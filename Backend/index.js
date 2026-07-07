@@ -4,8 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const path = require('path');
 const corsOptions = require("./config/corsConfig");
-const { connectDB } = require("./config/connectDb");
-// const corsOptions = require('./config/corsConfig');
+const { connectDB, gracefulShutdown } = require("./config/connectDb");
 const auth = require("./Routes/auth/auth")
     // const { globalErrorHandler } = require('./utils/errorHandler');
 
@@ -15,7 +14,6 @@ const app = express();
 app.use(cors(corsOptions));
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-// app.options('*', cors(corsOptions));
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -29,21 +27,12 @@ app.use((req, res, next) => {
 // Other middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.status(200).json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
-    });
-});
 
 // API routes
 app.use("/api/auth", auth);
 app.use("/api/maintenance", require("./routes/maintenance/index"));
+app.use("/api/otp", require("./routes/auth/otpRoute"));
 // app.use("/api/admin", require("./routes/admin/index"));
 // app.use("/api/ngo", require("./routes/ngo/index"));
 // app.use("/api/company", require("./routes/company/index"));
@@ -54,18 +43,23 @@ app.use("/api/maintenance", require("./routes/maintenance/index"));
 // app.use("/api/user", require("./routes/user/index"));
 // app.use("/api/donor", require("./routes/donor/index"));
 
-// 404 handler
 
 // Global error handler
 // app.use(globalErrorHandler);
+
+// 404 handler
+// app.use('(*/)', (req, res) => {
+//     res.status(404).json({
+//         status: 'fail',
+//         message: `Route ${req.originalUrl} not found`
+//     });
+// });
 
 const PORT = process.env.PORT || 5000;
 
 // Initialize server
 const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    console.log(`🔗 Health check: http://0.0.0.0:${PORT}/health`);
-    console.log(`🔗 Local access: http://localhost:${PORT}/health`);
+    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
     connectDB();
 });
 

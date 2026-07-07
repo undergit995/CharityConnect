@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import AuthLoader from '../commonComponents/AuthLoader';
+import { api } from '../Services/authServices';
 
 // Create Auth Context
 export const AuthContext = createContext(null);
@@ -15,130 +16,8 @@ export const useAuth = () => {
   return context;
 };
 
-// API base URL
+// API base URL - FIXED: Defined here
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api';
-
-// Create and export axios instance with interceptors
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000, // 30 seconds timeout
-});
-
-// Flag to prevent multiple token refresh requests
-let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
-
-// Request interceptor - Add token to every request
-api.interceptors.request.use(
-  (config) => {
-    // Skip adding token for auth endpoints if needed
-    const skipAuthPaths = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'];
-    const shouldSkip = skipAuthPaths.some(path => config.url?.includes(path));
-    
-    if (!shouldSkip) {
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor - Handle token refresh
-api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    
-    // If error is not 401 or request already retried, reject
-    if (error.response?.status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
-    }
-
-    // Don't attempt refresh for login/register endpoints
-    const authEndpoints = ['/auth/login', '/auth/register', '/auth/refresh-token'];
-    if (authEndpoints.some(endpoint => originalRequest.url?.includes(endpoint))) {
-      return Promise.reject(error);
-    }
-
-    originalRequest._retry = true;
-
-    // If already refreshing, queue the request
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      }).then(token => {
-        originalRequest.headers.Authorization = `Bearer ${token}`;
-        return api(originalRequest);
-      }).catch(err => Promise.reject(err));
-    }
-
-    isRefreshing = true;
-
-    try {
-      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-      
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      // Call refresh token endpoint
-      const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
-      const { accessToken } = response.data;
-
-      // Update stored token
-      if (localStorage.getItem('refreshToken')) {
-        localStorage.setItem('accessToken', accessToken);
-      } else {
-        sessionStorage.setItem('accessToken', accessToken);
-      }
-
-      // Update axios default header
-      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-      // Process queued requests
-      processQueue(null, accessToken);
-      
-      // Retry original request
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-      return api(originalRequest);
-
-    } catch (refreshError) {
-      // Refresh failed - process queue with error
-      processQueue(refreshError, null);
-      
-      // Logout user
-      logout();
-      
-      // Redirect to login
-      if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
-      }
-      
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-);
 
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {

@@ -8,7 +8,6 @@ export default function LandingPageLayout() {
     <Box>
       <AppBarComponent/>
         <Outlet/>
-        
     </Box>
   )
 }

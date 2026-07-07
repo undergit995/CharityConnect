@@ -10,6 +10,11 @@ import LandingPage from "./pages/auth/LandingPage";
 import LandingPageLayout from "./pages/LandingPageLayout";
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { ProtectedRoute } from "./routes/ProtectedRoutes";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLayout from "./pages/admin/AdminLayout";
+import DonorRoutes from "./routes/DonorRoutes";
+import CharityRoutes from "./routes/CharityRoutes";
+import OfflinePage from "./pages/auth/OfflinePage";
 
 // import { ProtectedRoute, AdminRoute, CharityRoute, DonorRoute } from './components/ProtectedRoute';
 // import { theme } from './styles/theme';
@@ -738,12 +743,36 @@ const AppRoutes = () => {
           <Route path="/charity/campaigns/manage" element={<CampaignManagement />} />
         </Route> */}
 
-        {/* Admin Routes */}
-        {/* <Route element={<AdminRoute />}>
+
+        <Route path="/admin" element={
+    <AdminLayout/>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/charities" element={<CharityManagement />} />
-          <Route path="/admin/campaigns" element={<CampaignManagement />} />
-        </Route> */}
+          {/* <Route path="/admin/charities" element={<CharityManagement />} />
+          <Route path="/admin/campaigns" element={<CampaignManagement />} /> */}
+        </Route>
+
+        {/* Donor Routes */}
+      <Route 
+        path="/donor/*" 
+        element={
+          // <ProtectedRoute requiredRoles={['donor']}>
+            <DonorRoutes />
+          // </ProtectedRoute>
+        } 
+      />
+      
+      {/* Charity Routes */}
+      <Route 
+        path="/charity/*" 
+        element={
+          <ProtectedRoute requiredRoles={['charity']}>
+            <CharityRoutes />
+          </ProtectedRoute>
+        } 
+      />
+      
+      
+      <Route path="*" element={<Navigate to="/" replace />} />
 
         {/* Error Routes */}
         {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}

@@ -1,26 +1,11 @@
-/**
- * Validators Utility for CharityConnect
- * Contains all validation functions for forms and data
- */
 
-// ==================== EMAIL VALIDATORS ====================
-
-/**
- * Validate email address format
- * @param {string} email - Email address to validate
- * @returns {boolean} - True if valid, false otherwise
- */
 export const validateEmail = (email) => {
   if (!email) return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-/**
- * Validate email with detailed error message
- * @param {string} email - Email address to validate
- * @returns {object} - { isValid: boolean, error: string }
- */
+
 export const validateEmailDetailed = (email) => {
   if (!email) {
     return { isValid: false, error: 'Email is required' };
@@ -31,14 +16,7 @@ export const validateEmailDetailed = (email) => {
   return { isValid: true, error: '' };
 };
 
-// ==================== PASSWORD VALIDATORS ====================
 
-/**
- * Validate password strength
- * @param {string} password - Password to validate
- * @param {object} options - Validation options
- * @returns {boolean} - True if valid, false otherwise
- */
 export const validatePassword = (password, options = {}) => {
   const {
     minLength = 8,
@@ -58,12 +36,7 @@ export const validatePassword = (password, options = {}) => {
   return true;
 };
 
-/**
- * Validate password with detailed error message
- * @param {string} password - Password to validate
- * @param {object} options - Validation options
- * @returns {object} - { isValid: boolean, errors: string[] }
- */
+
 export const validatePasswordDetailed = (password, options = {}) => {
   const {
     minLength = 8,
@@ -102,11 +75,8 @@ export const validatePasswordDetailed = (password, options = {}) => {
   };
 };
 
-/**
- * Get password strength score (0-5)
- * @param {string} password - Password to check
- * @returns {number} - Strength score 0-5
- */
+
+
 export const getPasswordStrength = (password) => {
   if (!password) return 0;
   
@@ -121,11 +91,7 @@ export const getPasswordStrength = (password) => {
   return Math.min(score, 5);
 };
 
-/**
- * Get password strength label
- * @param {number} score - Strength score (0-5)
- * @returns {object} - { label: string, color: string }
- */
+
 export const getPasswordStrengthLabel = (score) => {
   const strengthMap = {
     0: { label: 'Very Weak', color: '#e74c3c' },
@@ -138,13 +104,7 @@ export const getPasswordStrengthLabel = (score) => {
   return strengthMap[score] || strengthMap[0];
 };
 
-// ==================== PHONE VALIDATORS ====================
 
-/**
- * Validate phone number
- * @param {string} phone - Phone number to validate
- * @returns {boolean} - True if valid, false otherwise
- */
 export const validatePhone = (phone) => {
   if (!phone) return false;
   // Supports: (123) 456-7890, 123-456-7890, 123.456.7890, 1234567890, +1234567890
@@ -152,11 +112,7 @@ export const validatePhone = (phone) => {
   return phoneRegex.test(phone);
 };
 
-/**
- * Validate phone number with detailed error
- * @param {string} phone - Phone number to validate
- * @returns {object} - { isValid: boolean, error: string }
- */
+
 export const validatePhoneDetailed = (phone) => {
   if (!phone) {
     return { isValid: false, error: 'Phone number is required' };
@@ -167,11 +123,7 @@ export const validatePhoneDetailed = (phone) => {
   return { isValid: true, error: '' };
 };
 
-/**
- * Format phone number to international format
- * @param {string} phone - Phone number to format
- * @returns {string} - Formatted phone number
- */
+
 export const formatPhoneNumber = (phone) => {
   if (!phone) return '';
   // Remove all non-numeric characters
@@ -183,14 +135,7 @@ export const formatPhoneNumber = (phone) => {
   return phone;
 };
 
-// ==================== NAME VALIDATORS ====================
 
-/**
- * Validate name
- * @param {string} name - Name to validate
- * @param {object} options - Validation options
- * @returns {boolean} - True if valid, false otherwise
- */
 export const validateName = (name, options = {}) => {
   const { minLength = 2, maxLength = 50, allowSpaces = true } = options;
   

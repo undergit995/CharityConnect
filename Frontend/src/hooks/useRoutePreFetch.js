@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ROUTES } from './routes';
+import { ROUTES } from '../routes/routes';
 
 export const useRoutePrefetch = () => {
   const location = useLocation();
