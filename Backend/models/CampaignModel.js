@@ -298,6 +298,8 @@ const CampaignSchema = new mongoose.Schema({
       type: Date,
     },
   },
+    
+},{
     timestamps: true
 });
 

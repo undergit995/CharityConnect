@@ -35,7 +35,7 @@ app.use("/api/maintenance", require("./routes/maintenance/index"));
 app.use("/api/otp", require("./routes/auth/otpRoute"));
 app.use("/api/admin", require("./routes/admin/admin"));
 // app.use("/api/ngo", require("./routes/ngo/index"));
-// app.use("/api/company", require("./routes/company/index"));
+app.use("/api/charity", require("./routes/charity/index"));
 // app.use("/api/donations", require("./routes/donations/index"));
 app.use("/api/campaigns", require("./routes/campaign/campaign"));
 // app.use("/api/payment", require("./routes/payment/index"));
