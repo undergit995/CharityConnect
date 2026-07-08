@@ -132,7 +132,7 @@ const Maintenance = () => {
               overflow: 'hidden',
             }}
           >
-            {/* Status Chip */}
+            
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
               <Chip
                 label="Under Maintenance"

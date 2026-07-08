@@ -34,11 +34,11 @@ const AdminSidebar = () => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
-    { text: 'Charities', icon: <CharityIcon />, path: '/admin/charities' },
+    { text: 'Charities', icon: <CharityIcon />, path: '/admin/charity' },
     { text: 'Campaigns', icon: <CampaignIcon />, path: '/admin/campaigns' },
     { text: 'Donors', icon: <PeopleIcon />, path: '/admin/donors' },
     { text: 'Donations', icon: <DonateIcon />, path: '/admin/donations' },
-    { text: 'Reports', icon: <ReportIcon />, path: '/admin/reports' },
+    { text: 'Reports', icon: <ReportIcon />, path: '/admin/donationreport' },
     { text: 'Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
     { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
   ];

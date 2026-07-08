@@ -78,7 +78,7 @@ const charityNavItems = [
 ];
 
 const donorNavItems = [
-  { label: 'Dashboard', path: '/donor/dashboard', icon: <DashboardIcon /> },
+  { label: 'Dashboard', path: '/donor', icon: <DashboardIcon /> },
   { label: 'My Donations', path: '/donations', icon: <ReceiptIcon /> },
   { label: 'Saved Campaigns', path: '/saved', icon: <FavoriteIcon /> },
 ];

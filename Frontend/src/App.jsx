@@ -8,13 +8,18 @@ import axios from "axios";
 import { ThemeProvider } from "./Theme/ThemeContext";
 import LandingPage from "./pages/auth/LandingPage";
 import LandingPageLayout from "./pages/LandingPageLayout";
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { ProtectedRoute } from "./routes/ProtectedRoutes";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLayout from "./pages/admin/AdminLayout";
 import DonorRoutes from "./routes/DonorRoutes";
 import CharityRoutes from "./routes/CharityRoutes";
 import OfflinePage from "./pages/auth/OfflinePage";
+import AdminDonationsReport from "./pages/admin/DonationReport";
+import AdminManageCampaigns from "./pages/admin/CampaignManagement";
+import AdminManageCharity from "./pages/admin/CharityManagement";
+import AdminCharityApproval from "./pages/admin/AdminCharityApproval";
+import { WarningAmberOutlined } from "@mui/icons-material";
+import { api } from "./Services/authServices";
+import CampaignDetails from "./pages/CampaignDetails";
 
 // import { ProtectedRoute, AdminRoute, CharityRoute, DonorRoute } from './components/ProtectedRoute';
 // import { theme } from './styles/theme';
@@ -29,9 +34,9 @@ const AuthLoader = lazy(() => import("./commonComponents/AuthLoader"));
 
 // Dashboard components
 // const Dashboard = lazy(() => import('./pages/Dashboard'));
-// const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-// const CharityDashboard = lazy(() => import('./pages/CharityDashboard'));
-// const DonorDashboard = lazy(() => import('./pages/DonorDashboard'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const CharityDashboard = lazy(() => import('./pages/charity/CharityDashboard'));
+const DonorDashboard = lazy(() => import('./pages/donor/DonorDashboard'));
 
 // // Profile and Settings
 // const Profile = lazy(() => import('./pages/Profile'));
@@ -232,7 +237,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
           }}
         >
           <span role="img" aria-label="error">
-            <WarningAmberIcon/>
+            <WarningAmberOutlined/>
           </span>
         </div>
 
@@ -513,7 +518,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //           }
 //         />
 //         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-//         <Route path="/auth/verify-email" element={<VerifyEmail />} />
+//         <Route path="/auth/verify" element={<VerifyEmail />} />
 //         <Route path="/auth/verify-otp" element={<VerifyOTP />} />
 
 //         {/* Campaign Routes */}
@@ -670,7 +675,22 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //   );
 // }
 
-// App Routes Component - This uses useAuth so it MUST be inside AuthProvider
+// Component to redirect users to their specific dashboard after login
+const DashboardRedirect = () => {
+  const { user, loading } = useAuth();
+
+  // Guard clause if user object or role isn't loaded yet
+  if (loading || !user) {
+    return <PageLoader />;
+  }
+
+  if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
+  if (user.role === 'donor') return <Navigate to="/donor/dashboard" replace />;
+  if (user.role === 'charity') return <Navigate to="/charity/dashboard" replace />;
+  
+  return <Navigate to="/unauthorized" replace />;
+};
+
 const AppRoutes = () => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -685,6 +705,7 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPageLayout />} >
            <Route index element={<LandingPage />} />
            <Route path="/home" element={<LandingPage />} />
+           <Route path="/campaigns" element={<CampaignDetails />} />
         {/* <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faq" element={<FAQ />} />
@@ -697,14 +718,14 @@ const AppRoutes = () => {
         <Route
           path="/auth/login"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+            isAuthenticated ? <DashboardRedirect /> : <Login />
           }
         />
         <Route
           path="/auth/register"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <DashboardRedirect />
             ) : (
               <Register />
             )
@@ -720,17 +741,17 @@ const AppRoutes = () => {
         <Route path="/campaigns/:id/donate" element={<DonationPage />} />
         <Route path="/charity/:id" element={<CharityProfile />} /> */}
 
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
         {/* Protected Routes - Require Authentication */}
-        {/* <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
+        <Route element={<ProtectedRoute />}>
+          {/* <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<NotificationPreferences />} />
           <Route path="/donations" element={<DonationHistory />} />
-          <Route path="/donations/:id/receipt" element={<DonationReceipt />} />
-        </Route> */}
+          <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
+        </Route>
 
-        {/* Donor Routes */}
+        {/* Donor Routes - Example */}
         {/* <Route element={<DonorRoute />}>
           <Route path="/donor/dashboard" element={<DonorDashboard />} />
         </Route> */}
@@ -745,19 +766,22 @@ const AppRoutes = () => {
 
 
         <Route path="/admin" element={
-    <AdminLayout/>}>
+          <ProtectedRoute requiredRoles={['admin']}>
+            <AdminLayout/>
+          </ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          {/* <Route path="/admin/charities" element={<CharityManagement />} />
-          <Route path="/admin/campaigns" element={<CampaignManagement />} /> */}
+          <Route path="/admin/charity" element={<AdminCharityApproval />} />
+          <Route path="/admin/campaigns" element={<AdminManageCampaigns />} />
+          <Route path="/admin/donationreport" element={<AdminDonationsReport />} />
         </Route>
 
         {/* Donor Routes */}
-      <Route 
+      <Route
         path="/donor/*" 
         element={
-          // <ProtectedRoute requiredRoles={['donor']}>
+          <ProtectedRoute requiredRoles={['donor']}>
             <DonorRoutes />
-          // </ProtectedRoute>
+          </ProtectedRoute>
         } 
       />
       
@@ -783,22 +807,16 @@ const AppRoutes = () => {
   );
 };
 
+
+
 // Main App Component
 function App() {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoading, setIsLoading] = useState(true);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api';
-
-  const api = axios.create({
-    baseURL: API_BASE_URL,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
   useEffect(() => {
+    console.log("App Mounted! If you see this rolling in the browser console, the whole app is unmounting.");
     const checkMaintenance = async () => {
       try {
         const response = await api.get('/maintenance');

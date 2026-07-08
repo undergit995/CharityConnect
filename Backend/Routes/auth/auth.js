@@ -10,14 +10,22 @@ const Charity = require("../../models/CharityModel");
 // const ActivityLog = require("../models/ActivityLog");
 const authMiddleware = require("../../middlewares/auth");
 const otpService = require("../../utils/otpService");
-const { validateEmail, validatePhone, validatePassword } = require("../../utils/validators");
+const {
+  validateEmail,
+  validatePhone,
+  validatePassword,
+} = require("../../utils/validators");
 const { sendEmail } = require("../../utils/emailService");
+const {
+  validatePasswordDetailed,
+} = require("../../../Frontend/src/Utils/validators");
+const ActivityLog = require("../../models/ActivityLog");
+const generateTokens = require("../../utils/refreshToken");
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "CharityConnectSecretKey";
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
-
-
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
 
 const logActivity = async (userId, action, details = {}) => {
   try {
@@ -29,10 +37,9 @@ const logActivity = async (userId, action, details = {}) => {
     });
     await activity.save();
   } catch (error) {
-    console.error('Error logging activity:', error);
+    console.error("Error logging activity:", error);
   }
 };
-
 
 const sendWelcomeEmail = async (email, name, role) => {
   try {
@@ -66,7 +73,7 @@ const sendWelcomeEmail = async (email, name, role) => {
               <li>Start your giving journey</li>
             </ul>
             <div style="text-align: center;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/dashboard" class="button">Go to Dashboard</a>
+              <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard" class="button">Go to Dashboard</a>
             </div>
             <p class="message">If you have any questions, feel free to contact our support team.</p>
             <div class="footer">
@@ -79,14 +86,13 @@ const sendWelcomeEmail = async (email, name, role) => {
 
     await sendEmail({
       to: email,
-      subject: 'Welcome to CharityConnect 🎉',
+      subject: "Welcome to CharityConnect 🎉",
       html: emailContent,
     });
   } catch (error) {
-    console.error('Error sending welcome email:', error);
+    console.error("Error sending welcome email:", error);
   }
 };
-
 
 router.post("/setup-admin", async (req, res) => {
   try {
@@ -119,8 +125,8 @@ router.post("/setup-admin", async (req, res) => {
 
     await adminUser.save();
 
-    await logActivity(adminUser._id, "Admin account created", { 
-      type: "initial_setup" 
+    await logActivity(adminUser._id, "Admin account created", {
+      type: "initial_setup",
     });
 
     res.status(201).json({
@@ -147,7 +153,6 @@ router.post("/setup-admin", async (req, res) => {
     });
   }
 });
-
 
 router.post("/register", async (req, res) => {
   try {
@@ -206,8 +211,8 @@ router.post("/register", async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ 
-      $or: [{ email }, { phone }] 
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phone }],
     });
 
     if (existingUser) {
@@ -265,15 +270,31 @@ router.post("/register", async (req, res) => {
       zipCode: zipCode || "",
       website: website || "",
       description: description || "",
-    //   profileImage: req.file ? req.file.path : null,
-      permissions: normalizedRole === "donor" 
-        ? ["view_campaigns", "make_donations", "view_donations", "save_campaigns"]
-        : ["view_campaigns", "create_campaigns", "edit_campaigns", "view_donations", "post_updates"],
+      //   profileImage: req.file ? req.file.path : null,
+      permissions:
+        normalizedRole === "donor"
+          ? [
+              "view_campaigns",
+              "make_donations",
+              "view_donations",
+              "save_campaigns",
+            ]
+          : [
+              "view_campaigns",
+              "create_campaigns",
+              "edit_campaigns",
+              "view_donations",
+              "post_updates",
+            ],
     };
 
     // Add organization details for charity role
+    // Add organization details for charity role
     if (normalizedRole === "charity") {
-      if (!organizationName) {
+      // Extract charityDetails from req.body (or adapt based on your destructuring)
+      const { charityDetails } = req.body;
+
+      if (!charityDetails || !charityDetails.organizationName) {
         return res.status(400).json({
           success: false,
           message: "Organization name is required for charity registration",
@@ -281,9 +302,9 @@ router.post("/register", async (req, res) => {
       }
 
       const charityData = {
-        organizationName,
-        organizationType: organizationType || "Non-Profit",
-        registrationNumber: registrationNumber || "",
+        organizationName: charityDetails.organizationName,
+        organizationType: charityDetails.organizationType || "Non-Profit",
+        registrationNumber: charityDetails.registrationNumber || "",
         verified: false,
       };
 
@@ -294,7 +315,7 @@ router.post("/register", async (req, res) => {
     await user.save();
 
     // Log activity
-    await logActivity(user._id, "User registered", { 
+    await logActivity(user._id, "User registered", {
       role: normalizedRole,
       email: user.email,
     });
@@ -362,7 +383,8 @@ router.post("/login", async (req, res) => {
     if (user.role === "charity" && !user.isApproved) {
       return res.status(403).json({
         success: false,
-        message: "Your charity account is pending approval. You'll be notified once approved.",
+        message:
+          "Your charity account is pending approval. You'll be notified once approved.",
       });
     }
 
@@ -459,7 +481,7 @@ router.post("/refresh-token", async (req, res) => {
         permissions: user.permissions || [],
       },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: "24h" },
     );
 
     res.status(200).json({
@@ -534,16 +556,17 @@ router.post("/forgot-password", async (req, res) => {
       // Don't reveal if user exists for security
       return res.status(200).json({
         success: true,
-        message: "If an account exists with this email, you will receive a password reset link.",
+        message:
+          "If an account exists with this email, you will receive a password reset link.",
       });
     }
 
     // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString("hex");
     const resetTokenHash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(resetToken)
-      .digest('hex');
+      .digest("hex");
 
     // Save token to user
     user.resetPasswordToken = resetTokenHash;
@@ -551,7 +574,7 @@ router.post("/forgot-password", async (req, res) => {
     await user.save();
 
     // Send reset email
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/auth/reset-password?token=${resetToken}`;
 
     const emailContent = `
       <!DOCTYPE html>
@@ -588,13 +611,14 @@ router.post("/forgot-password", async (req, res) => {
 
     await sendEmail({
       to: email,
-      subject: 'Password Reset - CharityConnect',
+      subject: "Password Reset - CharityConnect",
       html: emailContent,
     });
 
     res.status(200).json({
       success: true,
-      message: "If an account exists with this email, you will receive a password reset link.",
+      message:
+        "If an account exists with this email, you will receive a password reset link.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -642,9 +666,9 @@ router.post("/reset-password", async (req, res) => {
 
     // Hash token
     const resetTokenHash = crypto
-      .createHash('sha256')
+      .createHash("sha256")
       .update(token)
-      .digest('hex');
+      .digest("hex");
 
     // Find user with valid token
     const user = await User.findOne({
@@ -671,7 +695,8 @@ router.post("/reset-password", async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Password reset successfully. You can now login with your new password.",
+      message:
+        "Password reset successfully. You can now login with your new password.",
     });
   } catch (error) {
     console.error("Reset password error:", error);
@@ -776,7 +801,7 @@ router.post("/verify-email", async (req, res) => {
     }
 
     // Verify OTP
-    const result = otpService.verifyOTP(email, otp, 'verification');
+    const result = otpService.verifyOTP(email, otp, "verification");
 
     if (!result.success) {
       return res.status(400).json({
@@ -855,7 +880,7 @@ router.post("/resend-verification", async (req, res) => {
     }
 
     // Send OTP
-    const result = await otpService.sendOTPEmail(email, 'verification');
+    const result = await otpService.sendOTPEmail(email, "verification");
 
     res.status(200).json({
       success: true,
@@ -917,14 +942,14 @@ router.post("/resend-verification", async (req, res) => {
  */
 // router.put("/profile", authMiddleware, upload.single('profileImage'), async (req, res) => {
 //   try {
-//     const { 
-//       firstName, 
-//       lastName, 
-//       phone, 
-//       address, 
-//       city, 
-//       state, 
-//       country, 
+//     const {
+//       firstName,
+//       lastName,
+//       phone,
+//       address,
+//       city,
+//       state,
+//       country,
 //       zipCode,
 //       website,
 //       description,
@@ -1160,4 +1185,4 @@ router.post("/resend-verification", async (req, res) => {
 //   }
 // });
 
-module.exports = router
+module.exports = router;

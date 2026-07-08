@@ -714,9 +714,10 @@ const Register = () => {
 
   // Verify OTP
   const handleVerifyOTP = async (otp) => {
-    if (otp.length === 6) {
-      setOtpLoading(true);
-      setOtpError("");
+    if (otpLoading || otpVerified || otp.length !== 6) return;
+
+  setOtpLoading(true);
+  setOtpError("");
 
       try {
         const response = await api.post("/otp/verify", {
@@ -734,13 +735,12 @@ const Register = () => {
         const message =
           error.response?.data?.message || "Invalid OTP. Please try again.";
         setOtpError(message);
-        setErrors((prev) => ({ ...prev, otp: message }));
+        // setErrors((prev) => ({ ...prev, otp: message }));
         // Reset OTP input if verification fails
         setOtpVerified(false);
       } finally {
         setOtpLoading(false);
       }
-    }
   };
 
   // Resend OTP
@@ -798,6 +798,7 @@ const Register = () => {
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
         role: formData.role,
         acceptTerms: formData.acceptTerms,
         fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
@@ -813,11 +814,9 @@ const Register = () => {
         };
       }
 
-      const response = await api.post('auth/regsiter',userData);
+      const response = await api.post('/auth/register',userData);
 
-      // Check if registration was successful
       if (response?.data?.success) {
-        // Navigate based on role or general dashboard
         if (response?.data?.user?.role === "admin") {
           navigate("/admin/dashboard");
         } else if (response?.data?.user?.role === "charity") {

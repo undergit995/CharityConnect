@@ -163,9 +163,12 @@ export const AuthProvider = ({ children }) => {
         rememberMe,
       });
 
-      const { accessToken, refreshToken, user, permissions } = response.data;
+      const payload = response.data.data || response.data; 
+      const { accessToken, refreshToken, user, permissions } = payload;
 
-      // Store tokens
+      console.log("📍 Network payload verified:", { accessToken: !!accessToken, user });
+
+      // Store tokens safely
       if (rememberMe) {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
@@ -174,18 +177,28 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem('refreshToken', refreshToken);
       }
 
-      // Set user state
       setUser(user);
       setIsAuthenticated(true);
       setPermissions(permissions || []);
       
-      // Start session timeout
-      const decoded = jwtDecode(accessToken);
-      startSessionTimeout(decoded.exp * 1000);
+      
+      if (accessToken) {
+        try {
+          const decoded = jwtDecode(accessToken);
+          if (decoded && decoded.exp) {
+            startSessionTimeout(decoded.exp * 1000);
+          }
+        } catch (jwtError) {
+          console.warn("⚠️ jwtDecode failed or startSessionTimeout missing, bypassing timeout hook:", jwtError);
+        }
+      }
 
-      return { user, permissions };
+      return { user, permissions: permissions || [] };
+
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Login failed. Please try again.';
+      console.error("Real internal error inside AuthContext try block:", err);
+      
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed.';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -286,7 +299,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/verify-email', { token });
+      const response = await api.post('/auth/verify', { token });
       if (user) {
         setUser({ ...user, emailVerified: true });
       }

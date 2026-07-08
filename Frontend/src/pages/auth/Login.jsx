@@ -30,13 +30,14 @@ import {
   Brightness4 as DarkIcon,
   Brightness7 as LightIcon,
 } from "@mui/icons-material";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useNavigate, Link as RouterLink, replace } from "react-router-dom";
 import SocialLogin from "./components/SocialLogin";
 import { useAuth } from "../../hooks/useAuth";
 import { useTheme } from "../../hooks/useTheme";
 import { motion } from "framer-motion";
 import Nav from "./components/Nav";
 import { validateEmail } from "../../Utils/validators";
+import { api } from "../../Services/authServices";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -64,23 +65,44 @@ const Login = () => {
       setErrors(newErrors);
       return;
     }
-
+    
     try {
-      await login(email, password, rememberMe);
-      navigate("/dashboard");
+      const response = await login(email, password, rememberMe);
+      
+    if (!response) {
+      throw new Error('Login failed - no response');
+    }
+    
+    if (!response || !response.user) {
+    throw new Error('Login failed - no response'); 
+  }
+
+  // 3. Extract the role from the nested user object safely
+  const userRole = response.user.role;
+  
+  // Navigate based on role
+  const roleRoutes = {
+    admin: "/admin/dashboard",
+    charity: "/charity/dashboard",
+    donor: "/donor/dashboard",
+  };
+  navigate(roleRoutes[userRole] , replace);
+  console.log("🎯 User authenticated successfully! Role:", roleRoutes[userRole]);
     } catch (err) {
       console.error("Login error:", err);
     }
   };
 
   return (
-     <Box sx={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      bgcolor: isDark ? '#0a0a12' : '#f8f9fa',
-      transition: 'background-color 0.3s ease',
-    }}>
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: isDark ? "#0a0a12" : "#f8f9fa",
+        transition: "background-color 0.3s ease",
+      }}
+    >
       <Nav />
       {/* Main Content */}
       <Box sx={{ flex: 1, display: "flex", overflow: "hidden" }}>
@@ -135,7 +157,7 @@ const Login = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Icon */}
+              
               <Box
                 sx={{
                   width: 70,
@@ -740,7 +762,7 @@ export default Login;
 //   };
 
 //   return (
-//     <AuthLayout 
+//     <AuthLayout
 //       title="Welcome Back"
 //       subtitle="Sign in to continue your charitable journey"
 //       illustration="/images/auth/login-illustration.svg"
@@ -814,8 +836,8 @@ export default Login;
 //             }
 //             label="Remember me"
 //           />
-//           <Link 
-//             component={RouterLink} 
+//           <Link
+//             component={RouterLink}
 //             to="/auth/forgot-password"
 //             variant="body2"
 //             sx={{ textDecoration: 'none' }}
@@ -853,8 +875,8 @@ export default Login;
 //         <Box sx={{ textAlign: 'center', mt: 2 }}>
 //           <Typography variant="body2" color="textSecondary">
 //             Don't have an account?{' '}
-//             <Link 
-//               component={RouterLink} 
+//             <Link
+//               component={RouterLink}
 //               to="/auth/register"
 //               sx={{ textDecoration: 'none', fontWeight: 600 }}
 //             >

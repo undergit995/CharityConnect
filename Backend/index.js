@@ -10,7 +10,7 @@ const auth = require("./Routes/auth/auth")
 
 const app = express();
 
-// CORS configuration - Apply BEFORE anything else
+// CORS configuration
 app.use(cors(corsOptions));
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -33,11 +33,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use("/api/auth", auth);
 app.use("/api/maintenance", require("./routes/maintenance/index"));
 app.use("/api/otp", require("./routes/auth/otpRoute"));
-// app.use("/api/admin", require("./routes/admin/index"));
+app.use("/api/admin", require("./routes/admin/admin"));
 // app.use("/api/ngo", require("./routes/ngo/index"));
 // app.use("/api/company", require("./routes/company/index"));
 // app.use("/api/donations", require("./routes/donations/index"));
-// app.use("/api/campaigns", require("./routes/campaigns/index"));
+app.use("/api/campaigns", require("./routes/campaign/campaign"));
 // app.use("/api/payment", require("./routes/payment/index"));
 // app.use("/api/public", require("./routes/public/index"));
 // app.use("/api/user", require("./routes/user/index"));

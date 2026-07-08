@@ -22,3 +22,4 @@ const generateTokens = (user) => {
   return { accessToken, refreshToken };
 };
 
+module.exports = generateTokens

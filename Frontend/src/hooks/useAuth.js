@@ -1,28 +1,31 @@
-import { useContext } from 'react';
-import { AuthContext } from '../Context/AuthContext';
+// hooks/useAuth.js
+import { useContext } from 'react'; // ← THIS WAS MISSING
+import { AuthContext } from '../context/AuthContext';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   
-   if (!context) {
+  if (!context) {
+    // Return fallback instead of throwing error
+    console.warn('useAuth used outside of AuthProvider - returning fallback');
     return {
       user: null,
       loading: false,
       error: null,
       isAuthenticated: false,
       permissions: [],
-      login: async () => {},
-      register: async () => {},
+      login: async () => ({ success: false, error: 'Auth not available' }),
+      register: async () => ({ success: false, error: 'Auth not available' }),
       logout: () => {},
-      forgotPassword: async () => {},
-      resetPassword: async () => {},
-      changePassword: async () => {},
-      verifyEmail: async () => {},
-      resendVerificationEmail: async () => {},
-      verifyOTP: async () => {},
-      sendOTP: async () => {},
-      socialLogin: async () => {},
-      updateProfile: async () => {},
+      forgotPassword: async () => ({ success: false, error: 'Auth not available' }),
+      resetPassword: async () => ({ success: false, error: 'Auth not available' }),
+      changePassword: async () => ({ success: false, error: 'Auth not available' }),
+      verifyEmail: async () => ({ success: false, error: 'Auth not available' }),
+      resendVerificationEmail: async () => ({ success: false, error: 'Auth not available' }),
+      verifyOTP: async () => ({ success: false, error: 'Auth not available' }),
+      sendOTP: async () => ({ success: false, error: 'Auth not available' }),
+      socialLogin: async () => ({ success: false, error: 'Auth not available' }),
+      updateProfile: async () => ({ success: false, error: 'Auth not available' }),
       hasPermission: () => false,
       hasRole: () => false,
       clearError: () => {},
@@ -89,8 +92,8 @@ export const useAuthVerifyEmail = () => {
 };
 
 export const useAuthResendVerification = () => {
-  const { resendVerification } = useAuth();
-  return resendVerification;
+  const { resendVerificationEmail } = useAuth();
+  return resendVerificationEmail;
 };
 
 export const useAuthSendOTP = () => {
@@ -108,11 +111,6 @@ export const useAuthSocialLogin = () => {
   return socialLogin;
 };
 
-export const useAuthUserProfile = () => {
-  const { getUserProfile } = useAuth();
-  return getUserProfile;
-};
-
 export const useAuthUpdateProfile = () => {
   const { updateProfile } = useAuth();
   return updateProfile;
@@ -123,32 +121,4 @@ export const useAuthIsAuthenticated = () => {
   return isAuthenticated;
 };
 
-export const useAuthGetUserFromToken = () => {
-  const { getUserFromToken } = useAuth();
-  return getUserFromToken;
-};
-
-export const useAuthSetTokens = () => {
-  const { setTokens } = useAuth();
-  return setTokens;
-};
-
-export const useAuthClearTokens = () => {
-  const { clearTokens } = useAuth();
-  return clearTokens;
-};
-
-export const useAuthGetAccessToken = () => {
-  const { getAccessToken } = useAuth();
-  return getAccessToken;
-};
-
-export const useAuthGetRefreshToken = () => {
-  const { getRefreshToken } = useAuth();
-  return getRefreshToken;
-};
-
-export const useAuthRefreshToken = () => {
-  const { refreshToken } = useAuth();
-  return refreshToken;
-};
+export default useAuth;

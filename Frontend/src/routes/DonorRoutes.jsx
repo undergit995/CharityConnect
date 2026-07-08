@@ -1,27 +1,35 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DonorLayout from '../pages/donor/DonorLayout';
+import { Box } from '@mui/material';
+import AuthLoader from '../commonComponents/AuthLoader';
+import CampaignList from '../pages/donor/CampaignLists';
 
-// import DonorDonations from '../pages/DonorDonations';
-// import DonorSaved from '../pages/DonorSaved';
-// import DonorProfile from '../pages/DonorProfile';
-// import DonorSettings from '../pages/DonorSettings';
-// import DonorNotifications from '../pages/DonorNotifications';
+// Lazy load Donor components
+const DonorDashboard = lazy(() => import('../pages/donor/DonorDashboard'));
+const DonorProfile = lazy(() => import('../pages/donor/DonorProfile'));
+// const DonorDonations = lazy(() => import('../pages/donor/DonorDonations'));
+// const DonorSaved = lazy(() => import('../pages/donor/DonorSaved'));
+// const DonorSettings = lazy(() => import('../pages/donor/DonorSettings'));
+// const DonorNotifications = lazy(() => import('../pages/donor/DonorNotifications'));
+
 
 const DonorRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={<DonorLayout />}>
-        <Route index element={<Navigate to="/donor" replace />} />
-        {/* <Route path="dashboard" element={<DonorDashboard />} /> */}
-        {/* <Route path="donations" element={<DonorDonations />} />
-        <Route path="saved" element={<DonorSaved />} />
-        <Route path="profile" element={<DonorProfile />} />
-        <Route path="settings" element={<DonorSettings />} />
-        <Route path="notifications" element={<DonorNotifications />} /> */}
-      </Route>
-      <Route path="*" element={<Navigate to="/donor/dashboard" replace />} />
-    </Routes>
+    <Suspense fallback={<AuthLoader />}>
+      <Routes>
+        <Route element={<DonorLayout />}>
+          <Route index element={<Navigate to="/donor/dashboard" replace />} />
+          <Route path="dashboard" element={<DonorDashboard />} />
+          <Route path="profile" element={<DonorProfile />} />
+          <Route path="campaigns" element={<CampaignList />} />
+          {/* <Route path="donations" element={<DonorDonations />} />
+          <Route path="settings" element={<DonorSettings />} />
+          <Route path="notifications" element={<DonorNotifications />} /> */}
+          <Route path="*" element={<Navigate to="/donor/dashboard" replace />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 };
 

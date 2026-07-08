@@ -176,11 +176,7 @@ const DonorSidebar = () => {
         />
         <Typography
           variant="caption"
-          component="div" // ← Added this to render as <div> instead of <p>
-          sx={{ color: isDark ? "#6a6a80" : "#9a9ab0", fontWeight: 600, px: 1 }}
-        >
-          RECENT CAMPAIGNS
-        </Typography>
+          sx={{ color: isDark ? "#6a6a80" : "#9a9ab0", fontWeight: 600, px: 1, display: 'block' }}>RECENT CAMPAIGNS</Typography>
         {recentCampaigns.map((campaign, index) => (
           <ListItem
             key={index}
@@ -195,15 +191,9 @@ const DonorSidebar = () => {
             }}
           >
             <ListItemText
-              component="div"
-              slotProps={{
-                primary: { component: "div" },
-                secondary: { component: "div" },
-              }}
               primary={
                 <Typography
                   variant="body2"
-                  component="div" // Forces the inner typography to be a div, not a paragraph
                   sx={{
                     color: isDark ? "#e8e8f0" : "#1a1a2e",
                     fontWeight: 500,
@@ -214,14 +204,13 @@ const DonorSidebar = () => {
               }
               secondary={
                 <Box
-                  sx={{
+                  sx={{ 
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
                     mt: 0.5,
                   }}
                 >
-                  {/* Progress Bar Background */}
                   <Box
                     sx={{
                       flex: 1,
@@ -232,7 +221,6 @@ const DonorSidebar = () => {
                       borderRadius: 2,
                     }}
                   >
-                    {/* Progress Bar Fill */}
                     <Box
                       sx={{
                         width: `${campaign?.progress || 0}%`,
@@ -243,10 +231,8 @@ const DonorSidebar = () => {
                     />
                   </Box>
 
-                  {/* Progress Text */}
                   <Typography
                     variant="caption"
-                    component="span" // A span is safe to use anywhere and won't break layout
                     sx={{
                       color: isDark ? "#6a6a80" : "#9a9ab0",
                       minWidth: "28px",

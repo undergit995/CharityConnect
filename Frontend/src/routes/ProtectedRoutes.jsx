@@ -19,8 +19,13 @@ export const ProtectedRoute = ({
   }
 
   if (requiredRoles.length > 0) {
-    const hasRequiredRole = requiredRoles.some(role => hasRole(role));
+    const hasRequiredRole = requiredRoles.some(role => 
+      hasRole(role.toLowerCase()) || 
+      (user?.role && user.role.toLowerCase() === role.toLowerCase())
+    );
+    
     if (!hasRequiredRole) {
+      console.warn(`🛑 Access Denied: User role "${user?.role}" does not match required roles:`, requiredRoles);
       return <Navigate to="/unauthorized" replace />;
     }
   }

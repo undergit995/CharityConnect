@@ -33,8 +33,8 @@ import {
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useTheme } from '../../../hooks/useTheme';
 import { motion } from 'framer-motion';
+
 export default function Nav() {
-    
   const { isDark, toggleTheme } = useTheme();
   return (<AppBar 
         position="sticky" 
