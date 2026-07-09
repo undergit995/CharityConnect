@@ -87,13 +87,15 @@ api.interceptors.response.use(
 
       // Call refresh token endpoint
       const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
-      const { accessToken } = response.data;
+      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
       // Update stored token
       if (localStorage.getItem('refreshToken')) {
         localStorage.setItem('accessToken', accessToken);
+        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
       } else {
         sessionStorage.setItem('accessToken', accessToken);
+        if (newRefreshToken) sessionStorage.setItem('refreshToken', newRefreshToken);
       }
 
       // Update axios default header

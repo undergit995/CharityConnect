@@ -57,7 +57,7 @@ const donationSchema = new mongoose.Schema(
     },
     transactionId: { 
       type: String, 
-      required: [true, "Transaction ID is required"],
+      // required: [true, "Transaction ID is required"],
       unique: true,
       trim: true
     },
@@ -353,7 +353,7 @@ donationSchema.index({
 // ==================== MIDDLEWARE ====================
 
 // Generate receipt number before saving
-donationSchema.pre("save", async function(next) {
+donationSchema.pre("save", async function() {
   try {
     if (!this.receiptNumber && this.status === "Completed") {
       const prefix = "DON";
@@ -370,9 +370,9 @@ donationSchema.pre("save", async function(next) {
       this.refundedAt = new Date();
     }
     
-    next();
+    
   } catch (error) {
-    next(error);
+    console.log(error);
   }
 });
 

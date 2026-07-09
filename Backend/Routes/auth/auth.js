@@ -471,23 +471,14 @@ router.post("/refresh-token", async (req, res) => {
       });
     }
 
-    // Generate new access token
-    const newAccessToken = jwt.sign(
-      {
-        id: user._id,
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions || [],
-      },
-      JWT_SECRET,
-      { expiresIn: "24h" },
-    );
+    // Implement Refresh Token Rotation: generate a new access AND refresh token
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
 
     res.status(200).json({
       success: true,
       data: {
-        accessToken: newAccessToken,
+        accessToken: accessToken,
+        refreshToken: newRefreshToken, // Send the new refresh token to the client
       },
     });
   } catch (error) {

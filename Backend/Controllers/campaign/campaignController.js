@@ -3,6 +3,7 @@ const Campaign = require("../../models/CampaignModel");
 const User = require("../../models/User");
 const { deleteFile } = require("../../config/multerConfig");
 const { sendEmail } = require("../../config/mailConfig");
+const Donation = require("../../models/Donation");
 
 // ==================== CREATE CAMPAIGN ====================
 
@@ -901,6 +902,94 @@ exports.getCampaignStats = async (req, res) => {
         });
     }
 };
+
+
+exports.getCampaignForDonation =  async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid campaign ID',
+      });
+    }
+
+    const campaign = await Campaign.findById(id)
+      .populate('charityId', 'fullName email profileImage phone charityDetails.organizationName charityDetails.verified charityDetails.missionStatement charityDetails.socialMedia')
+      .select('title description goalAmount raisedAmount stats coverImage endDate category location charityId status isActive isVerified __v');
+
+    if (!campaign) {
+      return res.status(404).json({
+        success: false,
+        message: 'Campaign not found',
+      });
+    }
+
+    // Check if campaign is active
+    const isActive = campaign.status === 'active' && campaign.isActive;
+    const isExpired = new Date() > new Date(campaign.endDate);
+    
+    // Calculate days remaining
+    const daysRemaining = Math.ceil((new Date(campaign.endDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+    // Get recent donations (for display on donation page)
+    const recentDonations = await Donation.find({ 
+      campaignId: campaign._id, 
+      status: 'Completed' 
+    })
+      .sort({ donationDate: -1 })
+      .limit(5)
+      .populate('donorId', 'fullName')
+      .select('amount donationDate isAnonymous donorId');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        _id: campaign._id,
+        title: campaign.title,
+        description: campaign.description,
+        coverImage: campaign.coverImage,
+        category: campaign.category,
+        location: campaign.location,
+        goalAmount: campaign.goalAmount,
+        raisedAmount: campaign.raisedAmount,
+        stats: campaign.stats,
+        endDate: campaign.endDate,
+        status: campaign.status,
+        isActive: campaign.isActive,
+        isVerified: campaign.isVerified,
+        isExpired,
+        daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+        isActive: isActive && !isExpired,
+        charityId: {
+          _id: campaign.charityId?._id,
+          fullName: campaign.charityId?.fullName,
+          email: campaign.charityId?.email,
+          profileImage: campaign.charityId?.profileImage,
+          organizationName: campaign.charityId?.charityDetails?.organizationName,
+          verified: campaign.charityId?.charityDetails?.verified,
+          missionStatement: campaign.charityId?.charityDetails?.missionStatement,
+          socialMedia: campaign.charityId?.charityDetails?.socialMedia,
+        },
+        recentDonations: recentDonations.map(d => ({
+          amount: d.amount,
+          donorName: d.isAnonymous ? 'Anonymous' : d.donorId?.fullName || 'Guest',
+          date: d.donationDate,
+        })),
+        __v: campaign.__v || 0,
+      },
+    });
+
+  } catch (error) {
+    console.error('Get donation page error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load donation page',
+      error: error.message,
+    });
+  }
+}
 
 // ==================== DONATION LINK ====================
 

@@ -585,6 +585,6 @@ UserSchema.set('toJSON', {
 });
 
 
-const AuthModel = mongoose.model('user', UserSchema);
+const AuthModel = mongoose.model('User', UserSchema);
 
 module.exports = AuthModel;

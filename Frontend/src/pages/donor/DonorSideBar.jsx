@@ -37,7 +37,7 @@ const DonorSidebar = () => {
     { text: "Dashboard", icon: <DashboardIcon />, path: "/donor/dashboard" },
     { text: "My Donations", icon: <ReceiptIcon />, path: "/donor/donations" },
     { text: "Saved Campaigns", icon: <FavoriteIcon />, path: "/donor/saved" },
-    { text: "Explore Campaigns", icon: <SearchIcon />, path: "/campaigns" },
+    { text: "Explore Campaigns", icon: <SearchIcon />, path: "/donor/campaigns" },
     { text: "Profile", icon: <PersonIcon />, path: "/donor/profile" },
     { text: "Settings", icon: <SettingsIcon />, path: "/donor/settings" },
   ];
@@ -179,6 +179,9 @@ const DonorSidebar = () => {
           sx={{ color: isDark ? "#6a6a80" : "#9a9ab0", fontWeight: 600, px: 1, display: 'block' }}>RECENT CAMPAIGNS</Typography>
         {recentCampaigns.map((campaign, index) => (
           <ListItem
+            secondaryAction={
+              <Typography variant="caption" sx={{ color: isDark ? "#6a6a80" : "#9a9ab0", minWidth: "28px", textAlign: "right" }}>{campaign?.progress || 0}%</Typography>
+            }
             key={index}
             sx={{
               borderRadius: 2,
@@ -189,7 +192,7 @@ const DonorSidebar = () => {
                   : "rgba(0,0,0,0.04)",
               },
             }}
-          >
+          > 
             <ListItemText
               primary={
                 <Typography
@@ -202,9 +205,10 @@ const DonorSidebar = () => {
                   {campaign?.name || "Untitled Campaign"}
                 </Typography>
               }
+              secondaryTypographyProps={{ component: 'div' }}
               secondary={
                 <Box
-                  sx={{ 
+                  sx={{
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
@@ -222,25 +226,8 @@ const DonorSidebar = () => {
                     }}
                   >
                     <Box
-                      sx={{
-                        width: `${campaign?.progress || 0}%`,
-                        height: "100%",
-                        backgroundColor: "#2ecc71",
-                        borderRadius: 2,
-                      }}
-                    />
+                      sx={{ width: `${campaign?.progress || 0}%`, height: "100%", backgroundColor: "#2ecc71", borderRadius: 2 }} />
                   </Box>
-
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark ? "#6a6a80" : "#9a9ab0",
-                      minWidth: "28px",
-                      textAlign: "right",
-                    }}
-                  >
-                    {campaign?.progress || 0}%
-                  </Typography>
                 </Box>
               }
             />

@@ -3,15 +3,15 @@ const mongoose = require('mongoose');
 const ActivityLogSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // References your User model
+    ref: 'User', 
     required: true,
   },
   action: {
     type: String,
-    required: true, // e.g., "User registered", "Login attempt"
+    required: true, 
   },
   details: {
-    type: mongoose.Schema.Types.Mixed, // Allows saving any custom object/JSON data
+    type: mongoose.Schema.Types.Mixed,
     default: {},
   },
   timestamp: {

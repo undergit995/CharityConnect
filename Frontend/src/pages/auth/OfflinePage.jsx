@@ -68,7 +68,7 @@ const OfflinePage = () => {
     if (retryCountdown > 0) {
       timer = setInterval(() => {
         setRetryCountdown(prev => prev - 1);
-      }, 1000);
+      }, 30000);
     } else if (retryCountdown === 0 && !isOnline) {
       // Auto-retry when countdown reaches 0
       handleRetryConnection();

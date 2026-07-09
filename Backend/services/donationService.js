@@ -1,7 +1,7 @@
 // services/DonationService.js
 const mongoose = require('mongoose');
 const Donation = require('../models/Donation');
-const Campaign = require('../models/Campaign');
+const Campaign = require('../models/CampaignModel');
 const User = require('../models/User');
 const { v4: uuidv4 } = require('uuid');
 

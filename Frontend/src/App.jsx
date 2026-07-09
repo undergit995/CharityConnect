@@ -20,6 +20,8 @@ import AdminCharityApproval from "./pages/admin/AdminCharityApproval";
 import { WarningAmberOutlined } from "@mui/icons-material";
 import { api } from "./Services/authServices";
 import CampaignDetails from "./pages/CampaignDetails";
+import AdminCampaignApproval from "./pages/admin/AdminCampaignApproval";
+import DonationPage from "./pages/DonationPage";
 
 // import { ProtectedRoute, AdminRoute, CharityRoute, DonorRoute } from './components/ProtectedRoute';
 // import { theme } from './styles/theme';
@@ -751,19 +753,6 @@ const AppRoutes = () => {
           <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
         </Route>
 
-        {/* Donor Routes - Example */}
-        {/* <Route element={<DonorRoute />}>
-          <Route path="/donor/dashboard" element={<DonorDashboard />} />
-        </Route> */}
-
-        {/* Charity Routes */}
-        {/* <Route element={<CharityRoute />}>
-          <Route path="/charity/dashboard" element={<CharityDashboard />} />
-          <Route path="/charity/campaigns/create" element={<CreateCampaign />} />
-          <Route path="/charity/campaigns/:id/edit" element={<EditCampaign />} />
-          <Route path="/charity/campaigns/manage" element={<CampaignManagement />} />
-        </Route> */}
-
 
         <Route path="/admin" element={
           <ProtectedRoute requiredRoles={['admin']}>
@@ -771,7 +760,7 @@ const AppRoutes = () => {
           </ProtectedRoute>}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/charity" element={<AdminCharityApproval />} />
-          <Route path="/admin/campaigns" element={<AdminManageCampaigns />} />
+          <Route path="/admin/campaigns" element={<AdminCampaignApproval />} />
           <Route path="/admin/donationreport" element={<AdminDonationsReport />} />
         </Route>
 
@@ -865,8 +854,10 @@ function App() {
   if (!isOnline) {
     return (
       <ThemeProvider>
+        <BrowserRouter>
         <GlobalStyles styles={globalStyles} />
         <OfflinePage />
+        </BrowserRouter>
       </ThemeProvider>
     );
   }

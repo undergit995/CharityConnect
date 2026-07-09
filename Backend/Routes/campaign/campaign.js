@@ -112,7 +112,14 @@ router.put("/:id/resume", authAndRole('charity', 'admin'), campaignController.re
  * @access Private (Charity owner or Admin)
  */
 router.get("/stats/charity/:charityId", authAndRole('charity', 'admin'), campaignController.getCampaignStats);
+// routes/campaignRoutes.js (or donationRoutes.js)
 
+/**
+ * @route GET /api/campaigns/:id/donate
+ * @desc Get campaign details for donation page
+ * @access Public
+ */
+router.get('/:id/donate',campaignController.getCampaignForDonation);
 // ==================== DONATION LINK ====================
 
 /**
@@ -121,5 +128,6 @@ router.get("/stats/charity/:charityId", authAndRole('charity', 'admin'), campaig
  * @access Public
  */
 router.get("/donation-link/:donationLink", campaignController.getCampaignByDonationLink);
+
 
 module.exports = router;

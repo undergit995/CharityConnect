@@ -71,7 +71,7 @@ const CharityDetailsSchema = new mongoose.Schema({
   },
   verifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user',
+    ref: 'User',
   },
   bankDetails: {
     accountHolderName: String,
