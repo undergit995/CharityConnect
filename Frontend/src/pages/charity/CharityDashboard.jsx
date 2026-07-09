@@ -1,5 +1,4 @@
-// pages/charity/CharityDashboard.jsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -9,486 +8,785 @@ import {
   Card,
   CardContent,
   Avatar,
-  LinearProgress,
-  Chip,
-  Button,
   IconButton,
   Tooltip,
   Divider,
-  Alert,
-  CircularProgress,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Stack,
   useMediaQuery,
-} from '@mui/material';
+  Button,
+  CircularProgress,
+  Alert,
+  LinearProgress,
+  Chip,
+} from "@mui/material";
 import {
-  Refresh as RefreshIcon,
-  Lock as LockIcon,
-  LockOpen as LockOpenIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  VolunteerActivism as DonateIcon,
   Campaign as CampaignIcon,
+  VolunteerActivism as DonateIcon,
   People as PeopleIcon,
   AttachMoney as MoneyIcon,
-} from '@mui/icons-material';
-import { motion } from 'framer-motion';
-import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
-import { api } from '../../Services/authServices';
-import CharityStats from './components/CharityStats';
-
-// Conflict Resolution Dialog
-const ConflictResolutionDialog = ({ open, onClose, onResolve, conflictData }) => {
-  const { isDark } = useTheme();
-  const [selectedStrategy, setSelectedStrategy] = useState('auto');
-
-  const strategies = [
-    { value: 'latest', label: 'Use Latest Version', description: 'Keep the most recent version' },
-    { value: 'merge', label: 'Merge Changes', description: 'Combine both versions' },
-    { value: 'manual', label: 'Manual Resolution', description: 'Choose which fields to keep' },
-  ];
-
-  return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
-          backdropFilter: 'blur(20px)',
-        },
-      }}
-    >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon sx={{ color: '#f39c12' }} />
-          <Typography variant="h6">Version Conflict Detected</Typography>
-        </Box>
-      </DialogTitle>
-      <DialogContent>
-        <Alert severity="warning" sx={{ mb: 2 }}>
-          This document has been modified by another user. Please choose how to resolve the conflict.
-        </Alert>
-        
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Current Version (Server)
-          </Typography>
-          <Paper sx={{ p: 2, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>
-              {JSON.stringify(conflictData?.current, null, 2)}
-            </pre>
-          </Paper>
-        </Box>
-
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Your Changes
-          </Typography>
-          <Paper sx={{ p: 2, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
-            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>
-              {JSON.stringify(conflictData?.updates, null, 2)}
-            </pre>
-          </Paper>
-        </Box>
-
-        <Typography variant="subtitle2" gutterBottom>
-          Resolution Strategy
-        </Typography>
-        {strategies.map((strategy) => (
-          <Paper
-            key={strategy.value}
-            onClick={() => setSelectedStrategy(strategy.value)}
-            sx={{
-              p: 2,
-              mb: 1,
-              cursor: 'pointer',
-              border: `2px solid ${selectedStrategy === strategy.value ? '#667eea' : 'transparent'}`,
-              borderRadius: 2,
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-              },
-            }}
-          >
-            <Typography variant="subtitle2">{strategy.label}</Typography>
-            <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-              {strategy.description}
-            </Typography>
-          </Paper>
-        ))}
-      </DialogContent>
-      <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button onClick={onClose} sx={{ borderRadius: 2 }}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => onResolve(selectedStrategy)}
-          sx={{
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #5a67d8 0%, #6b4190 100%)',
-            },
-          }}
-        >
-          Resolve Conflict
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
+  TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  Refresh as RefreshIcon,
+  Download as DownloadIcon,
+  FilterList as FilterIcon,
+  Pending as PendingIcon,
+  CheckCircle as CheckCircleIcon,
+  Pause as PauseIcon,
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import { motion } from "framer-motion";
+import { useTheme } from "../../hooks/useTheme";
+import { useAuth } from "../../Context/AuthContext";
+import { api } from "../../Services/authServices";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { useNavigate } from "react-router-dom";
+import StatsCard from "./components/StatsChart";
+import CampaignStatusCard from "./components/CampaignCard";
 
 // Main Charity Dashboard
 const CharityDashboard = () => {
   const { isDark } = useTheme();
   const { user } = useAuth();
-  const isMobile = useMediaQuery('(max-width:600px)');
-  
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalCampaigns: 0,
-    activeCampaigns: 0,
-    totalDonations: 0,
-    totalRaised: 0,
-    totalDonors: 0,
-    pendingDonations: 0,
-  });
-  const [optimisticStats, setOptimisticStats] = useState({});
-  const [recentDonations, setRecentDonations] = useState([]);
-  const [recentCampaigns, setRecentCampaigns] = useState([]);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockInfo, setLockInfo] = useState(null);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [conflictData, setConflictData] = useState(null);
-  const [version, setVersion] = useState(0);
-  
-  const updateQueue = useRef([]);
-  const isProcessing = useRef(false);
+  const isMobile = useMediaQuery("(max-width:600px)");
 
-  // Fetch dashboard data with locking
-  const fetchDashboardData = useCallback(async () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [stats, setStats] = useState(null);
+  const [charts, setCharts] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [period, setPeriod] = useState("month");
+
+  const [campaignStatus, setCampaignStatus] = useState({
+    total: 0,
+    active: 0,
+    draft: 0,
+    pending: 0,
+    paused: 0,
+    completed: 0,
+  });
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
     setLoading(true);
+    setError("");
     try {
-      const response = await api.get('/charity/dashboard', {
-        headers: {
-          'X-Version': version,
-        },
+      const response = await api.get("/charity/dashboard/stats", {
+        params: { period },
       });
-      
-      setStats(response.data.stats);
-      setRecentDonations(response.data.recentDonations || []);
-      setRecentCampaigns(response.data.recentCampaigns || []);
-      setVersion(response.data.version || 0);
-      
-      // Update optimistic stats
-      setOptimisticStats(response.data.stats);
-    } catch (err) {
-      if (err.response?.status === 409) {
-        // Conflict detected
-        setConflictData({
-          current: err.response.data.current,
-          updates: err.response.data.updates,
-        });
-        setConflictOpen(true);
-      } else {
-        setError(err.response?.data?.message || 'Failed to load dashboard');
+
+      if (response.data.success) {
+        const { stats, charts, recentActivity, campaignStatus } =
+          response.data.data;
+        setStats(stats);
+        setCharts(charts);
+        setRecentActivity(recentActivity || []);
+        setCampaignStatus(
+          campaignStatus || {
+            total: 0,
+            active: 0,
+            draft: 0,
+            pending: 0,
+            paused: 0,
+            completed: 0,
+          },
+        );
       }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  }, [version]);
+  };
 
-  // Process update queue with optimistic locking
-  const processUpdateQueue = useCallback(async () => {
-    if (isProcessing.current || updateQueue.current.length === 0) return;
-    
-    isProcessing.current = true;
-    const update = updateQueue.current.shift();
-
-    try {
-      // Acquire lock before update
-      const lockResponse = await api.post(`/charity/dashboard/lock`, {
-        documentId: update.documentId,
-      });
-
-      if (lockResponse.data.locked) {
-        setIsLocked(true);
-        setLockInfo(lockResponse.data.lockInfo);
-      }
-
-      // Perform optimistic update
-      setOptimisticStats(prev => ({
-        ...prev,
-        ...update.optimisticUpdate,
-      }));
-
-      // Send actual update
-      const response = await api.put(`/charity/dashboard/${update.documentId}`, {
-        ...update.data,
-        version: update.version,
-        __v: version,
-      });
-
-      // Release lock
-      await api.post(`/charity/dashboard/unlock`, {
-        documentId: update.documentId,
-      });
-
-      setIsLocked(false);
-      setLockInfo(null);
-
-      // Update with latest data
-      if (response.data) {
-        setStats(response.data);
-        setOptimisticStats(response.data);
-        setVersion(response.data.version);
-        setSuccess('Update successful!');
-        setSnackbarOpen(true);
-      }
-
-    } catch (err) {
-      if (err.response?.status === 409) {
-        // Conflict - show resolution dialog
-        setConflictData({
-          current: err.response.data.current,
-          updates: err.response.data.updates,
-        });
-        setConflictOpen(true);
-      } else if (err.response?.status === 423) {
-        // Locked
-        setError('Document is currently locked by another user');
-        setSnackbarOpen(true);
-        // Retry after lock is released
-        setTimeout(() => {
-          updateQueue.current.push(update);
-          processUpdateQueue();
-        }, 5000);
-      } else {
-        setError(err.response?.data?.message || 'Update failed');
-        setSnackbarOpen(true);
-        // Rollback optimistic update
-        fetchDashboardData();
-      }
-    } finally {
-      isProcessing.current = false;
-      // Process next update in queue
-      if (updateQueue.current.length > 0) {
-        processUpdateQueue();
-      }
-    }
-  }, [version]);
-
-  // Queue an update
-  const queueUpdate = useCallback((documentId, data, optimisticUpdate) => {
-    updateQueue.current.push({
-      documentId,
-      data,
-      version: version,
-      optimisticUpdate,
-    });
-    processUpdateQueue();
-  }, [version, processUpdateQueue]);
-
-  // Handle conflict resolution
-  const handleConflictResolve = useCallback(async (strategy) => {
-    setConflictOpen(false);
-    try {
-      const response = await api.post('/charity/dashboard/resolve-conflict', {
-        documentId: conflictData.current._id,
-        strategy,
-        currentVersion: conflictData.current,
-        userChanges: conflictData.updates,
-      });
-
-      setStats(response.data);
-      setOptimisticStats(response.data);
-      setVersion(response.data.version);
-      setSuccess('Conflict resolved successfully!');
-      setSnackbarOpen(true);
-    } catch (err) {
-      setError('Failed to resolve conflict');
-      setSnackbarOpen(true);
-    }
-  }, [conflictData]);
-
-  // Refresh lock
-  const refreshLock = useCallback(async () => {
-    try {
-      await api.post('/charity/dashboard/refresh-lock');
-      setSnackbarOpen(true);
-    } catch (err) {
-      setError('Failed to refresh lock');
-      setSnackbarOpen(true);
-    }
-  }, []);
-
-  // Initial load
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+  }, [period]);
 
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isLocked) {
-        fetchDashboardData();
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [fetchDashboardData, isLocked]);
+  // Prepare chart data
+  const prepareDonationTrendData = () => {
+    if (!charts?.donationTrend) return [];
+    return charts.donationTrend.labels.map((label, index) => ({
+      name: label,
+      amount: charts.donationTrend.amounts[index] || 0,
+      count: charts.donationTrend.counts[index] || 0,
+    }));
+  };
+
+  const prepareCategoryData = () => {
+    if (!charts?.categoryDistribution) return [];
+    return charts.categoryDistribution.labels.map((label, index) => ({
+      name: label,
+      value: charts.categoryDistribution.counts[index] || 0,
+    }));
+  };
+
+  const prepareMonthlyDonations = () => {
+    if (!charts?.monthlyDonations) return [];
+    return charts.monthlyDonations.labels.map((label, index) => ({
+      name: label,
+      amount: charts.monthlyDonations.amounts[index] || 0,
+    }));
+  };
+
+  const COLORS = [
+    "#667eea",
+    "#764ba2",
+    "#2ecc71",
+    "#f39c12",
+    "#e74c3c",
+    "#3498db",
+    "#1abc9c",
+    "#9b59b6",
+    "#e67e22",
+    "#95a5a6",
+  ];
 
   return (
     <Box sx={{ py: 3 }}>
       <Container maxWidth="xl">
-        {/* Header with Lock Status */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+          }}
+        >
           <Box>
             <Typography
               variant="h4"
               sx={{
                 fontWeight: 700,
-                color: isDark ? '#e8e8f0' : '#1a1a2e',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
+                color: isDark ? "#e8e8f0" : "#1a1a2e",
+                mb: 0.5,
               }}
             >
-              Dashboard
-              {isLocked && (
-                <Tooltip title={`Locked by ${lockInfo?.lockedBy} until ${new Date(lockInfo?.lockedUntil).toLocaleTimeString()}`}>
-                  <LockIcon sx={{ color: '#f39c12', fontSize: 20 }} />
-                </Tooltip>
-              )}
+              Welcome back, {user?.fullName || "Charity"} 👋
             </Typography>
-            <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-              Real-time overview of your charity's performance
+            <Typography
+              variant="body2"
+              sx={{ color: isDark ? "#a0a0b8" : "#4a4a6a" }}
+            >
+              Here's your campaign performance overview
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {isLocked && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<LockOpenIcon />}
-                onClick={refreshLock}
-                sx={{ borderRadius: 2 }}
-              >
-                Extend Lock
-              </Button>
-            )}
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               variant="outlined"
               size="small"
-              startIcon={<RefreshIcon />}
-              onClick={fetchDashboardData}
-              disabled={loading}
+              onClick={() => setPeriod(period === "month" ? "week" : "month")}
               sx={{ borderRadius: 2 }}
             >
-              Refresh
+              {period === "month" ? "Monthly" : "Weekly"}
             </Button>
+            <Tooltip title="Refresh">
+              <IconButton
+                onClick={fetchDashboardData}
+                disabled={loading}
+                sx={{
+                  color: isDark ? "#a0a0b8" : "#4a4a6a",
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.02)",
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
 
-        {/* Stats Grid with Optimistic Updates */}
-        <CharityStats stats={stats} optimisticStats={optimisticStats} loading={loading} />
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
+            {error}
+          </Alert>
+        )}
 
-        {/* Recent Donations */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: 3,
-            background: isDark ? 'rgba(20,20,32,0.8)' : '#ffffff',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-            mb: 3,
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-            Recent Donations
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          {recentDonations.length === 0 ? (
-            <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a', textAlign: 'center', py: 3 }}>
-              No recent donations
-            </Typography>
-          ) : (
-            recentDonations.map((donation, index) => (
-              <Box
-                key={donation._id}
+        {/* Stats Grid */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsCard
+              title="Total Campaigns"
+              value={campaignStatus.total || 0}
+              icon={<CampaignIcon />}
+              color="#3498db"
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsCard
+              title="Active Campaigns"
+              value={campaignStatus.active || 0}
+              icon={<CheckCircleIcon />}
+              color="#2ecc71"
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsCard
+              title="Total Raised"
+              value={`$${stats?.totalRaised?.toLocaleString() || 0}`}
+              icon={<MoneyIcon />}
+              color="#f39c12"
+              trend={stats?.growth > 0 ? "up" : "down"}
+              percentage={Math.abs(stats?.growth || 0)}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <StatsCard
+              title="Total Donors"
+              value={stats?.totalDonors || 0}
+              icon={<PeopleIcon />}
+              color="#9b59b6"
+              subtitle={`+${stats?.newDonors || 0} this month`}
+              loading={loading}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Campaign Status Cards */}
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Total"
+              count={campaignStatus.total}
+              color="#3498db"
+              icon={<CampaignIcon />}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Active"
+              count={campaignStatus.active}
+              color="#2ecc71"
+              icon={<CheckCircleIcon />}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Draft"
+              count={campaignStatus.draft}
+              color="#95a5a6"
+              icon={<CampaignIcon />}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Pending"
+              count={campaignStatus.pending}
+              color="#f39c12"
+              icon={<PendingIcon />}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Paused"
+              count={campaignStatus.paused}
+              color="#3498db"
+              icon={<PauseIcon />}
+              loading={loading}
+            />
+          </Grid>
+          <Grid item xs={4} sm={2}>
+            <CampaignStatusCard
+              status="Completed"
+              count={campaignStatus.completed}
+              color="#9b59b6"
+              icon={<CheckCircleIcon />}
+              loading={loading}
+            />
+          </Grid>
+        </Grid>
+
+        {/* Charts Section */}
+        {!loading && charts && (
+          <>
+            <Grid container spacing={{ xs: 2.5, md: 4 }} sx={{ mb: 4 }}>
+              {/* Donation Analytics */}
+              <Grid size={{xs:12,lg:7}}>
+                <Box
+                  sx={{
+                    p: "1px",
+                    borderRadius: "28px",
+                    background: isDark
+                      ? "linear-gradient(135deg,#6366F1,#06B6D4,#8B5CF6)"
+                      : "linear-gradient(135deg,#2563EB,#06B6D4,#8B5CF6)",
+                    transition: "all .35s ease",
+                    "&:hover": {
+                      transform: { xs: "none", md: "translateY(-6px)" },
+                      boxShadow: isDark
+                        ? "0 30px 80px rgba(99,102,241,.35)"
+                        : "0 25px 60px rgba(37,99,235,.20)",
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      borderRadius: "27px",
+                      overflow: "hidden",
+                      backdropFilter: "blur(25px)",
+                      background: isDark
+                        ? "linear-gradient(180deg,#111827,#0F172A)"
+                        : "linear-gradient(180deg,#FFFFFF,#F8FAFC)",
+                      border: `1px solid ${
+                        isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)"
+                      }`,
+                      p: { xs: 2.5, md: 4 },
+                      height: "100%",
+                    }}
+                  >
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={2}
+                      justifyContent="space-between"
+                      alignItems={{ xs: "flex-start", sm: "center" }}
+                      mb={4}
+                    >
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            letterSpacing: 2,
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            color: "#38BDF8",
+                          }}
+                        >
+                          Analytics
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            fontSize: { xs: 24, md: 34 },
+                            fontWeight: 800,
+                            mt: 0.5,
+                            background:
+                              "linear-gradient(90deg,#6366F1,#06B6D4)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                          }}
+                        >
+                          Donation Performance
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            mt: 1,
+                            color: isDark ? "#94A3B8" : "#64748B",
+                          }}
+                        >
+                          Revenue & donation activity over time
+                        </Typography>
+                      </Box>
+
+                      <Avatar
+                        sx={{
+                          width: 58,
+                          height: 58,
+                          background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                          fontSize: 28,
+                        }}
+                      >
+                        📈
+                      </Avatar>
+                    </Stack>
+
+                    <ResponsiveContainer
+                      width="100%"
+                      height={isMobile ? 250 : 350}
+                    >
+                      <LineChart data={prepareDonationTrendData()}>
+                        <defs>
+                          <linearGradient
+                            id="amountGradient"
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="0"
+                          >
+                            <stop offset="0%" stopColor="#6366F1" />
+                            <stop offset="100%" stopColor="#06B6D4" />
+                          </linearGradient>
+
+                          <linearGradient
+                            id="countGradient"
+                            x1="0"
+                            y1="0"
+                            x2="1"
+                            y2="0"
+                          >
+                            <stop offset="0%" stopColor="#EC4899" />
+                            <stop offset="100%" stopColor="#F97316" />
+                          </linearGradient>
+                        </defs>
+
+                        <CartesianGrid
+                          strokeDasharray="2 8"
+                          stroke={isDark ? "#233047" : "#E5E7EB"}
+                        />
+
+                        <XAxis
+                          dataKey="name"
+                          tickLine={false}
+                          axisLine={false}
+                          stroke={isDark ? "#94A3B8" : "#64748B"}
+                        />
+
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          stroke={isDark ? "#94A3B8" : "#64748B"}
+                        />
+
+                        <ChartTooltip
+                          contentStyle={{
+                            border: "none",
+                            borderRadius: 18,
+                            backdropFilter: "blur(20px)",
+                            background: isDark
+                              ? "rgba(15,23,42,.95)"
+                              : "#FFFFFF",
+                            color: isDark ? "#fff" : "#111827",
+                            boxShadow: "0 15px 45px rgba(0,0,0,.2)",
+                          }}
+                        />
+
+                        <Legend wrapperStyle={{ paddingTop: 15 }} />
+
+                        <Line
+                          type="monotone"
+                          dataKey="amount"
+                          stroke="url(#amountGradient)"
+                          strokeWidth={5}
+                          dot={{
+                            r: 4,
+                            fill: "#fff",
+                            stroke: "#6366F1",
+                            strokeWidth: 3,
+                          }}
+                          activeDot={{ r: 8 }}
+                          name="Amount ($)"
+                        />
+
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="url(#countGradient)"
+                          strokeWidth={5}
+                          dot={{
+                            r: 4,
+                            fill: "#fff",
+                            stroke: "#EC4899",
+                            strokeWidth: 3,
+                          }}
+                          activeDot={{ r: 8 }}
+                          name="Donations"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </Box>
+                </Box>
+              </Grid>
+
+              {/* Categories */}
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Box
+                  sx={{
+                    p: "1px",
+                    borderRadius: "28px",
+                    background: isDark
+                      ? "linear-gradient(135deg,#06B6D4,#8B5CF6,#EC4899)"
+                      : "linear-gradient(135deg,#06B6D4,#2563EB,#8B5CF6)",
+                    transition: ".35s",
+
+                    "&:hover": {
+                      transform: { xs: "none", md: "translateY(-6px)" },
+                      boxShadow: isDark
+                        ? "0 25px 70px rgba(139,92,246,.35)"
+                        : "0 20px 60px rgba(59,130,246,.18)",
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      borderRadius: "27px",
+                      overflow: "hidden",
+                      backdropFilter: "blur(25px)",
+                      background: isDark
+                        ? "linear-gradient(180deg,#111827,#0F172A)"
+                        : "linear-gradient(180deg,#FFFFFF,#F8FAFC)",
+                      border: `1px solid ${
+                        isDark ? "rgba(255,255,255,.06)" : "rgba(0,0,0,.05)"
+                      }`,
+                      p: { xs: 2.5, md: 4 },
+                      height: "100%",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mb={3}
+                    >
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontSize: 12,
+                            textTransform: "uppercase",
+                            letterSpacing: 2,
+                            color: "#06B6D4",
+                            fontWeight: 700,
+                          }}
+                        >
+                          Distribution
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: { xs: 22, md: 30 },
+                            color: isDark ? "#F8FAFC" : "#0F172A",
+                          }}
+                        >
+                          Campaign Categories
+                        </Typography>
+                      </Box>
+
+                      <Avatar
+                        sx={{
+                          background: "linear-gradient(135deg,#06B6D4,#8B5CF6)",
+                        }}
+                      >
+                        🥧
+                      </Avatar>
+                    </Stack>
+
+                    <ResponsiveContainer
+                      width="100%"
+                      height={isMobile ? 260 : 350}
+                    >
+                      <PieChart>
+                        <Pie
+                          data={prepareCategoryData()}
+                          dataKey="value"
+                          innerRadius="55%"
+                          outerRadius="82%"
+                          paddingAngle={5}
+                          cornerRadius={12}
+                          label={
+                            !isMobile
+                              ? ({ percent }) =>
+                                  `${(percent * 100).toFixed(0)}%`
+                              : false
+                          }
+                          labelLine={false}
+                        >
+                          {prepareCategoryData().map((entry, index) => (
+                            <Cell
+                              key={index}
+                              fill={COLORS[index % COLORS.length]}
+                              stroke="transparent"
+                            />
+                          ))}
+                        </Pie>
+
+                        <Legend
+                          layout={isMobile ? "horizontal" : "horizontal"}
+                          verticalAlign="bottom"
+                          align="center"
+                          wrapperStyle={{
+                            fontSize: 12,
+                            paddingTop: 15,
+                          }}
+                        />
+
+                        <ChartTooltip
+                          contentStyle={{
+                            border: "none",
+                            borderRadius: 18,
+                            backdropFilter: "blur(20px)",
+                            background: isDark
+                              ? "rgba(15,23,42,.95)"
+                              : "#FFFFFF",
+                            color: isDark ? "#fff" : "#111827",
+                            boxShadow: "0 15px 45px rgba(0,0,0,.2)",
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Monthly Donations */}
+            <Paper
+              sx={{
+                p: 3,
+                mb: 3,
+                borderRadius: 3,
+                background: isDark ? "rgba(20,20,32,0.8)" : "#ffffff",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
+              }}
+            >
+              <Typography
+                variant="h6"
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  py: 1.5,
-                  borderBottom: index < recentDonations.length - 1 ? `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` : 'none',
+                  fontWeight: 600,
+                  mb: 2,
+                  color: isDark ? "#e8e8f0" : "#1a1a2e",
                 }}
               >
-                <Box>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                    {donation.donorName || 'Anonymous Donor'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                    {new Date(donation.donationDate).toLocaleDateString()}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                    ${donation.amount.toLocaleString()}
-                  </Typography>
-                  <Chip
-                    label={donation.status}
-                    size="small"
-                    sx={{
-                      backgroundColor: donation.status === 'Completed' 
-                        ? 'rgba(46, 204, 113, 0.15)' 
-                        : 'rgba(243, 156, 18, 0.15)',
-                      color: donation.status === 'Completed' ? '#2ecc71' : '#f39c12',
+                Monthly Donations
+              </Typography>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={prepareMonthlyDonations()}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={isDark ? "#2a2a3e" : "#e0e0e0"}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    stroke={isDark ? "#a0a0b8" : "#4a4a6a"}
+                  />
+                  <YAxis stroke={isDark ? "#a0a0b8" : "#4a4a6a"} />
+                  <ChartTooltip
+                    contentStyle={{
+                      backgroundColor: isDark ? "#1a1a2e" : "#ffffff",
+                      border: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
+                      borderRadius: 8,
                     }}
                   />
-                </Box>
-              </Box>
-            ))
-          )}
-        </Paper>
+                  <Bar dataKey="amount" fill="#667eea" name="Amount ($)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Paper>
 
-        {/* Conflict Resolution Dialog */}
-        <ConflictResolutionDialog
-          open={conflictOpen}
-          onClose={() => setConflictOpen(false)}
-          onResolve={handleConflictResolve}
-          conflictData={conflictData}
-        />
+            {/* Recent Activity */}
+            <Paper
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                background: isDark ? "rgba(20,20,32,0.8)" : "#ffffff",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`,
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  color: isDark ? "#e8e8f0" : "#1a1a2e",
+                }}
+              >
+                Recent Activity
+              </Typography>
+              {recentActivity.length === 0 ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isDark ? "#a0a0b8" : "#4a4a6a",
+                    textAlign: "center",
+                    py: 3,
+                  }}
+                >
+                  No recent activity
+                </Typography>
+              ) : (
+                recentActivity.map((activity, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 1.5,
+                      borderBottom:
+                        index < recentActivity.length - 1
+                          ? `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"}`
+                          : "none",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          backgroundColor: "rgba(102,126,234,0.15)",
+                          color: "#667eea",
+                        }}
+                      >
+                        {activity.type === "donation" ? (
+                          <DonateIcon sx={{ fontSize: 16 }} />
+                        ) : (
+                          <CampaignIcon sx={{ fontSize: 16 }} />
+                        )}
+                      </Avatar>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: isDark ? "#e8e8f0" : "#1a1a2e" }}
+                        >
+                          {activity.message}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: isDark ? "#6a6a80" : "#9a9ab0" }}
+                        >
+                          {activity.time}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Chip
+                      label={activity.status}
+                      size="small"
+                      sx={{
+                        backgroundColor:
+                          activity.status === "Completed"
+                            ? "rgba(46, 204, 113, 0.15)"
+                            : activity.status === "Pending"
+                              ? "rgba(243, 156, 18, 0.15)"
+                              : "rgba(231, 76, 60, 0.15)",
+                        color:
+                          activity.status === "Completed"
+                            ? "#2ecc71"
+                            : activity.status === "Pending"
+                              ? "#f39c12"
+                              : "#e74c3c",
+                      }}
+                    />
+                  </Box>
+                ))
+              )}
+            </Paper>
+          </>
+        )}
 
-        {/* Snackbar */}
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert 
-            severity={error ? 'error' : 'success'} 
-            onClose={() => setSnackbarOpen(false)}
-            sx={{ borderRadius: 2 }}
-          >
-            {error || success}
-          </Alert>
-        </Snackbar>
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
       </Container>
     </Box>
   );

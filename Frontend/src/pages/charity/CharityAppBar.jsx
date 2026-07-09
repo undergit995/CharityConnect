@@ -32,7 +32,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 
 const CharityAppBar = ({ onDrawerToggle }) => {
   const navigate = useNavigate();

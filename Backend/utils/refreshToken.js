@@ -13,9 +13,9 @@ const generateTokens = (user, existingRefreshToken = null) => {
     tokenVersion: user.tokenVersion || 0,
   };
 
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' }); // Increased for better UX
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1m' });
 
-  // Generate a new refresh token only if one isn't provided.
+  
   const refreshToken = existingRefreshToken
     ? existingRefreshToken
     : jwt.sign(

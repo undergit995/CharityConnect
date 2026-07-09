@@ -1,8 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import AuthLoader from '../commonComponents/AuthLoader';
-import { api } from '../Services/authServices';
+import { authService, api } from '../Services/authServices';
 
 // Create Auth Context
 export const AuthContext = createContext(null);
@@ -11,13 +10,19 @@ export const AuthContext = createContext(null);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    console.warn('⚠️ useAuth used outside of AuthProvider - returning fallback');
+    return {
+      user: null,
+      loading: false,
+      error: null,
+      isAuthenticated: false,
+      permissions: [],
+      login: async () => ({ success: false, error: 'Auth not available' }),
+      logout: () => {},
+    };
   }
   return context;
 };
-
-// API base URL - FIXED: Defined here
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7000/api';
 
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {
@@ -87,32 +92,10 @@ export const AuthProvider = ({ children }) => {
   // Refresh access token
   const refreshAccessToken = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-      
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      // Use axios directly to avoid interceptor loop
-      const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
-      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
-
-      // Update stored token
-      if (localStorage.getItem('refreshToken')) {
-        localStorage.setItem('accessToken', accessToken);
-        if (newRefreshToken) localStorage.setItem('refreshToken', newRefreshToken);
-      } else {
-        sessionStorage.setItem('accessToken', accessToken);
-        if (newRefreshToken) sessionStorage.setItem('refreshToken', newRefreshToken);
-      }
-
-      // Update axios default header
-      api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-
-      return accessToken;
+      return await authService.refreshToken();
     } catch (err) {
       console.error('Token refresh failed:', err);
-      logout();
+      await logout();
       throw err;
     }
   }, []);
@@ -120,22 +103,11 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-      if (refreshToken) {
-        await api.post('/auth/logout', { refreshToken });
-      }
+      await api.post('/auth/logout');
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
-      // Clear all auth data
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      sessionStorage.removeItem('accessToken');
-      sessionStorage.removeItem('refreshToken');
-      
-      // Clear axios headers
-      delete api.defaults.headers.common['Authorization'];
-      
+      authService.clearTokens();
       setUser(null);
       setIsAuthenticated(false);
       setPermissions([]);
@@ -159,25 +131,15 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     
     try {
-      const response = await api.post('/auth/login', {
+      const response = await authService.api.post('/auth/login', {
         email,
         password,
         rememberMe,
       });
 
       const payload = response.data.data || response.data; 
-      const { accessToken, refreshToken, user, permissions } = payload;
-
-      console.log("📍 Network payload verified:", { accessToken: !!accessToken, user });
-
-      // Store tokens safely
-      if (rememberMe) {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-      } else {
-        sessionStorage.setItem('accessToken', accessToken);
-        sessionStorage.setItem('refreshToken', refreshToken);
-      }
+      const { accessToken, refreshToken, user, permissions = [] } = payload;
+      authService.setTokens(accessToken, refreshToken, rememberMe);
 
       setUser(user);
       setIsAuthenticated(true);
@@ -195,7 +157,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      return { user, permissions: permissions || [] };
+      return { user, permissions };
 
     } catch (err) {
       console.error("Real internal error inside AuthContext try block:", err);
@@ -214,19 +176,15 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await authService.api.post('/auth/register', userData);
       
       // Auto-login after registration (if configured)
       if (response.data.autoLogin) {
         const { accessToken, refreshToken, user, permissions } = response.data;
-        
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        
+        authService.setTokens(accessToken, refreshToken, true);
         setUser(user);
         setIsAuthenticated(true);
         setPermissions(permissions || []);
-        
         const decoded = jwtDecode(accessToken);
         startSessionTimeout(decoded.exp * 1000);
       }
@@ -247,7 +205,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      await api.post('/auth/forgot-password', { email });
+      await authService.api.post('/auth/forgot-password', { email });
       return { success: true, message: 'Password reset email sent' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to send reset email';
@@ -264,7 +222,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      await api.post('/auth/reset-password', { token, newPassword });
+      await authService.api.post('/auth/reset-password', { token, newPassword });
       return { success: true, message: 'Password reset successfully' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to reset password';
@@ -281,7 +239,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      await api.post('/auth/change-password', {
+      await authService.api.post('/auth/change-password', {
         currentPassword,
         newPassword,
       });
@@ -301,7 +259,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/verify', { token });
+      const response = await authService.api.post('/auth/verify', { token });
       if (user) {
         setUser({ ...user, emailVerified: true });
       }
@@ -321,7 +279,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      await api.post('/auth/resend-verification', { email });
+      await authService.api.post('/auth/resend-verification', { email });
       return { success: true, message: 'Verification email sent' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to resend verification';
@@ -338,7 +296,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/verify-otp', { phone, otp });
+      const response = await authService.api.post('/auth/verify-otp', { phone, otp });
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'OTP verification failed';
@@ -355,7 +313,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      await api.post('/auth/send-otp', { phone });
+      await authService.api.post('/auth/send-otp', { phone });
       return { success: true, message: 'OTP sent successfully' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to send OTP';
@@ -372,16 +330,13 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.post('/auth/social-login', {
+      const response = await authService.api.post('/auth/social-login', {
         provider,
         token,
       });
 
       const { accessToken, refreshToken, user, permissions } = response.data;
-
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-
+      authService.setTokens(accessToken, refreshToken, true);
       setUser(user);
       setIsAuthenticated(true);
       setPermissions(permissions || []);
@@ -405,7 +360,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await api.put('/users/profile', profileData);
+      const response = await authService.api.put('/users/profile', profileData);
       setUser(response.data.user);
       return response.data;
     } catch (err) {

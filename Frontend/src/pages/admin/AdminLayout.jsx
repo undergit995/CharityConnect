@@ -30,7 +30,7 @@ const AdminLayout = () => {
             width: 280,
             boxSizing: 'border-box',
             border: 'none',
-            backgroundColor: 'transparent',
+              backgroundColor: (theme) => theme.palette.background.paper,
           },
         }}
       >

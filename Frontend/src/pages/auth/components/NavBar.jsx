@@ -56,7 +56,7 @@ import {
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../../hooks/useTheme';
-import { useAuth } from '../../../context/AuthContext';
+import { useAuth } from '../../../Context/AuthContext';
 
 // Navigation Items Configuration
 const navItems = [
@@ -210,9 +210,6 @@ const AppBarComponent = () => {
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>
               {user.name || 'User'}
-            </Typography>
-            <Typography variant="caption" color="textSecondary">
-              {user.email}
             </Typography>
           </Box>
         </Box>
@@ -396,7 +393,11 @@ const AppBarComponent = () => {
               color="inherit"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }}
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                mr: 1,
+                color: isDark ? '#e8e8f0' : '#1a1a2e', // Explicitly set color for visibility
+              }}
             >
               <MenuIcon />
             </IconButton>
@@ -444,7 +445,9 @@ const AppBarComponent = () => {
                   sx={{
                     position: 'relative',
                     fontWeight: location.pathname === item.path ? 600 : 400,
-                    color: location.pathname === item.path ? '#667eea' : 'inherit',
+                    color: location.pathname === item.path 
+                      ? '#667eea' 
+                      : isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
                     px: 2,
                     py: 1,
                     borderRadius: 2,
@@ -462,7 +465,7 @@ const AppBarComponent = () => {
                       transition: 'width 0.3s ease',
                     },
                     '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.08)', // Increased opacity for better visibility in light mode
                     },
                     '&:hover::after': {
                       width: '20px',
@@ -615,6 +618,7 @@ const AppBarComponent = () => {
                     onClick={() => navigate('/auth/login')}
                     sx={{
                       display: { xs: 'none', sm: 'flex' },
+                      color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)',
                       borderRadius: 2,
                     }}
                   >

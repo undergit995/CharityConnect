@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CssBaseline, GlobalStyles } from "@mui/material";
 import { ErrorBoundary } from "react-error-boundary";
-import { AuthProvider, useAuth } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./Context/AuthContext";
 import Maintenance from "./pages/Maintenance";
 import axios from "axios";
 import { ThemeProvider } from "./Theme/ThemeContext";
@@ -708,11 +708,6 @@ const AppRoutes = () => {
            <Route index element={<LandingPage />} />
            <Route path="/home" element={<LandingPage />} />
            <Route path="/campaigns" element={<CampaignDetails />} />
-        {/* <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsConditions />} /> */}
         </Route>
 
 
@@ -743,15 +738,15 @@ const AppRoutes = () => {
         <Route path="/campaigns/:id/donate" element={<DonationPage />} />
         <Route path="/charity/:id" element={<CharityProfile />} /> */}
 
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
         {/* Protected Routes - Require Authentication */}
-        <Route element={<ProtectedRoute />}>
           {/* <Route path="/profile" element={<Profile />} />
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute />}>
           <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<NotificationPreferences />} />
           <Route path="/donations" element={<DonationHistory />} />
-          <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
         </Route>
+          <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
 
 
         <Route path="/admin" element={
@@ -882,100 +877,5 @@ function App() {
 }
 
 
-// function App() {
-//   const [isMaintenance, setIsMaintenance] = useState(false);
-//   const [isOnline, setIsOnline] = useState(navigator.onLine);
-//   const [isLoading, setIsLoading] = useState(true);
 
-//   // API base URL
-//   const API_BASE_URL = import.meta.env.VITE_REACT_APP__API_URL || 'http://localhost:7000/api';
-
-//   // Create axios instance for maintenance check
-//   const api = axios.create({
-//     baseURL: API_BASE_URL,
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//   });
-
-//   // Check for maintenance mode
-//   useEffect(() => {
-//     const checkMaintenance = async () => {
-//       try {
-//         const response = await api.get('/maintenance');
-//         setIsMaintenance(response.data.maintenance || false);
-//       } catch (error) {
-//         // If API is down, check localStorage or env variable
-//         const maintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
-//         setIsMaintenance(maintenanceMode);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     checkMaintenance();
-//   }, []);
-
-//   // Online/Offline detection
-//   useEffect(() => {
-//     const handleOnline = () => setIsOnline(true);
-//     const handleOffline = () => setIsOnline(false);
-
-//     window.addEventListener('online', handleOnline);
-//     window.addEventListener('offline', handleOffline);
-
-//     return () => {
-//       window.removeEventListener('online', handleOnline);
-//       window.removeEventListener('offline', handleOffline);
-//     };
-//   }, []);
-
-//   // Loading state
-//   if (isLoading) {
-//     return (
-//       <ThemeProvider>
-//         <PageLoader />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Maintenance page
-//   if (isMaintenance) {
-//     return (
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <Maintenance />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Offline page
-//   if (!isOnline) {
-//     return (
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <OfflinePage />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Main App - Everything wrapped with ThemeProvider at the top level
-//   return (
-//     <ErrorBoundary
-//       FallbackComponent={ErrorFallback}
-//       onReset={() => {
-//         window.location.href = '/';
-//       }}
-//     >
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <BrowserRouter>
-//           <AuthProvider>
-//             <AppRoutes />
-//           </AuthProvider>
-//         </BrowserRouter>
-//       </ThemeProvider>
-//     </ErrorBoundary>
-//   );
-// }
 export default App;

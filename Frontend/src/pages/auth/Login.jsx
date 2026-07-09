@@ -32,7 +32,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, Link as RouterLink, replace } from "react-router-dom";
 import SocialLogin from "./components/SocialLogin";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../Context/AuthContext";
 import { useTheme } from "../../hooks/useTheme";
 import { motion } from "framer-motion";
 import Nav from "./components/Nav";
@@ -87,7 +87,6 @@ const Login = () => {
     donor: "/donor/dashboard",
   };
   navigate(roleRoutes[userRole] , replace);
-  console.log("🎯 User authenticated successfully! Role:", roleRoutes[userRole]);
     } catch (err) {
       console.error("Login error:", err);
     }
@@ -465,19 +464,6 @@ const Login = () => {
                     "& .MuiInputBase-input": {
                       color: isDark ? "#fff" : "#1a1a2e",
                     },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailIcon
-                          sx={{
-                            color: isDark
-                              ? "rgba(255,255,255,0.3)"
-                              : "rgba(0,0,0,0.3)",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
                   }}
                 />
 

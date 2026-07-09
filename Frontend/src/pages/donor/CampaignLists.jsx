@@ -289,7 +289,6 @@ const CampaignList = () => {
       };
 
       const response = await api.get('/campaigns', { params });
-      console.log("ds",response.data);
       setCampaigns(response.data.data || []);
       setTotalPages(response.data.pagination?.pages || 1);
       setTotalCampaigns(response.data.pagination?.total || 0);

@@ -40,7 +40,7 @@ export default function Nav() {
         position="sticky" 
         elevation={0}
         sx={{
-          bgcolor: isDark ? 'transparent' : 'rgba(255,255,255,0.9)',
+          bgcolor: isDark ? 'rgba(10, 10, 18, 0.8)' : 'rgba(255,255,255,0.9)',
           backdropFilter: 'blur(20px)',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(0,0,0,0.06)',
           transition: 'all 0.3s ease',

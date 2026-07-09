@@ -937,7 +937,7 @@ const AdminDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Total Donations"
-              value={`$${stats?.totalAmount?.toLocaleString() || '0'}`}
+              value={`₹${stats?.totalAmount?.toLocaleString() || '0'}`}
               icon={<DonateIcon />}
               color="#f39c12"
               trend={stats?.donationGrowth > 0 ? 'up' : 'down'}
@@ -1012,10 +1012,10 @@ const AdminDashboard = () => {
                       <Pie
                         data={prepareCategoryData()}
                         cx="50%"
-                        cy="50%"
+                        cy={isMobile ? '40%' : '50%'}
                         labelLine={false}
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
+                        label={isMobile ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius="80%"
                         fill="#8884d8"
                         dataKey="value"
                       >
@@ -1030,6 +1030,7 @@ const AdminDashboard = () => {
                           borderRadius: 8,
                         }}
                       />
+                      <Legend layout={isMobile ? 'horizontal' : 'bottom'} verticalAlign={isMobile ? 'bottom' : 'middle'} align={isMobile ? 'center' : 'right'} />
                     </PieChart>
                   </ResponsiveContainer>
                 </Paper>
