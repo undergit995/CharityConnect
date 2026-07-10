@@ -25,7 +25,7 @@ import {
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../hooks/useTheme";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../Context/AuthContext";
 
 const DonorSidebar = () => {
   const navigate = useNavigate();
@@ -205,14 +205,13 @@ const DonorSidebar = () => {
                   {campaign?.name || "Untitled Campaign"}
                 </Typography>
               }
-              secondaryTypographyProps={{ component: 'div' }}
+              secondaryTypographyProps={{ component: 'div', sx: { mt: 0.5 } }}
               secondary={
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-                    mt: 0.5,
                   }}
                 >
                   <Box

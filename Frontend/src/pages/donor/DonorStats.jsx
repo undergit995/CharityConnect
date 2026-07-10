@@ -61,12 +61,21 @@ const DonorStatsCard = ({ title, value, icon, color, loading, optimisticValue, s
 };
 
 const DonorStats = ({ stats, optimisticStats, loading, saving }) => {
+  if (loading && !stats) {
+    return <div>Loading stats...</div>;
+  }
+  
+  // If loading is false but stats somehow still didn't load properly
+  if (!stats) {
+    return null; 
+  }
+
   return (
     <Grid container spacing={3} sx={{ mb: 4 }}>
       <Grid item xs={12} sm={6} md={3}>
         <DonorStatsCard
           title="Total Donations"
-          value={stats.totalDonations}
+          value={stats?.totalDonations}
           optimisticValue={optimisticStats.totalDonations}
           icon={<ReceiptIcon />}
           color="#3498db"
@@ -76,7 +85,7 @@ const DonorStats = ({ stats, optimisticStats, loading, saving }) => {
       <Grid item xs={12} sm={6} md={3}>
         <DonorStatsCard
           title="Total Given"
-          value={`$${stats.totalAmount?.toLocaleString() || 0}`}
+          value={`$${stats?.totalAmount?.toLocaleString() || 0}`}
           optimisticValue={`$${optimisticStats.totalAmount?.toLocaleString() || 0}`}
           icon={<MoneyIcon />}
           color="#2ecc71"
@@ -86,7 +95,7 @@ const DonorStats = ({ stats, optimisticStats, loading, saving }) => {
       <Grid item xs={12} sm={6} md={3}>
         <DonorStatsCard
           title="Saved Campaigns"
-          value={stats.savedCampaigns}
+          value={stats?.savedCampaigns}
           optimisticValue={optimisticStats.savedCampaigns}
           icon={<FavoriteIcon />}
           color="#e74c3c"

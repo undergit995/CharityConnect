@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../../middlewares/auth');
+const { authMiddleware,authAndRole   } = require('../../middlewares/auth');
 const donorController = require('../../Controllers/donor/donorController');
 
 /**
@@ -8,7 +8,7 @@ const donorController = require('../../Controllers/donor/donorController');
  * @desc Get donor dashboard statistics
  * @access Private (Donor only)
  */
-router.get('/dashboard/stats', authAndRole('donor'), donorController.getDashboardStats);
+router.get('/dashboard', authAndRole('donor'), donorController.getDashboardStats);
 
 /**
  * @route GET /api/donor/donations

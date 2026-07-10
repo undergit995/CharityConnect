@@ -61,7 +61,7 @@ import {
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 import { formatDistanceToNow } from 'date-fns';
 

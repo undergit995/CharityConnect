@@ -30,23 +30,53 @@ class AuthService {
     );
 
     this.api.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-          try {
-            const newAccessToken = await this.refreshToken();
-            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-            return this.api(originalRequest);
-          } catch (refreshError) {
-            // The AuthContext will handle the logout
-            return Promise.reject(refreshError);
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Don't refresh login/register/refresh requests
+    if (
+      error.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url?.includes("/auth/")
+    ) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    if (this.isRefreshing) {
+      return new Promise((resolve, reject) => {
+        this.failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return this.api(originalRequest);
+        })
+        .catch((err) => Promise.reject(err));
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      const newAccessToken = await this.refreshToken();
+
+      this.processFailedQueue(null, newAccessToken);
+
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      return this.api(originalRequest);
+    } catch (refreshError) {
+      this.processFailedQueue(refreshError);
+
+      this.clearTokens();
+
+      return Promise.reject(refreshError);
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+);
   }
 
   getAccessToken() {
@@ -75,12 +105,25 @@ class AuthService {
     sessionStorage.removeItem('refreshToken');
     delete this.api.defaults.headers.common['Authorization'];
   }
+  
+  processFailedQueue(error, token = null) {
+    this.failedQueue.forEach(prom => {
+      if (error) {
+        prom.reject(error);
+      } else {
+        prom.resolve(token);
+      }
+    });
+    this.failedQueue = [];
+  }
 
   async refreshToken() {
     const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
+
+if (!refreshToken) {
+    this.clearTokens();
+    return Promise.reject(new Error("No refresh token"));
+}
 
     const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
     const { accessToken, refreshToken: newRefreshToken } = response.data.data;
@@ -106,5 +149,4 @@ const authService = new AuthService();
 
 export { authService };
 
-// For components that need direct access to the configured axios instance
 export const api = authService.api;

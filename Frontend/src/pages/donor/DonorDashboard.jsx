@@ -1,4 +1,3 @@
-// pages/donor/DonorDashboard.jsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
@@ -64,7 +63,7 @@ import {
 import { motion } from 'framer-motion';
 import { formatDistanceToNow } from 'date-fns';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 import { useNavigate } from 'react-router-dom';
 import DonorStats from './DonorStats';

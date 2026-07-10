@@ -57,7 +57,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../Context/AuthContext';
 import { api } from '../Services/authServices';
 import { formatDistanceToNow, format } from 'date-fns';
 import RazorpayDonation from '../payment/RazorpayDonation';

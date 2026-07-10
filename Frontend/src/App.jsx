@@ -18,7 +18,7 @@ import AdminManageCampaigns from "./pages/admin/CampaignManagement";
 import AdminManageCharity from "./pages/admin/CharityManagement";
 import AdminCharityApproval from "./pages/admin/AdminCharityApproval";
 import { WarningAmberOutlined } from "@mui/icons-material";
-import { api } from "./Services/authServices";
+import { api, authService } from "./Services/authServices";
 import CampaignDetails from "./pages/CampaignDetails";
 import AdminCampaignApproval from "./pages/admin/AdminCampaignApproval";
 import DonationPage from "./pages/DonationPage";
@@ -828,6 +828,25 @@ function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+  const [initializing, setInitializing] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // useEffect(() => {
+  //   const initAuth = async () => {
+  //     const valid = await authService;
+  //     setIsAuthenticated(valid);
+  //     setInitializing(false);
+  //   };
+
+  //   initAuth();
+  //   const handleLogout = () => setIsAuthenticated(false);
+  //   window.addEventListener('auth-logout', handleLogout);
+  //   return () => window.removeEventListener('auth-logout', handleLogout);
+  // }, []);
+
+  // if (initializing) {
+  //   return <PageLoader />;
+  // }
 
   if (isLoading) {
     return (

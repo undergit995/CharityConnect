@@ -240,7 +240,7 @@ const CharityDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Total Raised"
-              value={`$${stats?.totalRaised?.toLocaleString() || 0}`}
+              value={`₹${stats?.totalRaised?.toLocaleString() || 0}`}
               icon={<MoneyIcon />}
               color="#f39c12"
               trend={stats?.growth > 0 ? "up" : "down"}
@@ -485,7 +485,7 @@ const CharityDashboard = () => {
                             strokeWidth: 3,
                           }}
                           activeDot={{ r: 8 }}
-                          name="Amount ($)"
+                          name="Amount (₹)"
                         />
 
                         <Line
@@ -677,7 +677,7 @@ const CharityDashboard = () => {
                       borderRadius: 8,
                     }}
                   />
-                  <Bar dataKey="amount" fill="#667eea" name="Amount ($)" />
+                  <Bar dataKey="amount" fill="#667eea" name="Amount (₹)" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>

@@ -77,7 +77,7 @@ const Login = () => {
     throw new Error('Login failed - no response'); 
   }
 
-  // 3. Extract the role from the nested user object safely
+  
   const userRole = response.user.role;
   
   // Navigate based on role
@@ -628,7 +628,7 @@ const Login = () => {
                   </Typography>
                 </Divider>
 
-                <SocialLogin />
+                <SocialLogin  redirectPath="/"/>
 
                 <Box sx={{ textAlign: "center", mt: 3 }}>
                   <Typography

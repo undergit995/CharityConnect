@@ -40,7 +40,7 @@ import {
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 
 const categories = [
@@ -72,6 +72,7 @@ const CharityCreateCampaign = () => {
     beneficiaryInfo: '',
     impactDetails: '',
   });
+console.log(user);
 
   const [errors, setErrors] = useState({});
 
@@ -104,6 +105,7 @@ const CharityCreateCampaign = () => {
     });
     updateProgress();
   };
+console.log("us",user);
 
   const updateProgress = () => {
     const fields = ['title', 'category', 'description', 'goalAmount', 'endDate'];
@@ -125,7 +127,7 @@ const CharityCreateCampaign = () => {
     if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.description.trim()) newErrors.description = 'Description is required';
     if (!formData.goalAmount) newErrors.goalAmount = 'Goal amount is required';
-    if (parseFloat(formData.goalAmount) < 100) newErrors.goalAmount = 'Minimum goal is $100';
+    if (parseFloat(formData.goalAmount) < 100) newErrors.goalAmount = 'Minimum goal is ₹100';
     if (!formData.endDate) newErrors.endDate = 'End date is required';
     if (images.length === 0) newErrors.images = 'At least one image is required';
     if (images.length > 5) newErrors.images = 'Maximum 5 images allowed';
@@ -175,6 +177,8 @@ const CharityCreateCampaign = () => {
         }, 2000);
       }
     } catch (err) {
+      console.log(err.message);
+      
       setError(err.response?.data?.message || 'Failed to create campaign');
     } finally {
       setLoading(false);
@@ -427,7 +431,7 @@ const CharityCreateCampaign = () => {
                   {/* Goal Amount */}
                   <TextField
                     fullWidth
-                    label="Goal Amount ($)"
+                    label="Goal Amount (₹)"
                     name="goalAmount"
                     type="number"
                     value={formData.goalAmount}
@@ -443,20 +447,24 @@ const CharityCreateCampaign = () => {
 
                   {/* End Date */}
                   <TextField
-                    fullWidth
-                    label="End Date"
-                    name="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                    error={!!errors.endDate}
-                    helperText={errors.endDate}
-                    sx={{ mb: 3 }}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      startAdornment: <CalendarIcon sx={{ mr: 1, color: isDark ? '#6a6a80' : '#9a9ab0' }} />,
-                    }}
-                  />
+  fullWidth
+  label="End Date"
+  name="endDate"
+  type="date"
+  value={formData.endDate}
+  onChange={handleChange}
+  error={!!errors.endDate}
+  helperText={errors.endDate}
+  sx={{ mb: 3 }}
+  slotProps={{
+    inputLabel: { 
+      shrink: true 
+    },
+    input: {
+      startAdornment: <CalendarIcon sx={{ mr: 1, color: isDark ? '#6a6a80' : '#9a9ab0' }} />,
+    }
+  }}
+/>
 
                   {/* Location */}
                   <TextField

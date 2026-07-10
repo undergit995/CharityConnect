@@ -48,7 +48,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 
 const CharityDonations = () => {
@@ -132,13 +132,13 @@ const CharityDonations = () => {
     },
     { 
       label: 'Total Amount', 
-      value: `$${summary.totalAmount?.toLocaleString() || 0}`, 
+      value: `₹${summary.totalAmount?.toLocaleString() || 0}`, 
       icon: <MoneyIcon />, 
       color: '#2ecc71' 
     },
     { 
       label: 'Average Donation', 
-      value: `$${summary.averageAmount?.toFixed(2) || 0}`, 
+      value: `₹${summary.averageAmount?.toFixed(2) || 0}`, 
       icon: <TrendingUpIcon />, 
       color: '#9b59b6' 
     },
@@ -347,7 +347,7 @@ const CharityDonations = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                          ${donation.amount?.toLocaleString() || 0}
+                          ₹{donation.amount?.toLocaleString() || 0}
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
@@ -429,7 +429,7 @@ const CharityDonations = () => {
                       Amount
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 700, color: '#2ecc71' }}>
-                      ${selectedDonation.amount?.toLocaleString() || 0}
+                      ₹{selectedDonation.amount?.toLocaleString() || 0}
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>

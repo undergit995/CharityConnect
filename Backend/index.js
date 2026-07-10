@@ -40,7 +40,7 @@ app.use("/api/campaigns", require("./routes/campaign/campaign"));
 app.use("/api/payments", require("./Routes/payment/index"));
 // app.use("/api/public", require("./routes/public/index"));
 // app.use("/api/user", require("./routes/user/index"));
-// app.use("/api/donor", require("./routes/donor/index"));
+app.use("/api/donor", require("./routes/donor/index"));
 
 
 // Global error handler

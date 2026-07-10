@@ -245,7 +245,7 @@ const LandingPage = () => {
 
   const stats = [
     { icon: <VolunteerIcon />, value: '50K+', label: 'Active Donors' },
-    { icon: <ImpactIcon />, value: '$2.5M+', label: 'Donations Raised' },
+    { icon: <ImpactIcon />, value: '₹2.5M+', label: 'Donations Raised' },
     { icon: <ImpactIcon />, value: '1.2K+', label: 'Campaigns Funded' },
     { icon: <PeopleIcon />, value: '500+', label: 'Trusted Charities' },
   ];
@@ -941,10 +941,10 @@ const LandingPage = () => {
                       <Box sx={{ mb: 1 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                           <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                            ${campaign.raised.toLocaleString()}
+                            ₹{campaign.raised.toLocaleString()}
                           </Typography>
                           <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                            ${campaign.goal.toLocaleString()}
+                            ₹{campaign.goal.toLocaleString()}
                           </Typography>
                         </Box>
                         <LinearProgress

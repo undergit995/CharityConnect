@@ -633,7 +633,7 @@ exports.getDashboardStats = async (req, res) => {
         },
         { $sort: { _id: 1 } },
       ]),
-      ActivityLog.find({ userId: charityId }).sort({ createdAt: -1 }).limit(10),
+      ActivityLog.find({ userId: charityId }).sort({ timestamp: -1 }).limit(10),
       Donation.aggregate([
         {
           $match: {

@@ -57,7 +57,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../hooks/useTheme';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../Context/AuthContext';
 import { api } from '../Services/authServices';
 import { formatDistanceToNow, format } from 'date-fns';
 import RazorpayDonation from '../payment/RazorpayDonation';
@@ -558,7 +558,7 @@ const CampaignDetails = () => {
                 <strong style={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
                   ₹{(campaign.raisedAmount || 0).toLocaleString()}
                 </strong>{' '}
-                raised of ${(campaign.goalAmount || 0).toLocaleString()}
+                raised of ₹{(campaign.goalAmount || 0).toLocaleString()}
               </Typography>
               <LinearProgress
                 variant="determinate"

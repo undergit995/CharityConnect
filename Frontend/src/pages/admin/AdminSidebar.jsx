@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 
 const AdminSidebar = () => {
   const navigate = useNavigate();

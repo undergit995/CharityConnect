@@ -19,7 +19,7 @@ import {
   InputAdornment,
   Divider,
 } from '@mui/material';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../Context/AuthContext';
 import { api } from '../Services/authServices';
 import { useTheme } from '../Theme/ThemeContext';
 import { CheckCircleOutlineRounded } from '@mui/icons-material';

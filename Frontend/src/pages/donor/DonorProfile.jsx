@@ -47,7 +47,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 
 // Tab Panel Component
 const TabPanel = ({ children, value, index }) => (

@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 
 const ForgotPassword = () => {

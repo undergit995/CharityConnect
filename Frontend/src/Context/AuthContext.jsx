@@ -54,10 +54,17 @@ export const AuthProvider = ({ children }) => {
           } else {
             // Try to refresh token
             try {
-              await refreshAccessToken();
+              const newAccessToken = await authService.refreshToken();
+              const newDecoded = jwtDecode(newAccessToken);
+              setUser(newDecoded);
+              setIsAuthenticated(true);
+              setPermissions(newDecoded.permissions || []);
+              startSessionTimeout(newDecoded.exp * 1000);
             } catch (refreshError) {
               console.error('Token refresh failed:', refreshError);
-              logout();
+              if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
+                logout();
+              }
             }
           }
         }
@@ -65,7 +72,9 @@ export const AuthProvider = ({ children }) => {
         console.error('Auth initialization error:', err);
         logout();
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setLoading(false);
+        }, 50);
       }
     };
 

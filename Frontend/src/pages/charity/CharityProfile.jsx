@@ -54,7 +54,7 @@ import {
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../Context/AuthContext';
 
 const TabPanel = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
@@ -426,7 +426,7 @@ const CharityProfile = () => {
                     </Box>
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                        $429K
+                        ₹429K
                       </Typography>
                       <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                         Total Raised
@@ -601,10 +601,10 @@ const CharityProfile = () => {
                           {campaign.title}
                         </TableCell>
                         <TableCell align="right" sx={{ color: '#2ecc71', fontWeight: 600 }}>
-                          ${campaign.raised.toLocaleString()}
+                          ₹{campaign.raised.toLocaleString()}
                         </TableCell>
                         <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                          ${campaign.goal.toLocaleString()}
+                          ₹{campaign.goal.toLocaleString()}
                         </TableCell>
                         <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
                           {campaign.donors.toLocaleString()}
@@ -649,7 +649,7 @@ const CharityProfile = () => {
                           {donation.donor}
                         </TableCell>
                         <TableCell align="right" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                          ${donation.amount}
+                          ₹{donation.amount}
                         </TableCell>
                         <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
                           {donation.date}

@@ -1,4 +1,3 @@
-// pages/admin/AdminCharityApproval.jsx
 import React, { useState, useEffect } from "react";
 import {
   Box,
@@ -58,7 +57,7 @@ import {
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { useTheme } from "../../hooks/useTheme";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../Context/AuthContext";
 import { api } from "../../Services/authServices";
 import { formatDistanceToNow } from "date-fns";
 
