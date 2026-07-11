@@ -1,4 +1,3 @@
-// components/Donation/RazorpayDonation.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -6,7 +5,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   TextField,
   Typography,
   Alert,
@@ -18,13 +16,21 @@ import {
   Switch,
   InputAdornment,
   Divider,
+  Chip,
+  IconButton,
 } from '@mui/material';
+import {
+  Close as CloseIcon,
+  CheckCircleOutlineRounded,
+  Person as PersonIcon,
+  VisibilityOff as VisibilityOffIcon,
+} from '@mui/icons-material';
+import PanoramaPhotosphereIcon from '@mui/icons-material/PanoramaPhotosphere';
 import { useAuth } from '../Context/AuthContext';
 import { api } from '../Services/authServices';
 import { useTheme } from '../Theme/ThemeContext';
-import { CheckCircleOutlineRounded } from '@mui/icons-material';
 
-const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
+const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const [amount, setAmount] = useState('');
@@ -35,6 +41,7 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [donationId, setDonationId] = useState(null);
+  const [showAnonymousInfo, setShowAnonymousInfo] = useState(false);
 
   const quickAmounts = [100, 500, 1000, 2000, 5000];
 
@@ -53,11 +60,17 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
 
   const handleAmountSelect = (value) => {
     setAmount(value.toString());
+    setError('');
+  };
+
+  const handleAmountChange = (e) => {
+    setAmount(e.target.value);
+    setError('');
   };
 
   const handleNext = () => {
     if (!amount || parseFloat(amount) < 1) {
-      setError('Please enter a valid donation amount');
+      setError('Please enter a valid donation amount (minimum ₹1)');
       return;
     }
     setError('');
@@ -73,13 +86,14 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
     setError('');
 
     try {
-      // Create Razorpay order
+      // ✅ Include anonymous flag in order creation
       const orderResponse = await api.post('/payments/create-order', {
         amount: parseFloat(amount),
         campaignId: campaign._id,
         currency: 'INR',
-        isAnonymous,
-        message,
+        isAnonymous: isAnonymous, // ✅ Pass anonymous preference
+        message: message,
+        guestInfo: guestInfo || null, // ✅ Pass guest info
       });
 
       if (!orderResponse.data.success) {
@@ -89,25 +103,41 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
       const { orderId, keyId, donationId: donationIdRes } = orderResponse.data.data;
       setDonationId(donationIdRes);
 
+      // ✅ Build prefill with guest info or user info
+      const prefill = {
+        name: guestInfo?.name || user?.fullName || '',
+        email: guestInfo?.email || user?.email || '',
+        contact: guestInfo?.phone || user?.phone || '',
+      };
+
+      // ✅ If anonymous, don't send personal info to Razorpay (but keep for receipt)
+      const razorpayPrefill = isAnonymous ? {
+        name: 'Anonymous Donor',
+        email: 'anonymous@charityconnect.com',
+        contact: '+0000000000',
+      } : prefill;
+
       // Open Razorpay checkout
       const options = {
         key: keyId,
         amount: parseFloat(amount) * 100,
         currency: 'INR',
         name: 'CharityConnect',
-        description: `Donation to ${campaign.title}`,
+        description: isAnonymous 
+          ? `Anonymous Donation to ${campaign.title}` 
+          : `Donation to ${campaign.title}`,
         order_id: orderId,
-        prefill: {
-          name: user?.fullName || '',
-          email: user?.email || '',
-          contact: user?.phone || '',
-        },
+        prefill: razorpayPrefill,
         notes: {
           campaignId: campaign._id,
           isAnonymous: isAnonymous ? 'true' : 'false',
+          donorName: prefill.name,
+          donorEmail: prefill.email,
+          donorPhone: prefill.contact,
+          isGuest: guestInfo ? 'true' : 'false',
         },
         theme: {
-          color: '#667eea',
+          color: isAnonymous ? '#2ecc71' : '#667eea',
         },
         modal: {
           ondismiss: () => {
@@ -122,12 +152,18 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
               donationId: donationIdRes,
+              isAnonymous: isAnonymous, // ✅ Pass anonymous flag
             });
 
             if (verifyResponse.data.success) {
               setSuccess(true);
               setStep(2);
-              onSuccess && onSuccess(verifyResponse.data.data);
+              // ✅ Pass success data with anonymous status
+              onSuccess && onSuccess({
+                ...verifyResponse.data.data,
+                isAnonymous: isAnonymous,
+                donorName: isAnonymous ? 'Anonymous' : prefill.name,
+              });
             }
           } catch (error) {
             setError(error.response?.data?.message || 'Payment verification failed');
@@ -153,6 +189,7 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
     setIsAnonymous(false);
     setError('');
     setSuccess(false);
+    setShowAnonymousInfo(false);
     onClose();
   };
 
@@ -170,15 +207,54 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700 }}>
-        Make a Donation
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Make a Donation
+          </Typography>
+          <IconButton onClick={handleClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+          You are donating to: <strong>{campaign?.title}</strong>
+        </Typography>
+        {isAnonymous && (
+          <Chip
+            icon={<VisibilityOffIcon sx={{ fontSize: 16 }} />}
+            label="Anonymous Donation"
+            size="small"
+            sx={{
+              mt: 1,
+              backgroundColor: 'rgba(46, 204, 113, 0.15)',
+              color: '#2ecc71',
+            }}
+          />
+        )}
       </DialogTitle>
 
       <DialogContent>
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mb: 2 }}
+            onClose={() => setError('')}
+          >
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ mb: 2 }}
+            icon={<CheckCircleOutlineRounded />}
+          >
+            Donation successful! Thank you for your generosity! 🎉
+          </Alert>
+        )}
+
         <Stepper activeStep={step} sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            You are donating to: <strong>{campaign?.title}</strong>
-          </Typography>
           <Step>
             <StepLabel>Amount</StepLabel>
           </Step>
@@ -189,18 +265,6 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
             <StepLabel>Complete</StepLabel>
           </Step>
         </Stepper>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Donation successful! Thank you for your generosity! 🎉
-          </Alert>
-        )}
 
         {step === 0 && (
           <Box>
@@ -233,7 +297,7 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
               label="Custom Amount"
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={handleAmountChange}
               placeholder="Enter amount..."
               sx={{ mb: 2 }}
               InputProps={{
@@ -269,17 +333,89 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
               Amount: <strong>₹{amount}</strong>
             </Typography>
 
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  color="primary"
-                />
-              }
-              label="Donate anonymously"
-              sx={{ mb: 2, display: 'block' }}
-            />
+            {/* ✅ Anonymous Donation Toggle with Info */}
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isAnonymous}
+                    onChange={(e) => {
+                      setIsAnonymous(e.target.checked);
+                      setShowAnonymousInfo(false);
+                    }}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PanoramaPhotosphereIcon sx={{ fontSize: 18 }} />
+                    <Typography variant="body2">Donate anonymously</Typography>
+                  </Box>
+                }
+                sx={{ display: 'block' }}
+              />
+
+              {isAnonymous && (
+                <Box sx={{ mt: 1 }}>
+                  <Alert 
+                    severity="info" 
+                    sx={{ fontSize: '0.875rem' }}
+                    onClose={() => setShowAnonymousInfo(false)}
+                  >
+                    <Typography variant="body2">
+                      <strong>What does anonymous mean?</strong>
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+                      • Your name will not appear on the campaign page
+                      • The charity will still receive your donation
+                      • You will still receive a receipt via email
+                      • Your identity remains private
+                    </Typography>
+                  </Alert>
+                </Box>
+              )}
+            </Box>
+
+            {/* ✅ Show user info based on anonymous status */}
+            {!isAnonymous && guestInfo && (
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  Donating as:
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {guestInfo.name}
+                </Typography>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  {guestInfo.email} • {guestInfo.phone}
+                </Typography>
+              </Box>
+            )}
+
+            {!isAnonymous && user && (
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  Donating as:
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {user.fullName}
+                </Typography>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  {user.email} • {user.phone}
+                </Typography>
+              </Box>
+            )}
+
+            {isAnonymous && (
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'rgba(46, 204, 113, 0.05)', border: '1px solid rgba(46, 204, 113, 0.2)' }}>
+                <Typography variant="body2" sx={{ color: '#2ecc71', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <VisibilityOffIcon sx={{ fontSize: 16 }} />
+                  You are donating anonymously
+                </Typography>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', display: 'block', mt: 0.5 }}>
+                  Your identity will not be shared publicly
+                </Typography>
+              </Box>
+            )}
 
             <TextField
               fullWidth
@@ -288,7 +424,7 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
               rows={3}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Leave a message of support..."
+              placeholder={isAnonymous ? "Leave an anonymous message of support..." : "Leave a message of support..."}
               sx={{ mb: 2 }}
             />
 
@@ -310,13 +446,17 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
                   flex: 2,
                   py: 1.5,
                   borderRadius: 2,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: isAnonymous 
+                    ? 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)'
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5a67d8 0%, #6b4190 100%)',
+                    background: isAnonymous 
+                      ? 'linear-gradient(135deg, #27ae60 0%, #219a52 100%)'
+                      : 'linear-gradient(135deg, #5a67d8 0%, #6b4190 100%)',
                   },
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Pay Now'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : isAnonymous ? 'Donate Anonymously' : 'Pay Now'}
               </Button>
             </Box>
           </Box>
@@ -329,7 +469,18 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess }) => {
               Donation Successful! 🎉
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Thank you for your generous donation of ₹{amount}
+              Thank you for your generous donation of <strong>₹{amount}</strong>
+            </Typography>
+            {isAnonymous && (
+              <Chip
+                icon={<VisibilityOffIcon sx={{ fontSize: 16 }} />}
+                label="Anonymous Donation"
+                size="small"
+                sx={{ mt: 2, backgroundColor: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71' }}
+              />
+            )}
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 1 }}>
+              A receipt has been sent to your email
             </Typography>
             <Button
               variant="contained"

@@ -38,7 +38,6 @@ const CharitySidebar = () => {
     { text: 'Donations', icon: <DonateIcon />, path: '/charity/donations' },
     { text: 'Analytics', icon: <TrendingUpIcon />, path: '/charity/analytics' },
     { text: 'Profile', icon: <PersonIcon />, path: '/charity/profile' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/charity/settings' },
   ];
 
   const stats = [

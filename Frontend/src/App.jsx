@@ -21,7 +21,7 @@ import { WarningAmberOutlined } from "@mui/icons-material";
 import { api, authService } from "./Services/authServices";
 import CampaignDetails from "./pages/CampaignDetails";
 import AdminCampaignApproval from "./pages/admin/AdminCampaignApproval";
-import DonationPage from "./pages/DonationPage";
+import CampaignList from "./pages/CampaignList";
 
 // import { ProtectedRoute, AdminRoute, CharityRoute, DonorRoute } from './components/ProtectedRoute';
 // import { theme } from './styles/theme';
@@ -47,13 +47,13 @@ const DonorDashboard = lazy(() => import('./pages/donor/DonorDashboard'));
 
 // // Campaign pages
 // const CampaignList = lazy(() => import('./pages/CampaignList'));
-// const CampaignDetails = lazy(() => import('./pages/CampaignDetails'));
+const CampaignPage = lazy(() => import('./pages/CampaignPage'));
 // const CreateCampaign = lazy(() => import('./pages/CreateCampaign'));
 // const EditCampaign = lazy(() => import('./pages/EditCampaign'));
 // const CampaignManagement = lazy(() => import('./pages/CampaignManagement'));
 
 // // Donation pages
-// const DonationPage = lazy(() => import('./pages/DonationPage'));
+const DonationPage = lazy(() => import('./components/campaign/DonationModal'));
 // const DonationHistory = lazy(() => import('./pages/DonationHistory'));
 // const DonationReceipt = lazy(() => import('./pages/DonationReceipt'));
 
@@ -707,7 +707,9 @@ const AppRoutes = () => {
         <Route path="/" element={<LandingPageLayout />} >
            <Route index element={<LandingPage />} />
            <Route path="/home" element={<LandingPage />} />
-           <Route path="/campaigns" element={<CampaignDetails />} />
+           <Route path="/campaigns" element={<CampaignList />} />
+           <Route path="/campaigns/:id" element={<CampaignPage />} />
+           <Route path="/campaigns/:id/donate" element={<DonationPage />} />
         </Route>
 
 

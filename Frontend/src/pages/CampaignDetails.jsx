@@ -127,7 +127,7 @@ class DonationLockManager {
 const donationLockManager = new DonationLockManager();
 
 // Main Campaign Details Component
-const CampaignDetails = () => {
+const CampaignDetailList = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
@@ -689,4 +689,4 @@ const CampaignDetails = () => {
   );
 };
 
-export default CampaignDetails;
+export default CampaignDetailList;

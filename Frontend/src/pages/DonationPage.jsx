@@ -1,4 +1,3 @@
-// pages/DonationPage.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -46,14 +45,12 @@ const DonationPage = () => {
   const [donationSuccess, setDonationSuccess] = useState(false);
   const [donationData, setDonationData] = useState(null);
 
-  // Check authentication
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/auth/login', { state: { from: `/campaigns/${id}/donate` } });
     }
   }, [isAuthenticated, navigate, id]);
 
-  // Fetch campaign details
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
@@ -74,7 +71,6 @@ const DonationPage = () => {
   const handleDonationSuccess = (data) => {
     setDonationSuccess(true);
     setDonationData(data);
-    // Refresh campaign data to show updated stats
     const fetchUpdatedCampaign = async () => {
       try {
         const response = await api.get(`/campaigns/${id}/donate`);

@@ -20,8 +20,6 @@ import {
   Menu as MenuIcon,
   Brightness4 as DarkIcon,
   Brightness7 as LightIcon,
-  Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
   Person as PersonIcon,
   Logout as LogoutIcon,
   Dashboard as DashboardIcon,
@@ -71,12 +69,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
     handleMenuClose();
     navigate(path);
   };
-
-  const notifications = [
-    { id: 1, message: 'Your donation of $100 to Clean Water was successful', time: '5 min ago' },
-    { id: 2, message: 'Campaign "Education for All" is 75% funded', time: '1 hour ago' },
-    { id: 3, message: 'New campaign "Medical Relief" started', time: '3 hours ago' },
-  ];
 
   return (
     <AppBar
@@ -172,20 +164,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
             </IconButton>
           </Tooltip>
 
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton
-              onClick={handleNotifOpen}
-              sx={{
-                color: isDark ? '#a0a0b8' : '#4a4a6a',
-              }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
           {/* User Profile */}
           <Tooltip title="Profile">
             <Box
@@ -225,14 +203,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
                 >
                   {user?.fullName || 'Donor'}
                 </Typography>
-                {/* <Typography
-                  variant="caption"
-                  sx={{
-                    color: isDark ? '#6a6a80' : '#9a9ab0',
-                  }}
-                >
-                  {user?.email || 'donor@charityconnect.com'}
-                </Typography> */}
               </Box>
               <ExpandMoreIcon sx={{ fontSize: 20, color: isDark ? '#a0a0b8' : '#4a4a6a' }} />
             </Box>
@@ -240,49 +210,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
         </Box>
       </Toolbar>
 
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notifAnchorEl}
-        open={Boolean(notifAnchorEl)}
-        onClose={handleNotifClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            width: 360,
-            maxHeight: 400,
-            borderRadius: 3,
-            background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-          },
-        }}
-      >
-        <Box sx={{ p: 2, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Notifications
-          </Typography>
-        </Box>
-        {notifications.map((notif) => (
-          <MenuItem key={notif.id} onClick={handleNotifClose}>
-            <Box sx={{ py: 0.5 }}>
-              <Typography variant="body2">{notif.message}</Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                {notif.time}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
-        <Divider />
-        <MenuItem onClick={() => { handleNotifClose(); navigate('/donor/notifications'); }}>
-          <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 500, textAlign: 'center', width: '100%' }}>
-            View All Notifications
-          </Typography>
-        </MenuItem>
-      </Menu>
-
-      {/* Profile Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -304,9 +231,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
           <Typography variant="subtitle1" fontWeight={600}>
             {user?.fullName || 'Donor'}
           </Typography>
-          {/* <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-            {user?.email || 'donor@charityconnect.com'}
-          </Typography> */}
         </Box>
         <Divider />
         <MenuItem onClick={() => handleNavigate('/donor/dashboard')}>
@@ -324,10 +248,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
         <MenuItem onClick={() => handleNavigate('/donor/saved')}>
           <ListItemIcon><FavoriteIcon fontSize="small" /></ListItemIcon>
           Saved Campaigns
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/donor/settings')}>
-          <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
-          Settings
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout} sx={{ color: '#e74c3c' }}>

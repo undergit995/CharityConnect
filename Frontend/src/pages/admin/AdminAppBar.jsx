@@ -195,24 +195,7 @@ const AdminAppBar = ({ onDrawerToggle }) => {
             </IconButton>
           </Tooltip>
 
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton
-              onClick={handleNotifOpen}
-              sx={{
-                color: isDark ? '#a0a0b8' : '#4a4a6a',
-                '&:hover': {
-                  color: isDark ? '#e8e8f0' : '#1a1a2e',
-                },
-              }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
 
-          {/* User Profile */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Tooltip title="Profile">
               <Box
@@ -253,14 +236,6 @@ const AdminAppBar = ({ onDrawerToggle }) => {
                   >
                     {user?.fullName || 'Admin'}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark ? '#6a6a80' : '#9a9ab0',
-                    }}
-                  >
-                    {user?.email || 'admin@charityconnect.com'}
-                  </Typography>
                 </Box>
                 <ChevronDownIcon
                   sx={{
@@ -275,54 +250,6 @@ const AdminAppBar = ({ onDrawerToggle }) => {
         </Box>
       </Toolbar>
 
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notifAnchorEl}
-        open={Boolean(notifAnchorEl)}
-        onClose={handleNotifClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            width: 360,
-            maxHeight: 400,
-            borderRadius: 3,
-            background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-            boxShadow: isDark
-              ? '0 8px 40px rgba(0,0,0,0.3)'
-              : '0 8px 40px rgba(0,0,0,0.08)',
-          },
-        }}
-      >
-        <Box sx={{ p: 2, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-            Notifications
-          </Typography>
-        </Box>
-        {notifications.map((notif) => (
-          <MenuItem key={notif.id} onClick={handleNotifClose}>
-            <Box sx={{ py: 0.5 }}>
-              <Typography variant="body2" sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                {notif.message}
-              </Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                {notif.time}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
-        <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
-        <MenuItem onClick={() => { handleNotifClose(); navigate('/admin/notifications'); }}>
-          <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 500, textAlign: 'center', width: '100%' }}>
-            View All Notifications
-          </Typography>
-        </MenuItem>
-      </Menu>
-
-      {/* Profile Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -366,14 +293,7 @@ const AdminAppBar = ({ onDrawerToggle }) => {
           </ListItemIcon>
           Profile
         </MenuItem>
-        
-        <MenuItem onClick={() => handleNavigate('/admin/settings')}>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }} />
-          </ListItemIcon>
-          Settings
-        </MenuItem>
-        
+                
         <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
         
         <MenuItem onClick={() => handleNavigate('/help')}>

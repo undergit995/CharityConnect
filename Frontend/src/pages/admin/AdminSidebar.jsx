@@ -39,8 +39,6 @@ const AdminSidebar = () => {
     { text: 'Donors', icon: <PeopleIcon />, path: '/admin/donors' },
     { text: 'Donations', icon: <DonateIcon />, path: '/admin/donations' },
     { text: 'Reports', icon: <ReportIcon />, path: '/admin/donationreport' },
-    { text: 'Notifications', icon: <NotificationsIcon />, path: '/admin/notifications' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/admin/settings' },
   ];
 
   return (

@@ -70,11 +70,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
     navigate(path);
   };
 
-  const notifications = [
-    { id: 1, message: 'New donation of ₹500 received for Clean Water', time: '5 min ago' },
-    { id: 2, message: 'Your campaign "Education for All" is 75% funded', time: '1 hour ago' },
-    { id: 3, message: '3 new donors joined your campaign', time: '3 hours ago' },
-  ];
 
   return (
     <AppBar
@@ -174,21 +169,7 @@ const CharityAppBar = ({ onDrawerToggle }) => {
             </IconButton>
           </Tooltip>
 
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton
-              onClick={handleNotifOpen}
-              sx={{
-                color: isDark ? '#a0a0b8' : '#4a4a6a',
-              }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
 
-          {/* User Profile */}
           <Tooltip title="Profile">
             <Box
               onClick={handleMenuOpen}
@@ -233,7 +214,7 @@ const CharityAppBar = ({ onDrawerToggle }) => {
                     color: isDark ? '#6a6a80' : '#9a9ab0',
                   }}
                 >
-                  {user?.email || 'charity@charityconnect.com'}
+                  {user?.email || 'charityconnect'}
                 </Typography>
               </Box>
               <ExpandMoreIcon sx={{ fontSize: 20, color: isDark ? '#a0a0b8' : '#4a4a6a' }} />
@@ -242,47 +223,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
         </Box>
       </Toolbar>
 
-      {/* Notifications & Profile Menus (similar to Donor) */}
-      <Menu
-        anchorEl={notifAnchorEl}
-        open={Boolean(notifAnchorEl)}
-        onClose={handleNotifClose}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-        PaperProps={{
-          sx: {
-            mt: 1.5,
-            width: 360,
-            maxHeight: 400,
-            borderRadius: 3,
-            background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-          },
-        }}
-      >
-        <Box sx={{ p: 2, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}` }}>
-          <Typography variant="subtitle1" fontWeight={600}>
-            Notifications
-          </Typography>
-        </Box>
-        {notifications.map((notif) => (
-          <MenuItem key={notif.id} onClick={handleNotifClose}>
-            <Box sx={{ py: 0.5 }}>
-              <Typography variant="body2">{notif.message}</Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                {notif.time}
-              </Typography>
-            </Box>
-          </MenuItem>
-        ))}
-        <Divider />
-        <MenuItem onClick={() => { handleNotifClose(); navigate('/charity/notifications'); }}>
-          <Typography variant="body2" sx={{ color: '#667eea', fontWeight: 500, textAlign: 'center', width: '100%' }}>
-            View All Notifications
-          </Typography>
-        </MenuItem>
-      </Menu>
 
       <Menu
         anchorEl={anchorEl}
@@ -305,8 +245,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
           <Typography variant="subtitle1" fontWeight={600}>
             {user?.fullName || 'Charity'}
           </Typography>
-          {/* <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-          </Typography> */}
         </Box>
         <Divider />
         <MenuItem onClick={() => handleNavigate('/charity/dashboard')}>
@@ -328,10 +266,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
         <MenuItem onClick={() => handleNavigate('/charity/profile')}>
           <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
           Profile
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/charity/settings')}>
-          <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
-          Settings
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout} sx={{ color: '#e74c3c' }}>
