@@ -94,3 +94,72 @@ Stack: TypeError: Cannot read properties of undefined (reading 'getSocket')
 Error: getaddrinfo ENOTFOUND smtp.gmail.com
 Stack: Error: getaddrinfo ENOTFOUND smtp.gmail.com
     at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)
+[2026-07-12T11:19:57.015Z] [ERROR] Error sending OTP email:
+Error: Please wait 60 seconds before requesting a new OTP
+Stack: Error: Please wait 60 seconds before requesting a new OTP
+    at OTPService.createOTP (D:\CharityConnect\Backend\utils\otpService.js:57:15)
+    at OTPService.sendOTPEmail (D:\CharityConnect\Backend\utils\otpService.js:173:28)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:10:37)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5
+[2026-07-12T12:32:11.278Z] [ERROR] Error sending OTP email:
+Error: Please wait 60 seconds before requesting a new OTP
+Stack: Error: Please wait 60 seconds before requesting a new OTP
+    at OTPService.createOTP (D:\CharityConnect\Backend\utils\otpService.js:57:15)
+    at OTPService.sendOTPEmail (D:\CharityConnect\Backend\utils\otpService.js:173:28)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:10:37)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5
+[2026-07-12T12:41:30.716Z] [ERROR] Error sending OTP email:
+Error: Please wait 60 seconds before requesting a new OTP
+Stack: Error: Please wait 60 seconds before requesting a new OTP
+    at OTPService.createOTP (D:\CharityConnect\Backend\utils\otpService.js:57:15)
+    at OTPService.sendOTPEmail (D:\CharityConnect\Backend\utils\otpService.js:173:28)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:10:37)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5
+[2026-07-12T14:14:19.859Z] [ERROR] Template email send error:
+Error: getVerificationTemplate is not defined
+Stack: ReferenceError: getVerificationTemplate is not defined
+    at getEmailTemplate (D:\CharityConnect\Backend\utils\emailService.js:8:19)
+    at sendTemplateEmail (D:\CharityConnect\Backend\utils\emailService.js:407:18)
+    at sendOTPEmail (D:\CharityConnect\Backend\utils\emailService.js:458:16)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:14:26)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5
+[2026-07-12T14:28:58.971Z] [ERROR] Template email send error:
+Error: getCampaignUpdateTemplate is not defined
+Stack: ReferenceError: getCampaignUpdateTemplate is not defined
+    at getEmailTemplate (D:\CharityConnect\Backend\utils\emailService.js:16:21)
+    at sendTemplateEmail (D:\CharityConnect\Backend\utils\emailService.js:594:18)
+    at sendOTPEmail (D:\CharityConnect\Backend\utils\emailService.js:645:16)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:12:26)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5
+[2026-07-12T14:31:41.283Z] [ERROR] Template email send error:
+Error: getAdminNotificationTemplate is not defined
+Stack: ReferenceError: getAdminNotificationTemplate is not defined
+    at getEmailTemplate (D:\CharityConnect\Backend\utils\emailService.js:17:24)
+    at sendTemplateEmail (D:\CharityConnect\Backend\utils\emailService.js:614:18)
+    at sendOTPEmail (D:\CharityConnect\Backend\utils\emailService.js:665:16)
+    at exports.sendEmailOtp (D:\CharityConnect\Backend\Controllers\AuthController\otpController.js:12:26)
+    at Layer.handleRequest (D:\CharityConnect\Backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\CharityConnect\Backend\node_modules\router\lib\route.js:157:13)
+    at D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:999:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\CharityConnect\Backend\node_modules\express-rate-limit\dist\index.cjs:854:5

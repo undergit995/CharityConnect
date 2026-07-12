@@ -59,7 +59,8 @@ const DonationPage = lazy(() => import('./components/campaign/DonationModal'));
 
 // // Charity pages
 // const CharityProfile = lazy(() => import('./pages/CharityProfile'));
-// const CharityManagement = lazy(() => import('./pages/CharityManagement'));
+const CharityVerification = lazy(() => import('./pages/admin/CharityVerification'));
+const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
 
 // Common pages
 // const HomePage = lazy(() => import('./pages/HomePage'));
@@ -761,6 +762,8 @@ const AppRoutes = () => {
           <Route path="/admin/donationreport" element={<AdminDonationsReport />} />
         </Route>
 
+          {/* <Route path="/admin/verification" element={<CharityVerification />} /> */}
+          <Route path="/admin/verification" element={<AdminVerification />} />
         {/* Donor Routes */}
       <Route
         path="/donor/*" 

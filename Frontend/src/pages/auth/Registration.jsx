@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -51,7 +51,7 @@ const steps = ["Account Type", "Personal Info", "Verification"];
 const Register = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { register, loading } = useAuth();
+  const { register, loading, sendOTP: sendAuthOTP, verifyOTP: verifyAuthOTP } = useAuth();
 
   const [activeStep, setActiveStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -60,6 +60,7 @@ const Register = () => {
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpLoading, setOtpLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [otpError, setOtpError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -137,7 +138,6 @@ const Register = () => {
         newErrors.email = "Please enter a valid email address";
       }
 
-      // Phone
       if (!formData.phone) {
         newErrors.phone = "Phone number is required";
       } else if (!validatePhone(formData.phone)) {
@@ -160,9 +160,8 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Send OTP via email
-  const sendOTP = async () => {
-    // First validate email
+  
+  const handleSendOTP = async () => {
     if (!formData.email) {
       setErrors((prev) => ({ ...prev, email: "Email is required" }));
       return;
@@ -180,61 +179,50 @@ const Register = () => {
     setServerError("");
 
     try {
-      const response = await api.post("/otp/send-email", {
-        email: formData.email,
-        purpose: "verification",
-      });
-
-      if (response.data.success) {
-        setOtpSent(true);
-        setOtpId(response.data.otpId);
-        setResendCooldown(60);
-        setErrors((prev) => ({ ...prev, otp: "" }));
-      }
+      const result = await sendAuthOTP(formData.email, 'verification');
+      setOtpSent(true);
+      setResendCooldown(60);
+      setErrors((prev) => ({ ...prev, otp: '' }));
+      return true;
     } catch (error) {
       console.error("Send OTP error:", error);
       const message =
-        error.response?.data?.message ||
+        error?.response?.data?.message ||
         "Failed to send OTP. Please try again.";
       setOtpError(message);
-      setErrors((prev) => ({ ...prev, otp: message }));
+      setErrors((prev) => ({ ...prev, email: message }));
+      return false;
     } finally {
       setOtpLoading(false);
     }
   };
 
-  // Verify OTP
-  const handleVerifyOTP = async (otp) => {
-    if (otpLoading || otpVerified || otp.length !== 6) return;
+  
+  const handleVerifyOTP = useCallback(async (otp) => {
+    if (otpLoading || otpVerified || !otp || otp.length !== 6) return;
 
   setOtpLoading(true);
   setOtpError("");
 
       try {
-        const response = await api.post("/otp/verify", {
-          identifier: formData.email,
-          otp: otp,
-          purpose: "verification",
-        });
+        const result = await verifyAuthOTP(formData.email, otp, "verification");
 
-        if (response.data.success) {
+        if (result.success) {
           setOtpVerified(true);
           setErrors((prev) => ({ ...prev, otp: "" }));
         }
       } catch (error) {
         console.error("Verify OTP error:", error);
         const message =
-          error.response?.data?.message || "Invalid OTP. Please try again.";
+          error.message || "Invalid OTP. Please try again.";
         setOtpError(message);
-        // setErrors((prev) => ({ ...prev, otp: message }));
-        // Reset OTP input if verification fails
+        setErrors((prev) => ({ ...prev, otp: message }));
         setOtpVerified(false);
       } finally {
         setOtpLoading(false);
       }
-  };
+  },[formData, otpLoading, otpVerified, verifyAuthOTP]);
 
-  // Resend OTP
   const handleResendOTP = async () => {
     if (resendCooldown > 0) return;
 
@@ -242,18 +230,12 @@ const Register = () => {
     setOtpError("");
 
     try {
-      const response = await api.post("/otp/resend", {
-        identifier: formData.email,
-        type: "email",
-        purpose: "verification",
-      });
-
-      if (response.data.success) {
+      const result = await sendAuthOTP(formData.email, "verification");
+      if (result.success) {
         setResendCooldown(60);
         setOtpSent(true);
         setOtpError("");
         setErrors((prev) => ({ ...prev, otp: "" }));
-        // Reset OTP verified state
         setOtpVerified(false);
       }
     } catch (error) {
@@ -267,9 +249,8 @@ const Register = () => {
     }
   };
 
-  // Final Registration Submit
+  
   const handleSubmit = async () => {
-    // Validate OTP
     if (!otpVerified) {
       setErrors((prev) => ({
         ...prev,
@@ -281,6 +262,7 @@ const Register = () => {
     setServerError("");
     setOtpError("");
 
+    setSubmitLoading(true);
     try {
       // Prepare data matching your User schema
       const userData = {
@@ -318,7 +300,6 @@ const Register = () => {
           navigate("/dashboard");
         }
       } else {
-        // If email verification required or other cases
         navigate("/auth/verify-email", {
           state: {
             email: formData.email,
@@ -329,13 +310,10 @@ const Register = () => {
     } catch (err) {
       console.error("Registration error:", err);
 
-      // Handle specific error cases
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
         "Registration failed. Please try again.";
-
-      // Check for duplicate email/phone errors
       if (errorMessage.includes("email already exists")) {
         setErrors((prev) => ({
           ...prev,
@@ -349,26 +327,27 @@ const Register = () => {
       } else {
         setServerError(errorMessage);
       }
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
-  // Go to next step
-  const handleNext = () => {
+  
+  const handleNext = async () => {
     if (validateStep(activeStep)) {
       if (activeStep === 1) {
-        // Send OTP when moving to verification step
-        sendOTP();
+        const otpSentSuccessfully = await handleSendOTP();
+        if (!otpSentSuccessfully) return; // Stop if OTP sending failed
       }
       setActiveStep((prev) => prev + 1);
     }
   };
 
-  // Go to previous step
+  
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
 
-  // Get step content
   const getStepContent = (step) => {
     switch (step) {
       case 0:
@@ -503,7 +482,7 @@ const Register = () => {
 
       case 1:
         return (
-          <Box>
+          <Box component="form" onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
@@ -639,6 +618,7 @@ const Register = () => {
               label="Password"
               name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
@@ -691,6 +671,7 @@ const Register = () => {
               label="Confirm Password"
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={handleChange}
               error={!!errors.confirmPassword}
@@ -1003,7 +984,7 @@ const Register = () => {
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
-                  disabled={loading || !otpVerified}
+                  disabled={loading || submitLoading || !otpVerified}
                   sx={{
                     py: 1.5,
                     px: 4,
@@ -1019,7 +1000,7 @@ const Register = () => {
                     transition: "all 0.3s ease",
                   }}
                 >
-                  {loading ? (
+                  {submitLoading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
                     "Create Account"

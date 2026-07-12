@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Campaign = require("../../models/CampaignModel");
 const User = require("../../models/User");
-const { deleteFile } = require("../../config/multerConfig");
+const { deleteFile, getFileUrl } = require("../../config/multerConfig");
 const { sendEmail } = require("../../config/mailConfig");
 const Donation = require("../../models/Donation");
 
@@ -75,8 +75,8 @@ exports.createCampaign = async (req, res) => {
             : (req.files?.campaignImages || []);
 
         // 3. Extract the first one as cover, and the remaining ones as gallery
-        const coverImage = filesArray.length > 0 ? filesArray[0].path : null;
-        const campaignImages = filesArray.length > 1 ? filesArray.slice(1).map(f => f.path) : [];
+        const coverImage = filesArray.length > 0 ? getFileUrl(req, filesArray[0].path) : null;
+        const campaignImages = filesArray.length > 1 ? filesArray.slice(1).map(f => getFileUrl(req, f.path)) : [];
 
         // 4. Validation & cleanup fallback
         if (!coverImage) {
@@ -411,13 +411,13 @@ exports.updateCampaign = async (req, res) => {
             if (campaign.coverImage) {
                 deleteFile(campaign.coverImage);
             }
-            campaign.coverImage = req.files.coverImage[0].path;
+            campaign.coverImage = getFileUrl(req, req.files.coverImage[0].path);
         }
 
         if (req.files?.campaignImages) {
             // Delete old images
             campaign.campaignImages.forEach(img => deleteFile(img));
-            campaign.campaignImages = req.files.campaignImages.map(f => f.path);
+            campaign.campaignImages = req.files.campaignImages.map(f => getFileUrl(req, f.path));
         }
 
         // Reset status to pending if major changes

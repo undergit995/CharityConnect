@@ -12,7 +12,7 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       withCredentials: true,
-      timeout: 30000,
+      timeout: 50000,
     });
 
     this.isRefreshing = false;
@@ -34,7 +34,7 @@ class AuthService {
   async (error) => {
     const originalRequest = error.config;
 
-    // Don't refresh login/register/refresh requests
+    
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||

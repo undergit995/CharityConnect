@@ -4,13 +4,18 @@ const crypto = require("crypto");
 const User = require("../../models/User");
 const ActivityLog = require("../../models/ActivityLog");
 const generateTokens = require("../../utils/refreshToken");
-const { sendEmail } = require("../../utils/emailService");
 const {
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+} = require("../../utils/emailService");
+const {
+  getFileUrl,
   validateEmail,
   validatePasswordDetailed,
 } = require("../../utils/validators");
 const Validators = require("../../utils/validators");
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
+const JWT_REFRESH_SECRET =
+  process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
 
 const logActivity = async (userId, action, details = {}) => {
   try {
@@ -22,24 +27,6 @@ const logActivity = async (userId, action, details = {}) => {
     });
   } catch (error) {
     console.error("Error logging activity:", error);
-  }
-};
-
-const sendWelcomeEmail = async (email, name, role) => {
-  try {
-    const emailContent = `
-            <h2>Welcome ${name}! 🎉</h2>
-            <p>Thank you for joining CharityConnect as a <strong>${role}</strong>.</p>
-            <p>You're now part of a community dedicated to making a difference.</p>
-            <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard">Go to Dashboard</a>
-        `;
-    await sendEmail({
-      to: email,
-      subject: "Welcome to CharityConnect 🎉",
-      html: emailContent,
-    });
-  } catch (error) {
-    console.error("Error sending welcome email:", error);
   }
 };
 
@@ -89,13 +76,11 @@ exports.setupAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Setup admin error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error setting up admin",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error setting up admin",
+      error: error.message,
+    });
   }
 };
 
@@ -123,12 +108,10 @@ exports.register = async (req, res) => {
     } = req.body;
 
     if (!firstName || !lastName || !email || !password || !phone || !role) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "All required fields must be filled",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "All required fields must be filled",
+      });
     }
 
     if (!validateEmail(email)) {
@@ -152,12 +135,10 @@ exports.register = async (req, res) => {
 
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "User with this email or phone already exists",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "User with this email or phone already exists",
+      });
     }
 
     const normalizedRole = role.toLowerCase();
@@ -205,12 +186,10 @@ exports.register = async (req, res) => {
     if (normalizedRole === "charity") {
       const { charityDetails } = req.body;
       if (!charityDetails || !charityDetails.organizationName) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: "Organization name is required for charity registration",
-          });
+        return res.status(400).json({
+          success: false,
+          message: "Organization name is required for charity registration",
+        });
       }
       userData.charityDetails = {
         organizationName: charityDetails.organizationName,
@@ -246,13 +225,11 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error registering user",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error registering user",
+      error: error.message,
+    });
   }
 };
 
@@ -274,21 +251,17 @@ exports.login = async (req, res) => {
     }
 
     if (!user.isActive) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Your account has been deactivated.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been deactivated.",
+      });
     }
 
     if (user.role === "charity" && !user.isApproved) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Your charity account is pending approval.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Your charity account is pending approval.",
+      });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -320,13 +293,11 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error during login",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error during login",
+      error: error.message,
+    });
   }
 };
 
@@ -338,14 +309,12 @@ exports.refreshToken = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Refresh token is required" });
     }
-console.log("Refresh token:", refreshToken);
-
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch (error) {
-  console.log(error.name);
-  console.log(error.message);
+      console.log(error.name);
+      console.log(error.message);
       return res
         .status(401)
         .json({ success: false, message: "Invalid or expired refresh token" });
@@ -369,13 +338,11 @@ console.log("Refresh token:", refreshToken);
     });
   } catch (error) {
     console.error("Refresh token error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error refreshing token",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error refreshing token",
+      error: error.message,
+    });
   }
 };
 
@@ -390,12 +357,10 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res
-        .status(200)
-        .json({
-          success: true,
-          message: "If an account exists, a reset link will be sent.",
-        });
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists, a reset link will be sent.",
+      });
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -407,33 +372,26 @@ exports.forgotPassword = async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/auth/reset-password?token=${resetToken}`;
-    const emailContent = `
-            <h2>Reset Your Password</h2>
-            <p>Click the button below to reset your password. This link is valid for 1 hour.</p>
-            <a href="${resetUrl}">Reset Password</a>
-        `;
 
-    await sendEmail({
-      to: email,
-      subject: "Password Reset - CharityConnect",
-      html: emailContent,
+    // Use the specific email function
+    await sendPasswordResetEmail(email, user.fullName, resetUrl).catch(
+      (error) => {
+        console.error("Forgot password email sending error:", error);
+        // Continue execution even if email fails, as per original logic
+      },
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "If an account exists, a reset link will be sent.",
     });
-
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "If an account exists, a reset link will be sent.",
-      });
   } catch (error) {
     console.error("Forgot password error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error processing request",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error processing request",
+      error: error.message,
+    });
   }
 };
 
@@ -442,12 +400,10 @@ exports.resetPassword = async (req, res) => {
     const { token, newPassword, confirmPassword } = req.body;
 
     if (!token || !newPassword) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Token and new password are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Token and new password are required",
+      });
     }
 
     if (newPassword !== confirmPassword) {
@@ -490,13 +446,11 @@ exports.resetPassword = async (req, res) => {
       .json({ success: true, message: "Password reset successfully." });
   } catch (error) {
     console.error("Reset password error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error resetting password",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error resetting password",
+      error: error.message,
+    });
   }
 };
 
@@ -531,13 +485,11 @@ exports.verifyEmail = async (req, res) => {
       .json({ success: true, message: "Email verified successfully" });
   } catch (error) {
     console.error("Verify email error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error verifying email",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error verifying email",
+      error: error.message,
+    });
   }
 };
 
@@ -572,13 +524,11 @@ exports.resendVerification = async (req, res) => {
     });
   } catch (error) {
     console.error("Resend verification error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error resending verification",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error resending verification",
+      error: error.message,
+    });
   }
 };
 
@@ -588,13 +538,11 @@ exports.logout = async (req, res) => {
     res.status(200).json({ success: true, message: "Logout successful" });
   } catch (error) {
     console.error("Logout error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error during logout",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error during logout",
+      error: error.message,
+    });
   }
 };
 
@@ -602,12 +550,10 @@ exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;
     if (!currentPassword || !newPassword) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Current and new password are required",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required",
+      });
     }
     if (newPassword !== confirmPassword) {
       return res
@@ -643,13 +589,11 @@ exports.changePassword = async (req, res) => {
       .json({ success: true, message: "Password changed successfully" });
   } catch (error) {
     console.error("Change password error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error changing password",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error changing password",
+      error: error.message,
+    });
   }
 };
 
@@ -666,13 +610,11 @@ exports.getCurrentUser = async (req, res) => {
     res.status(200).json({ success: true, data: { user } });
   } catch (error) {
     console.error("Get user error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error fetching user",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user",
+      error: error.message,
+    });
   }
 };
 
@@ -707,27 +649,23 @@ exports.updateProfile = async (req, res) => {
     if (zipCode) user.zipCode = zipCode;
     if (website) user.website = website;
     if (description) user.description = description;
-    if (req.file) user.profileImage = req.file.path;
+    if (req.file) user.profileImage = getFileUrl(req, req.file.path);
     await user.save();
     await logActivity(user._id, "Profile updated");
     const userResponse = user.toObject();
     delete userResponse.password;
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Profile updated successfully",
-        data: { user: userResponse },
-      });
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: { user: userResponse },
+    });
   } catch (error) {
     console.error("Update profile error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error updating profile",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error updating profile",
+      error: error.message,
+    });
   }
 };
 
@@ -767,13 +705,11 @@ exports.getAllUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Get users error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error fetching users",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error fetching users",
+      error: error.message,
+    });
   }
 };
 
@@ -798,22 +734,18 @@ exports.updateUser = async (req, res) => {
     });
     const userResponse = user.toObject();
     delete userResponse.password;
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "User updated successfully",
-        data: { user: userResponse },
-      });
+    res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: { user: userResponse },
+    });
   } catch (error) {
     console.error("Update user error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error updating user",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error updating user",
+      error: error.message,
+    });
   }
 };
 
@@ -841,12 +773,10 @@ exports.deleteUser = async (req, res) => {
       .json({ success: true, message: "User deleted successfully" });
   } catch (error) {
     console.error("Delete user error:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Error deleting user",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Error deleting user",
+      error: error.message,
+    });
   }
 };

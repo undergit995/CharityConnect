@@ -1,5 +1,6 @@
 const otpService = require('../../utils/otpService');
 const { validateEmail } = require('../../utils/validators');
+const { sendOTPEmail } = require('../../utils/emailService');
 
 exports.sendEmailOtp = async (req, res) => {
   try {
@@ -7,15 +8,15 @@ exports.sendEmailOtp = async (req, res) => {
     if (!email || !validateEmail(email)) {
       return res.status(400).json({ success: false, message: 'Valid email is required' });
     }
-    const result = await otpService.sendOTPEmail(email, purpose);
+    const otpData = otpService.createOTP(email, 'email', purpose);
+    const result = await sendOTPEmail(email, otpData.otp, purpose, otpService.otpConfig.expiresIn / 60);
     res.status(200).json({
       success: true,
       message: result.message,
-      otpId: result.otpId,
       expiresIn: result.expiresIn,
     });
   } catch (error) {
-    console.error('Send OTP email error:', error);
+    console.log('Send OTP email error:', error.message);
     res.status(500).json({ success: false, message: error.message || 'Failed to send OTP' });
   }
 };
@@ -52,7 +53,6 @@ exports.resendOtp = async (req, res) => {
     res.status(200).json({
       success: true,
       message: result.message,
-      otpId: result.otpId,
       expiresIn: result.expiresIn,
     });
   } catch (error) {
@@ -85,11 +85,10 @@ exports.verifyAndRegister = async (req, res) => {
         if (!result.success) {
             return res.status(400).json({ success: false, message: result.message });
         }
-        // TODO: Add user registration logic here
+        // Add registration here
         res.status(200).json({ success: true, message: 'OTP verified and user registered successfully' });
     } catch (error) {
         console.error('Verify and register error:', error);
         res.status(500).json({ success: false, message: 'Failed to verify OTP and register user' });
     }
 };
-

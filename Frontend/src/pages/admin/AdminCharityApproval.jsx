@@ -60,6 +60,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { useAuth } from "../../Context/AuthContext";
 import { api } from "../../Services/authServices";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const TabPanel = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
@@ -90,6 +91,8 @@ const AdminCharityApproval = () => {
     rejected: 0,
     total: 0,
   });
+
+  const navigate = useNavigate();
 
   const itemsPerPage = 10;
 
@@ -671,13 +674,14 @@ const AdminCharityApproval = () => {
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (typeof openActionDialog === "function") {
-                                  openActionDialog(charity, "view");
-                                } else {
-                                  console.error(
-                                    "openActionDialog is not a function!",
-                                  );
-                                }
+                                     navigate('/admin/verification')
+                                // if (typeof openActionDialog === "function") {
+                                //   openActionDialog(charity, "view");
+                                // } else {
+                                //   console.error(
+                                //     "openActionDialog is not a function!",
+                                //   );
+                                // }
                               }}
                               sx={{ color: isDark ? "#a0a0b8" : "#4a4a6a" }}
                             >
@@ -692,7 +696,7 @@ const AdminCharityApproval = () => {
                                   size="small"
                                   sx={{ color: "#2ecc71" }}
                                   onClick={() =>
-                                    openActionDialog(charity, "approve")
+                                     navigate('admin/verification')
                                   }
                                 >
                                   <ThumbUpIcon fontSize="small" />

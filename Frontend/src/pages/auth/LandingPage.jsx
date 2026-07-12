@@ -196,7 +196,7 @@ const LandingPage = () => {
       description: 'Our donors helped provide clean water access to 500 families in rural communities.',
       image: "charity1",
       impact: '500+ Families',
-      raised: 45000,
+      raised: 45,
     },
     {
       id: 2,
@@ -204,7 +204,7 @@ const LandingPage = () => {
       description: 'A new school was built, providing education to 300 children who previously had none.',
       image: "charity2",
       impact: '300 Students',
-      raised: 75000,
+      raised: 75,
     },
     {
       id: 3,
@@ -212,7 +212,7 @@ const LandingPage = () => {
       description: 'Over 10,000 meals were distributed to families affected by natural disasters.',
       image: "charity3",
       impact: '10,000+ Meals',
-      raised: 30000,
+      raised: 30,
     },
   ];
 
@@ -540,7 +540,7 @@ const LandingPage = () => {
                   {/* Hero Image/Illustration */}
                   <Box
                     component="img"
-                    src="/images/hero-illustration.svg"
+                    src="https://i.dawn.com/primary/2025/04/171654146396dcc.jpg"
                     alt="Charity Illustration"
                     sx={{
                       width: '100%',

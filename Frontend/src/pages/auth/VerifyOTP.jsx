@@ -121,7 +121,7 @@ const VerifyOTP = () => {
 
     try {
       setStatus('verifying');
-      await verifyOTP(phone, otpString);
+      await verifyOTP(phone, otpString, 'verification'); // Pass purpose for consistency
       setStatus('success');
       setMessage('Phone number verified successfully!');
       
@@ -138,7 +138,7 @@ const VerifyOTP = () => {
     try {
       setResendDisabled(true);
       setCountdown(60);
-      await sendOTP(phone);
+      await sendOTP(phone, 'verification'); // Pass purpose for consistency
       setMessage('New OTP sent successfully!');
       setStatus('verifying');
       setOtp(['', '', '', '', '', '']);

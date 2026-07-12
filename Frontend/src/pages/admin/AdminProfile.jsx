@@ -77,7 +77,7 @@ const AdminProfile = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
-  // Load user data
+  
   useEffect(() => {
     if (user) {
       setFormData({
@@ -143,7 +143,7 @@ const AdminProfile = () => {
     try {
       const formDataToSend = new FormData();
       
-      // Append all fields
+      
       Object.keys(formData).forEach(key => {
         if (key === 'notifications') {
           formDataToSend.append('notifications', JSON.stringify(formData.notifications));

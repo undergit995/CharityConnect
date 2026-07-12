@@ -43,16 +43,13 @@ export const AuthProvider = ({ children }) => {
         if (token) {
           const decoded = jwtDecode(token);
           
-          // Check if token is expired
           if (decoded.exp * 1000 > Date.now()) {
             setUser(decoded);
             setIsAuthenticated(true);
             setPermissions(decoded.permissions || []);
             
-            // Start session timeout warning
             startSessionTimeout(decoded.exp * 1000);
           } else {
-            // Try to refresh token
             try {
               const newAccessToken = await authService.refreshToken();
               const newDecoded = jwtDecode(newAccessToken);
@@ -90,7 +87,6 @@ export const AuthProvider = ({ children }) => {
     
     if (warningTime > 0) {
       const timeout = setTimeout(() => {
-        // Show session expiry warning
         window.dispatchEvent(new CustomEvent('session-warning'));
       }, warningTime);
       
@@ -98,7 +94,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Refresh access token
   const refreshAccessToken = useCallback(async () => {
     try {
       return await authService.refreshToken();
@@ -300,36 +295,36 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Verify OTP
-  const verifyOTP = async (phone, otp) => {
-    setLoading(true);
-    setError(null);
-
+  const verifyOTP = async (identifier, otp, purpose = 'verification') => {
     try {
-      const response = await authService.api.post('/auth/verify-otp', { phone, otp });
+      const response = await authService.api.post('/otp/verify', {
+        identifier,
+        otp,
+        purpose,
+      });
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'OTP verification failed';
-      setError(errorMessage);
       throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Send OTP
-  const sendOTP = async (phone) => {
-    setLoading(true);
-    setError(null);
-
+  const sendOTP = async (identifier, purpose = 'verification') => {
     try {
-      await authService.api.post('/auth/send-otp', { phone });
-      return { success: true, message: 'OTP sent successfully' };
+      const response = await authService.api.post('/otp/send-email', {
+        email: identifier,
+        purpose,
+      });
+      return {
+        success: true,
+        message: 'OTP sent successfully',
+        ...response.data,
+      };
     } catch (err) {
+      console.log(err.response);      
       const errorMessage = err.response?.data?.message || 'Failed to send OTP';
-      setError(errorMessage);
       throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 

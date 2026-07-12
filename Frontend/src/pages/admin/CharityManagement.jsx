@@ -350,7 +350,7 @@ const AdminManageCharity = () => {
                               <IconButton
                                 size="small"
                                 sx={{ color: '#2ecc71' }}
-                                onClick={() => openActionDialog(charity, 'approve')}
+                                onClick={() => navigate('admin/verification')}
                               >
                                 <CheckCircleIcon fontSize="small" />
                               </IconButton>

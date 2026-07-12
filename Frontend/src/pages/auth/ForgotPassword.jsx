@@ -233,6 +233,7 @@ const ForgotPassword = () => {
               fullWidth
               label="New Password"
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => {
                 setNewPassword(e.target.value);
@@ -265,6 +266,7 @@ const ForgotPassword = () => {
               fullWidth
               label="Confirm Password"
               type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => {
                 setConfirmPassword(e.target.value);

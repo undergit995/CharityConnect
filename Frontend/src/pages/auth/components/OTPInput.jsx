@@ -4,27 +4,28 @@ import { Box, TextField, InputAdornment } from '@mui/material';
 const OTPInput = ({ length = 6, onComplete, disabled = false }) => {
   const [otp, setOtp] = useState(Array(length).fill(''));
   const inputRefs = useRef([]);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (otp.every(val => val !== '')) {
-      onComplete(otp.join(''));
+    const otpString = otp.join('');
+    if (otpString.length === length) {
+      onCompleteRef.current(otpString);
     }
-  }, [otp, onComplete]);
+  }, [otp, length]);
 
   const handleChange = (index, value) => {
     if (value.length > 1) return;
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-
-    // Move to next input if value is entered
+    
     if (value && index < length - 1) {
       inputRefs.current[index + 1].focus();
     }
   };
 
   const handleKeyDown = (index, e) => {
-    // Move to previous input on backspace if current is empty
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
     }
@@ -43,7 +44,7 @@ const OTPInput = ({ length = 6, onComplete, disabled = false }) => {
     });
     setOtp(newOtp);
     
-    // Focus on last filled input
+    
     const lastFilledIndex = Math.min(pastedArray.length, length - 1);
     inputRefs.current[lastFilledIndex].focus();
   };

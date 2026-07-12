@@ -69,6 +69,7 @@ const donationSchema = new mongoose.Schema(
       type: String, 
       // required: [true, "Transaction ID is required"],
       unique: true,
+      sparse:true,
       trim: true
     },
     paymentGateway: {

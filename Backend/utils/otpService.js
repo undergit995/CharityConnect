@@ -1,9 +1,7 @@
 const otpGenerator = require('otp-generator');
-const crypto = require('crypto');
 const { sendEmail } = require('./emailService');
 const logger = require('./logger');
 
-// In-memory store for OTPs (use Redis in production)
 class OTPService {
   constructor() {
     this.otpStore = new Map();
@@ -19,11 +17,7 @@ class OTPService {
     };
   }
 
-  /**
-   * Generate a random OTP using otp-generator
-   * @param {number} length - Length of OTP
-   * @returns {string} - Generated OTP
-   */
+  
   generateOTP(length = this.otpConfig.length) {
     return otpGenerator.generate(length, {
       digits: this.otpConfig.digits,
@@ -34,14 +28,6 @@ class OTPService {
   }
 
   /**
-   * Generate a unique OTP ID
-   * @returns {string} - Unique OTP ID
-   */
-  generateOTPId() {
-    return crypto.randomBytes(16).toString('hex');
-  }
-
-  /**
    * Create and store OTP
    * @param {string} identifier - Email or phone number
    * @param {string} type - 'email' or 'phone'
@@ -49,7 +35,8 @@ class OTPService {
    * @returns {Object} - OTP details
    */
   createOTP(identifier, type = 'email', purpose = 'verification') {
-    // Check if there's an existing OTP
+    try {
+      
     const existing = this.getOTP(identifier);
     if (existing) {
       const timeSinceCreation = Date.now() - existing.createdAt;
@@ -59,11 +46,9 @@ class OTPService {
     }
 
     const otp = this.generateOTP();
-    const otpId = this.generateOTPId();
     const expiresAt = Date.now() + this.otpConfig.expiresIn * 1000;
 
     const otpData = {
-      id: otpId,
       identifier,
       otp,
       type,
@@ -77,12 +62,16 @@ class OTPService {
 
     this.otpStore.set(identifier, otpData);
 
-    // Auto-cleanup after expiry
+    
     setTimeout(() => {
       this.otpStore.delete(identifier);
     }, this.otpConfig.expiresIn * 1000);
 
     return otpData;
+  } catch (error) {
+      logger.error('Error creating OTP:', error.message);
+      throw new Error('Failed to create OTP');
+    }
   }
 
   /**
@@ -91,6 +80,8 @@ class OTPService {
    * @returns {Object|null} - OTP data or null
    */
   getOTP(identifier) {
+    try {
+      
     const otpData = this.otpStore.get(identifier);
     if (!otpData) return null;
 
@@ -101,6 +92,11 @@ class OTPService {
     }
 
     return otpData;
+    } 
+    catch (error) {
+      logger.error('Error getting OTP:', error.message);
+      throw new Error('Failed to get OTP');
+    }
   }
 
   /**
@@ -170,21 +166,13 @@ class OTPService {
    */
   async sendOTPEmail(email, purpose = 'verification', options = {}) {
     try {
+      // This function now primarily creates the OTP. The sending is handled by the controller.
       const otpData = this.createOTP(email, 'email', purpose);
-      
-      const emailContent = this.getEmailTemplate(otpData.otp, purpose);
-
-      await sendEmail({
-        to: email,
-        subject: `${purpose.charAt(0).toUpperCase() + purpose.slice(1)} OTP - CharityConnect`,
-        html: emailContent,
-        ...options,
-      });
 
       return {
         success: true,
         message: `OTP sent to your email for ${purpose}`,
-        otpId: otpData.id,
+        otp: otpData.otp, // Return the OTP to be sent by the controller
         expiresIn: this.otpConfig.expiresIn,
       };
     } catch (error) {
@@ -199,16 +187,16 @@ class OTPService {
    * @param {string} purpose - Purpose of OTP
    * @returns {string} - HTML email template
    */
-  getEmailTemplate(otp, purpose) {
+  getEmailTemplate(otp, purpose, data = {}) {
     const purposeMap = {
       verification: 'Verify your email address',
       login: 'Secure login verification',
       'reset-password': 'Password reset verification',
     };
-
+    const { expiresIn = 5 } = data;
     const purposeText = purposeMap[purpose] || 'Verification';
 
-    return `
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -234,8 +222,8 @@ class OTPService {
             <div class="otp-box">
               <div class="otp-code">${otp}</div>
             </div>
-            <p class="info">This OTP is valid for <strong>5 minutes</strong>. Do not share this code with anyone.</p>
-            <p class="info">If you didn't request this, please ignore this email or contact support.</p>
+            <p class="info">This OTP is valid for <strong>${expiresIn} minutes</strong>. Do not share this code with anyone.</p>
+            <p class="info">If you didn't request this, please ignore this email or contact our support team.</p>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} CharityConnect. All rights reserved.</p>
             </div>
@@ -243,6 +231,8 @@ class OTPService {
         </body>
       </html>
     `;
+
+    return { html };
   }
 
   /**
@@ -284,7 +274,6 @@ class OTPService {
    * @returns {Object} - Result
    */
   async resendOTP(identifier, type = 'email', purpose = 'verification') {
-    // Delete existing OTP
     this.otpStore.delete(identifier);
     
     if (type === 'email') {
@@ -334,7 +323,6 @@ class OTPService {
 // Export singleton instance
 const otpService = new OTPService();
 
-// Clear expired OTPs every 5 minutes
 setInterval(() => {
   otpService.clearExpiredOTPs();
 }, 300000);
