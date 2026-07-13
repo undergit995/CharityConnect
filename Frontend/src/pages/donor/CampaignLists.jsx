@@ -344,7 +344,7 @@ const CampaignList = () => {
       navigate('/auth/login');
       return;
     }
-    navigate(`/donor/campaigns/${campaign._id}/donate`);
+    navigate(`/donor/campaign/${campaign._id}/donate`);
   };
 
   // Apply filters
@@ -378,7 +378,7 @@ const CampaignList = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchCampaigns();
-    }, 30000);
+    }, 300000);
     return () => clearInterval(interval);
   }, [fetchCampaigns]);
 

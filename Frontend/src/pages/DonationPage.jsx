@@ -283,10 +283,10 @@ const DonationPage = () => {
                 <Box sx={{ mb: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      ₹{campaign.raisedAmount?.toLocaleString() || 0}
+                      ₹{campaign.raisedAmount?.toLocaleString('en-IN') || 0}
                     </Typography>
                     <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                      ₹{campaign.goalAmount?.toLocaleString() || 0}
+                      ₹{campaign.goalAmount?.toLocaleString('en-IN') || 0}
                     </Typography>
                   </Box>
                   <LinearProgress
@@ -457,7 +457,7 @@ const DonationPage = () => {
                       Raised
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: '#2ecc71' }}>
-                      ₹{campaign.raisedAmount?.toLocaleString() || 0}
+                      ₹{campaign.raisedAmount?.toLocaleString('en-IN') || 0}
                     </Typography>
                   </Box>
                   <Divider orientation="vertical" flexItem />
@@ -466,7 +466,7 @@ const DonationPage = () => {
                       Goal
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      ₹{campaign.goalAmount?.toLocaleString() || 0}
+                      ₹{campaign.goalAmount?.toLocaleString('en-IN') || 0}
                     </Typography>
                   </Box>
                 </Box>

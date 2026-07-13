@@ -27,6 +27,8 @@ exports.createCampaign = async (req, res) => {
             address,
         } = req.body;
 
+    const charityId = req.userId;
+
         // Validate required fields
         if (!title || !category || !description || !goalAmount || !endDate) {
             // Clean up uploaded files if validation fails
@@ -60,6 +62,33 @@ exports.createCampaign = async (req, res) => {
             });
         }
 
+
+    if (!charity.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your charity is not verified yet. Please complete document verification.',
+        data: {
+          status: 'pending_verification',
+          action: 'Complete document verification',
+          redirect: '/charity/documents',
+        },
+      });
+    }
+
+    const eligibility = await checkEligibility(charityId);
+    if (!eligibility.isEligible) {
+      return res.status(403).json({
+        success: false,
+        message: eligibility.reason || 'Your charity is not eligible for fundraising yet.',
+        data: {
+          status: 'not_eligible',
+          missingDocs: eligibility.missingDocs,
+          progress: eligibility.progress,
+          action: 'Complete verification requirements',
+          redirect: '/charity/documents',
+        },
+      });
+    }
         // Parse address if provided as JSON string
         let parsedAddress = {};
         if (address) {

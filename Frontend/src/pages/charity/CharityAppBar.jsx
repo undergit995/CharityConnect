@@ -208,14 +208,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
                 >
                   {user?.fullName || 'Charity'}
                 </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: isDark ? '#6a6a80' : '#9a9ab0',
-                  }}
-                >
-                  {user?.email || 'charityconnect'}
-                </Typography>
               </Box>
               <ExpandMoreIcon sx={{ fontSize: 20, color: isDark ? '#a0a0b8' : '#4a4a6a' }} />
             </Box>
@@ -247,18 +239,6 @@ const CharityAppBar = ({ onDrawerToggle }) => {
           </Typography>
         </Box>
         <Divider />
-        <MenuItem onClick={() => handleNavigate('/charity/dashboard')}>
-          <ListItemIcon><DashboardIcon fontSize="small" /></ListItemIcon>
-          Dashboard
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/charity/campaigns')}>
-          <ListItemIcon><CampaignIcon fontSize="small" /></ListItemIcon>
-          My Campaigns
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/charity/campaigns/create')}>
-          <ListItemIcon><AddIcon fontSize="small" /></ListItemIcon>
-          Create Campaign
-        </MenuItem>
         <MenuItem onClick={() => handleNavigate('/charity/donations')}>
           <ListItemIcon><DonateIcon fontSize="small" /></ListItemIcon>
           Donations

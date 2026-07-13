@@ -52,7 +52,7 @@ import {
   Share as ShareIcon,
   Receipt as ReceiptIcon,
 } from '@mui/icons-material';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
 
@@ -64,7 +64,7 @@ const TabPanel = ({ children, value, index }) => (
 
 const CharityProfile = () => {
   const { isDark } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, api } = useAuth();
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [isEditing, setIsEditing] = useState(false);
@@ -72,6 +72,10 @@ const CharityProfile = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [tabValue, setTabValue] = useState(0);
+  const [stats, setStats] = useState({ totalRaised: 0, totalDonors: 0, activeCampaigns: 0 });
+  const [campaigns, setCampaigns] = useState([]);
+  const [recentDonations, setRecentDonations] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -136,17 +140,42 @@ const CharityProfile = () => {
     }
   }, [user]);
 
-  const campaigns = [
-    { id: 1, title: 'Clean Water Initiative', raised: 125000, goal: 200000, donors: 3450, status: 'Active' },
-    { id: 2, title: 'Education for All', raised: 89000, goal: 150000, donors: 2100, status: 'Active' },
-    { id: 3, title: 'Medical Relief Fund', raised: 215000, goal: 300000, donors: 5600, status: 'Completed' },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user?._id) return;
+      setDataLoading(true);
+      try {
+        // Fetch stats, campaigns, and donations in parallel
+        const [statsRes, campaignsRes, donationsRes] = await Promise.all([
+          api.get('/charity/dashboard/stats'),
+          api.get(`/campaigns/charity/${user._id}?limit=5`),
+          api.get(`/charity/donations?limit=5`)
+        ]);
 
-  const recentDonations = [
-    { id: 1, donor: 'John Doe', amount: 500, date: '2024-01-15', status: 'Completed' },
-    { id: 2, donor: 'Sarah Smith', amount: 250, date: '2024-01-14', status: 'Completed' },
-    { id: 3, donor: 'Mike Johnson', amount: 1000, date: '2024-01-13', status: 'Pending' },
-  ];
+        if (statsRes.data.success) {
+          const { stats: summaryStats, campaignStatus } = statsRes.data.data;
+          setStats({
+            totalRaised: summaryStats?.totalRaised || 0,
+            totalDonors: summaryStats?.totalDonors || 0,
+            activeCampaigns: campaignStatus?.active || 0,
+          });
+        }
+
+        if (campaignsRes.data.success) {
+          setCampaigns(campaignsRes.data.data);
+        }
+
+        if (donationsRes.data.success) {
+          setRecentDonations(donationsRes.data.data);
+        }
+      } catch (err) {
+        setError('Failed to load profile data.');
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    fetchData();
+  }, [user?._id, api]);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -418,7 +447,7 @@ const CharityProfile = () => {
                   <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                        4
+                        {dataLoading ? <CircularProgress size={20} /> : stats.activeCampaigns}
                       </Typography>
                       <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                         Active Campaigns
@@ -426,7 +455,7 @@ const CharityProfile = () => {
                     </Box>
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                        ₹429K
+                        {dataLoading ? <CircularProgress size={20} /> : `₹${stats.totalRaised.toLocaleString('en-IN')}`}
                       </Typography>
                       <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                         Total Raised
@@ -434,7 +463,7 @@ const CharityProfile = () => {
                     </Box>
                     <Box>
                       <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                        11,150
+                        {dataLoading ? <CircularProgress size={20} /> : stats.totalDonors.toLocaleString('en-IN')}
                       </Typography>
                       <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                         Total Donors
@@ -582,96 +611,118 @@ const CharityProfile = () => {
 
           {/* Campaigns Tab */}
           <TabPanel value={tabValue} index={0}>
-            <Box sx={{ p: 3 }}>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Campaign</TableCell>
-                      <TableCell align="right">Raised</TableCell>
-                      <TableCell align="right">Goal</TableCell>
-                      <TableCell align="right">Donors</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {campaigns.map((campaign) => (
-                      <TableRow key={campaign.id}>
-                        <TableCell sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                          {campaign.title}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: '#2ecc71', fontWeight: 600 }}>
-                          ₹{campaign.raised.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                          ₹{campaign.goal.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                          {campaign.donors.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={campaign.status}
-                            size="small"
-                            sx={{
-                              backgroundColor: campaign.status === 'Active' 
-                                ? 'rgba(46, 204, 113, 0.15)' 
-                                : 'rgba(155, 89, 182, 0.15)',
-                              color: campaign.status === 'Active' ? '#2ecc71' : '#9b59b6',
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+            <AnimatePresence>
+              <Box sx={{ p: 3 }}>
+                {dataLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Campaign</TableCell>
+                          <TableCell align="right">Raised</TableCell>
+                          <TableCell align="right">Goal</TableCell>
+                          <TableCell align="right">Donors</TableCell>
+                          <TableCell align="center">Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {campaigns.map((campaign) => (
+                          <TableRow key={campaign._id}>
+                            <TableCell sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
+                              {campaign.title}
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: '#2ecc71', fontWeight: 600 }}>
+                              ₹{(campaign.raisedAmount || 0).toLocaleString('en-IN')}
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                              ₹{(campaign.goalAmount || 0).toLocaleString('en-IN')}
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                              {(campaign.stats?.donorCount || 0).toLocaleString('en-IN')}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={campaign.status}
+                                size="small"
+                                sx={{
+                                  backgroundColor: campaign.status === 'active'
+                                    ? 'rgba(46, 204, 113, 0.15)'
+                                    : campaign.status === 'completed'
+                                      ? 'rgba(155, 89, 182, 0.15)'
+                                      : 'rgba(243, 156, 18, 0.15)',
+                                  color: campaign.status === 'active'
+                                    ? '#2ecc71'
+                                    : campaign.status === 'completed'
+                                      ? '#9b59b6'
+                                      : '#f39c12',
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
+            </AnimatePresence>
           </TabPanel>
 
           {/* Donations Tab */}
           <TabPanel value={tabValue} index={1}>
-            <Box sx={{ p: 3 }}>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Donor</TableCell>
-                      <TableCell align="right">Amount</TableCell>
-                      <TableCell align="right">Date</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {recentDonations.map((donation) => (
-                      <TableRow key={donation.id}>
-                        <TableCell sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                          {donation.donor}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                          ₹{donation.amount}
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                          {donation.date}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={donation.status}
-                            size="small"
-                            sx={{
-                              backgroundColor: donation.status === 'Completed' 
-                                ? 'rgba(46, 204, 113, 0.15)' 
-                                : 'rgba(243, 156, 18, 0.15)',
-                              color: donation.status === 'Completed' ? '#2ecc71' : '#f39c12',
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
+            <AnimatePresence>
+              <Box sx={{ p: 3 }}>
+                {dataLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Donor</TableCell>
+                          <TableCell>Campaign</TableCell>
+                          <TableCell align="right">Amount</TableCell>
+                          <TableCell align="right">Date</TableCell>
+                          <TableCell align="center">Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {recentDonations.map((donation) => (
+                          <TableRow key={donation._id}>
+                            <TableCell sx={{ color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
+                              {donation.isAnonymous ? 'Anonymous' : donation.donorId?.fullName || 'N/A'}
+                            </TableCell>
+                            <TableCell sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                              {donation.campaignId?.title || 'N/A'}
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600, color: '#2ecc71' }}>
+                              ₹{donation.amount.toLocaleString('en-IN')}
+                            </TableCell>
+                            <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                              {new Date(donation.donationDate).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={donation.status}
+                                size="small"
+                                sx={{
+                                  backgroundColor: donation.status === 'Completed'
+                                    ? 'rgba(46, 204, 113, 0.15)'
+                                    : 'rgba(243, 156, 18, 0.15)',
+                                  color: donation.status === 'Completed' ? '#2ecc71' : '#f39c12',
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
+            </AnimatePresence>
           </TabPanel>
 
           {/* Settings Tab */}

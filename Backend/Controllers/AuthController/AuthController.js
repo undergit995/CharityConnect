@@ -14,6 +14,8 @@ const {
   validatePasswordDetailed,
 } = require("../../utils/validators");
 const Validators = require("../../utils/validators");
+const { truncate } = require("fs");
+const { createVerificationRecord } = require("../../services/verficationService");
 const JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
 
@@ -155,9 +157,9 @@ exports.register = async (req, res) => {
       phone,
       password: hashedPassword,
       role: normalizedRole,
-      isApproved: normalizedRole === "donor",
+      isApproved: true,
       isActive: true,
-      emailVerified: false,
+      emailVerified: true,
       acceptTerms: acceptTerms === "true" || acceptTerms === true,
       address: address || "",
       city: city || "",
@@ -201,6 +203,9 @@ exports.register = async (req, res) => {
 
     const user = new User(userData);
     await user.save();
+    if (user.role === 'charity') {
+      await createVerificationRecord(user._id);
+    }
 
     await logActivity(user._id, "User registered", {
       role: normalizedRole,
@@ -357,9 +362,9 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(200).json({
+      return res.status(400).json({
         success: true,
-        message: "If an account exists, a reset link will be sent.",
+        message: "If an account exists, a reset link will be sent,but no account on this email",
       });
     }
 
@@ -373,11 +378,9 @@ exports.forgotPassword = async (req, res) => {
 
     const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/auth/reset-password?token=${resetToken}`;
 
-    // Use the specific email function
     await sendPasswordResetEmail(email, user.fullName, resetUrl).catch(
       (error) => {
         console.error("Forgot password email sending error:", error);
-        // Continue execution even if email fails, as per original logic
       },
     );
 

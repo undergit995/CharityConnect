@@ -519,8 +519,8 @@ const ForgotPassword = () => {
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Typography variant="body2" color="textSecondary">
               Need help?{' '}
-              <a
-                href="/contact"
+              <RouterLink
+                to="/contact"
                 style={{
                   color: '#667eea',
                   textDecoration: 'none',
@@ -528,7 +528,7 @@ const ForgotPassword = () => {
                 }}
               >
                 Contact Support
-              </a>
+              </RouterLink>
             </Typography>
           </Box>
         </motion.div>

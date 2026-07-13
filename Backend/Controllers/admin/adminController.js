@@ -174,7 +174,6 @@ exports.getCharityById = async (req, res) => {
 
         const charity = await User.findById(id)
             .select('-password -resetPasswordToken -resetPasswordExpires')
-            .populate('campaigns', 'title status raisedAmount goalAmount');
 
         if (!charity || charity.role !== "charity") {
             return res.status(404).json({
@@ -182,6 +181,12 @@ exports.getCharityById = async (req, res) => {
                 message: "Charity not found"
             });
         }
+
+        // Fetch campaigns separately
+        const campaigns = await Campaign.find({ charityId: id }).select(
+            "title status raisedAmount goalAmount"
+        );
+
 
         // Get campaign stats
         const campaignStats = await Campaign.aggregate([
@@ -203,6 +208,7 @@ exports.getCharityById = async (req, res) => {
             success: true,
             data: {
                 charity,
+                campaigns,
                 campaignStats: campaignStats[0] || {
                     totalCampaigns: 0,
                     activeCampaigns: 0,

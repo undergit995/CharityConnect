@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const crypto = require("crypto");
-const { razorpay, verifyPaymentSignature } = require('../../config/razorpay');
-const Donation = require('../../models/Donation');
-const Campaign = require('../../models/CampaignModel');
-const User = require('../../models/User');
-const { sendEmail } = require('../../utils/emailService');
+const { razorpay, verifyPaymentSignature } = require("../../config/razorpay");
+const Donation = require("../../models/Donation");
+const Campaign = require("../../models/CampaignModel");
+const User = require("../../models/User");
+const { sendEmail } = require("../../utils/emailService");
 
 /**
  * @desc Create Razorpay order
@@ -13,19 +13,25 @@ const { sendEmail } = require('../../utils/emailService');
  */
 exports.createOrder = async (req, res) => {
   try {
-    const { amount, campaignId, currency = 'INR', isAnonymous, message } = req.body;
+    const {
+      amount,
+      campaignId,
+      currency = "INR",
+      isAnonymous,
+      message,
+    } = req.body;
 
     if (!amount || amount < 1) {
       return res.status(400).json({
         success: false,
-        message: 'Valid donation amount is required',
+        message: "Valid donation amount is required",
       });
     }
 
     if (!campaignId) {
       return res.status(400).json({
         success: false,
-        message: 'Campaign ID is required',
+        message: "Campaign ID is required",
       });
     }
 
@@ -34,14 +40,14 @@ exports.createOrder = async (req, res) => {
     if (!campaign) {
       return res.status(404).json({
         success: false,
-        message: 'Campaign not found',
+        message: "Campaign not found",
       });
     }
 
-    if (campaign.status !== 'active' || !campaign.isActive) {
+    if (campaign.status !== "active" || !campaign.isActive) {
       return res.status(400).json({
         success: false,
-        message: 'Campaign is not active',
+        message: "Campaign is not active",
       });
     }
 
@@ -53,8 +59,8 @@ exports.createOrder = async (req, res) => {
       notes: {
         campaignId: campaignId.toString(),
         userId: req.userId,
-        isAnonymous: isAnonymous ? 'true' : 'false',
-        message: message || '',
+        isAnonymous: isAnonymous ? "true" : "false",
+        message: message || "",
       },
     };
 
@@ -68,15 +74,15 @@ exports.createOrder = async (req, res) => {
       amount: amount,
       currency: currency,
       isAnonymous: isAnonymous || false,
-      message: message || '',
-      paymentMethod: 'razorpay',
+      message: message || "",
+      paymentMethod: "razorpay",
       razorpayOrderId: order.id,
-      status: 'Pending',
+      status: "Pending",
       donationDate: new Date(),
     });
 
     await donation.save();
-console.log(donation);
+    console.log(donation);
 
     res.status(200).json({
       success: true,
@@ -88,12 +94,11 @@ console.log(donation);
         donationId: donation._id,
       },
     });
-
   } catch (error) {
-    console.error('Create order error:', error);
+    console.error("Create order error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create payment order',
+      message: "Failed to create payment order",
       error: error.message,
     });
   }
@@ -106,12 +111,7 @@ console.log(donation);
  */
 exports.verifyPayment = async (req, res) => {
   try {
-    const {
-      orderId,
-      paymentId,
-      signature,
-      donationId,
-    } = req.body;
+    const { orderId, paymentId, signature, donationId } = req.body;
 
     // Verify signature
     const isValid = verifyPaymentSignature(orderId, paymentId, signature);
@@ -119,7 +119,7 @@ exports.verifyPayment = async (req, res) => {
     if (!isValid) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid payment signature',
+        message: "Invalid payment signature",
       });
     }
 
@@ -128,12 +128,12 @@ exports.verifyPayment = async (req, res) => {
     if (!donation) {
       return res.status(404).json({
         success: false,
-        message: 'Donation not found',
+        message: "Donation not found",
       });
     }
 
     // Update donation status
-    donation.status = 'Completed';
+    donation.status = "Completed";
     donation.razorpayPaymentId = paymentId;
     donation.razorpaySignature = signature;
     donation.transactionId = paymentId;
@@ -150,7 +150,8 @@ exports.verifyPayment = async (req, res) => {
     if (campaign) {
       campaign.raisedAmount = (campaign.raisedAmount || 0) + donation.amount;
       campaign.stats.donorCount = (campaign.stats.donorCount || 0) + 1;
-      campaign.stats.averageDonation = campaign.raisedAmount / campaign.stats.donorCount;
+      campaign.stats.averageDonation =
+        campaign.raisedAmount / campaign.stats.donorCount;
       await campaign.save();
     }
 
@@ -158,8 +159,8 @@ exports.verifyPayment = async (req, res) => {
     if (donation.donorId) {
       await User.findByIdAndUpdate(donation.donorId, {
         $inc: {
-          'stats.totalDonations': 1,
-          'stats.totalDonationAmount': donation.amount,
+          "stats.totalDonations": 1,
+          "stats.totalDonationAmount": donation.amount,
         },
       });
     }
@@ -189,7 +190,7 @@ exports.verifyPayment = async (req, res) => {
                 <h1>Thank You! 🙏</h1>
               </div>
               <div class="content">
-                <h2>Dear ${donor.fullName || 'Donor'},</h2>
+                <h2>Dear ${donor.fullName || "Donor"},</h2>
                 <p>Thank you for your generous donation to <strong>${campaign.title}</strong>.</p>
                 <div class="receipt-box">
                   <div class="row">
@@ -224,18 +225,17 @@ exports.verifyPayment = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Payment verified successfully',
+      message: "Payment verified successfully",
       data: {
         donationId: donation._id,
         receiptNumber: donation.receiptNumber,
       },
     });
-
   } catch (error) {
-    console.error('Verify payment error:', error);
+    console.error("Verify payment error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to verify payment',
+      message: "Failed to verify payment",
       error: error.message,
     });
   }
@@ -249,32 +249,32 @@ exports.verifyPayment = async (req, res) => {
 exports.handleWebhook = async (req, res) => {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-    const signature = req.headers['x-razorpay-signature'];
+    const signature = req.headers["x-razorpay-signature"];
 
     // Verify webhook signature
     const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
+      .createHmac("sha256", webhookSecret)
       .update(JSON.stringify(req.body))
-      .digest('hex');
+      .digest("hex");
 
     if (expectedSignature !== signature) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid webhook signature',
+        message: "Invalid webhook signature",
       });
     }
 
     const { event, payload } = req.body;
 
-    if (event === 'payment.captured') {
+    if (event === "payment.captured") {
       const payment = payload.payment.entity;
       const orderId = payment.order_id;
 
       // Find donation by order ID
       const donation = await Donation.findOne({ razorpayOrderId: orderId });
-      
-      if (donation && donation.status === 'Pending') {
-        donation.status = 'Completed';
+
+      if (donation && donation.status === "Pending") {
+        donation.status = "Completed";
         donation.razorpayPaymentId = payment.id;
         donation.transactionId = payment.id;
         donation.completedAt = new Date();
@@ -288,7 +288,8 @@ exports.handleWebhook = async (req, res) => {
         // Update campaign stats
         const campaign = await Campaign.findById(donation.campaignId);
         if (campaign) {
-          campaign.raisedAmount = (campaign.raisedAmount || 0) + donation.amount;
+          campaign.raisedAmount =
+            (campaign.raisedAmount || 0) + donation.amount;
           campaign.stats.donorCount = (campaign.stats.donorCount || 0) + 1;
           await campaign.save();
         }
@@ -297,8 +298,8 @@ exports.handleWebhook = async (req, res) => {
         if (donation.donorId) {
           await User.findByIdAndUpdate(donation.donorId, {
             $inc: {
-              'stats.totalDonations': 1,
-              'stats.totalDonationAmount': donation.amount,
+              "stats.totalDonations": 1,
+              "stats.totalDonationAmount": donation.amount,
             },
           });
         }
@@ -306,12 +307,11 @@ exports.handleWebhook = async (req, res) => {
     }
 
     res.status(200).json({ success: true });
-
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error("Webhook error:", error);
     res.status(500).json({
       success: false,
-      message: 'Webhook processing failed',
+      message: "Webhook processing failed",
     });
   }
 };

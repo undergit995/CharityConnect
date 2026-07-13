@@ -166,14 +166,14 @@ const FilterDrawer = ({ open, onClose, filters, onApply, onReset }) => {
           min={0}
           max={1000000}
           step={1000}
-          valueLabelFormat={(value) => `$${value.toLocaleString()}`}
+          valueLabelFormat={(value) => `₹${value.toLocaleString('en-IN')}`}
         />
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-            ${(localFilters.minGoal || 0).toLocaleString()}
+            ₹{(localFilters.minGoal || 0).toLocaleString('en-IN')}
           </Typography>
           <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-            ${(localFilters.maxGoal || 1000000).toLocaleString()}
+            ₹{(localFilters.maxGoal || 1000000).toLocaleString('en-IN')}
           </Typography>
         </Box>
       </Box>
@@ -244,7 +244,7 @@ const FilterDrawer = ({ open, onClose, filters, onApply, onReset }) => {
 };
 
 // Main Campaign List Component
-const CampaignList = () => {
+const CampaignLists = () => {
   const { isDark } = useTheme();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
@@ -370,7 +370,7 @@ const CampaignList = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchCampaigns();
-    }, 30000);
+    }, 300000);
     return () => clearInterval(interval);
   }, [fetchCampaigns]);
 
@@ -573,4 +573,4 @@ const CampaignList = () => {
   );
 };
 
-export default CampaignList;
+export default CampaignLists;

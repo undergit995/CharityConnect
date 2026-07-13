@@ -361,11 +361,11 @@ const CampaignRow = ({ campaign, onAction, isProcessing, version }) => {
       <TableCell>
         <Box sx={{ minWidth: 150 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-              ${(campaign.raisedAmount || 0).toLocaleString()}
+            <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+              ₹{(campaign.raisedAmount || 0).toLocaleString('en-IN')}
             </Typography>
-            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-              ${(campaign.goalAmount || 0).toLocaleString()}
+            <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+              ₹{(campaign.goalAmount || 0).toLocaleString('en-IN')}
             </Typography>
           </Box>
           <LinearProgress

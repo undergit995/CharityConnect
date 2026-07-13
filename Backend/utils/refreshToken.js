@@ -13,7 +13,7 @@ const generateTokens = (user, existingRefreshToken = null) => {
     tokenVersion: user.tokenVersion || 0,
   };
 
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '1m' });
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '10m' });
 
   
   const refreshToken = existingRefreshToken

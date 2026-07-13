@@ -1,5 +1,5 @@
-import React from 'react';
-import {
+import React, { useState, useEffect } from 'react';
+import { CircularProgress,
   Box,
   List,
   ListItem,
@@ -24,6 +24,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { api } from '../../Services/authServices';
 
 const CharitySidebar = () => {
   const navigate = useNavigate();
@@ -31,20 +32,49 @@ const CharitySidebar = () => {
   const { isDark } = useTheme();
   const { user, logout } = useAuth();
 
+  const [stats, setStats] = useState({
+    activeCampaigns: 0,
+    totalRaised: 0,
+    totalDonors: 0,
+    loading: true,
+  });
+
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/charity/dashboard' },
     { text: 'My Campaigns', icon: <CampaignIcon />, path: '/charity/campaigns' },
     { text: 'Create Campaign', icon: <AddIcon />, path: '/charity/campaigns/create' },
     { text: 'Donations', icon: <DonateIcon />, path: '/charity/donations' },
-    { text: 'Analytics', icon: <TrendingUpIcon />, path: '/charity/analytics' },
+    // { text: 'Analytics', icon: <TrendingUpIcon />, path: '/charity/analytics' },
     { text: 'Profile', icon: <PersonIcon />, path: '/charity/profile' },
   ];
 
-  const stats = [
-    { label: 'Active Campaigns', value: '4' },
-    { label: 'Total Raised', value: '12,450' },
-    { label: 'Total Donors', value: '87' },
-  ];
+  // Fetch charity stats
+  useEffect(() => {
+    const fetchCharityStats = async () => {
+      try {
+        const response = await api.get('/charity/dashboard/stats');
+        if (response.data.success) {
+          const { stats: summaryStats, campaignStatus } = response.data.data;
+          setStats({
+            activeCampaigns: campaignStatus?.active || 0,
+            totalRaised: summaryStats?.totalRaised || 0,
+            totalDonors: summaryStats?.totalDonors || 0,
+            loading: false,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch charity stats:', error);
+        setStats(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    fetchCharityStats();
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth/login');
+  };
 
   return (
     <Box
@@ -55,7 +85,6 @@ const CharitySidebar = () => {
         pt: 8,
       }}
     >
-      {/* User Info */}
       <Box sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <Avatar
@@ -85,16 +114,38 @@ const CharitySidebar = () => {
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          {stats.map((stat, index) => (
-            <Box key={index}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                {stat.value}
-              </Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                {stat.label}
-              </Typography>
-            </Box>
-          ))}
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
+              {stats.loading ? <CircularProgress size={20} /> : stats.activeCampaigns}
+            </Typography>
+            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+              Active Campaigns
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
+              {stats.loading ? (
+                <CircularProgress size={20} />
+              ) : (
+                `₹${stats.totalRaised.toLocaleString('en-IN')}`
+              )}
+            </Typography>
+            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+              Total Raised
+            </Typography>
+          </Box>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
+              {stats.loading ? (
+                <CircularProgress size={20} />
+              ) : (
+                stats.totalDonors.toLocaleString('en-IN')
+              )}
+            </Typography>
+            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+              Total Donors
+            </Typography>
+          </Box>
         </Box>
         <Divider sx={{ mt: 2, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
       </Box>
@@ -172,7 +223,7 @@ const CharitySidebar = () => {
         <Divider sx={{ mb: 2, borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
         <ListItem
           button
-          onClick={logout}
+          onClick={handleLogout}
           sx={{
             borderRadius: 2,
             '&:hover': {

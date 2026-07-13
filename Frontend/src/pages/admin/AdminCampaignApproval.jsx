@@ -382,14 +382,14 @@ const AdminCampaignApproval = () => {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                            ${campaign.goalAmount?.toLocaleString() || 0}
+                            ₹{campaign.goalAmount?.toLocaleString('en-IN') || 0}
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ minWidth: 120 }}>
                           <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                               <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                                ${campaign.raisedAmount?.toLocaleString() || 0}
+                                ₹{campaign.raisedAmount?.toLocaleString('en-IN') || 0}
                               </Typography>
                               <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                                 {Math.round(progress)}%
@@ -518,7 +518,7 @@ const AdminCampaignApproval = () => {
                         Goal Amount
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        ₹{selectedCampaign.goalAmount?.toLocaleString() || 0}
+                        ₹{selectedCampaign.goalAmount?.toLocaleString('en-IN') || 0}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -526,7 +526,7 @@ const AdminCampaignApproval = () => {
                         Raised Amount
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                        ₹{selectedCampaign.raisedAmount?.toLocaleString() || 0}
+                        ₹{selectedCampaign.raisedAmount?.toLocaleString('en-IN') || 0}
                       </Typography>
                     </Grid>
                     <Grid item xs={12}>

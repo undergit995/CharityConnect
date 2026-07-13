@@ -41,7 +41,7 @@ import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 import RazorpayDonation from '../../payment/RazorpayDonation';
 
-const DonationPage = () => {
+const DonationPageModal = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
@@ -54,7 +54,7 @@ const DonationPage = () => {
   
   // Donation states
   const [amount, setAmount] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false); // ✅ Anonymous toggle moved here
+  const [isAnonymous, setIsAnonymous] = useState(false);
   const [message, setMessage] = useState('');
   const [step, setStep] = useState(0);
   const [showRazorpay, setShowRazorpay] = useState(false);
@@ -720,4 +720,4 @@ const DonationPage = () => {
   );
 };
 
-export default DonationPage;
+export default DonationPageModal;

@@ -1,4 +1,3 @@
-// services/verificationService.js
 import { api } from './authServices';
 
 class VerificationService {
@@ -24,16 +23,17 @@ class VerificationService {
    * @param {File} file - File to upload
    * @returns {Promise} - Upload response
    */
-  async uploadDocument(charityId, documentType, file) {
+  async uploadDocument(charityId, documentType, file, onUploadProgress) {
     try {
       const formData = new FormData();
       formData.append('documentType', documentType);
-      formData.append('file', file);
+      formData.append('document', file);
 
       const response = await api.post(`/verification/upload/${charityId}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress,
       });
       return response.data;
     } catch (error) {

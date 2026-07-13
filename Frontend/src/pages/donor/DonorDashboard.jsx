@@ -153,7 +153,7 @@ const DonationHistoryTable = ({ donations, loading, onUpdate }) => {
                   {donation.campaignId?.title || 'N/A'}
                 </TableCell>
                 <TableCell align="right" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                  ${donation.amount?.toLocaleString() || 0}
+                  ₹{donation.amount?.toLocaleString('en-IN') || 0}
                 </TableCell>
                 <TableCell align="right" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
                   {new Date(donation.donationDate).toLocaleDateString()}

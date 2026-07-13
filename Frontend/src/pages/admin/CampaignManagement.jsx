@@ -342,10 +342,10 @@ const AdminManageCampaigns = () => {
                           <Box>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                               <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                                ${campaign.raisedAmount?.toLocaleString() || 0}
+                                ₹{campaign.raisedAmount?.toLocaleString('en-IN') || 0}
                               </Typography>
                               <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                                ${campaign.goalAmount?.toLocaleString() || 0}
+                                ₹{campaign.goalAmount?.toLocaleString('en-IN') || 0}
                               </Typography>
                             </Box>
                             <LinearProgress
@@ -472,7 +472,7 @@ const AdminManageCampaigns = () => {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-              Are you sure you want to {dialogAction} campaign{' '}
+              Are you sure you want to {dialogAction} campaign
               <strong>{selectedCampaign?.title}</strong>?
               {dialogAction === 'delete' && ' This action cannot be undone.'}
             </Typography>

@@ -100,7 +100,7 @@ const CampaignDetails = () => {
   };
 
   const handleDonationSuccess = () => {
-    fetchCampaignData(); // Refresh campaign data
+    fetchCampaignData();
   };
 
   if (loading) {

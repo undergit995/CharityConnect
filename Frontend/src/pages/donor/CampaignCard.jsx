@@ -216,10 +216,10 @@ export const CampaignCard = ({ campaign, onSave, isSaving, onDonate }) => {
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
               <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                ${(campaign.raisedAmount || 0).toLocaleString()}
+                ₹{(campaign.raisedAmount || 0).toLocaleString('en-IN')}
               </Typography>
               <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                ${(campaign.goalAmount || 0).toLocaleString()}
+                ₹{(campaign.goalAmount || 0).toLocaleString('en-IN')}
               </Typography>
             </Box>
             <LinearProgress

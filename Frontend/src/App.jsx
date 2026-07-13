@@ -21,7 +21,7 @@ import { WarningAmberOutlined } from "@mui/icons-material";
 import { api, authService } from "./Services/authServices";
 import CampaignDetails from "./pages/CampaignDetails";
 import AdminCampaignApproval from "./pages/admin/AdminCampaignApproval";
-import CampaignList from "./pages/CampaignList";
+import CampaignLists from "./pages/CampaignList";
 
 // import { ProtectedRoute, AdminRoute, CharityRoute, DonorRoute } from './components/ProtectedRoute';
 // import { theme } from './styles/theme';
@@ -36,9 +36,9 @@ const AuthLoader = lazy(() => import("./commonComponents/AuthLoader"));
 
 // Dashboard components
 // const Dashboard = lazy(() => import('./pages/Dashboard'));
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const CharityDashboard = lazy(() => import('./pages/charity/CharityDashboard'));
-const DonorDashboard = lazy(() => import('./pages/donor/DonorDashboard'));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const CharityDashboard = lazy(() => import("./pages/charity/CharityDashboard"));
+const DonorDashboard = lazy(() => import("./pages/donor/DonorDashboard"));
 
 // // Profile and Settings
 // const Profile = lazy(() => import('./pages/Profile'));
@@ -47,25 +47,27 @@ const DonorDashboard = lazy(() => import('./pages/donor/DonorDashboard'));
 
 // // Campaign pages
 // const CampaignList = lazy(() => import('./pages/CampaignList'));
-const CampaignPage = lazy(() => import('./pages/CampaignPage'));
+const CampaignPage = lazy(() => import("./pages/CampaignPage"));
 // const CreateCampaign = lazy(() => import('./pages/CreateCampaign'));
 // const EditCampaign = lazy(() => import('./pages/EditCampaign'));
 // const CampaignManagement = lazy(() => import('./pages/CampaignManagement'));
 
 // // Donation pages
-const DonationPage = lazy(() => import('./components/campaign/DonationModal'));
+const DonationPage = lazy(() => import("./components/campaign/DonationModal"));
 // const DonationHistory = lazy(() => import('./pages/DonationHistory'));
 // const DonationReceipt = lazy(() => import('./pages/DonationReceipt'));
 
 // // Charity pages
 // const CharityProfile = lazy(() => import('./pages/CharityProfile'));
-const CharityVerification = lazy(() => import('./pages/admin/CharityVerification'));
-const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
+const CharityVerification = lazy(
+  () => import("./pages/charity/CharityVerification"),
+);
+const AdminVerification = lazy(() => import("./pages/admin/AdminVerification"));
 
 // Common pages
 // const HomePage = lazy(() => import('./pages/HomePage'));
 // const About = lazy(() => import('./pages/About'));
-// const Contact = lazy(() => import('./pages/Contact'));
+const ContactUs = lazy(() => import("./pages/ContactUs"));
 // const FAQ = lazy(() => import('./pages/FAQ'));
 // const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 // const TermsConditions = lazy(() => import('./pages/TermsConditions'));
@@ -101,13 +103,13 @@ const globalStyles = {
 };
 
 // Loading Components
-const PageLoader = () => {    
+const PageLoader = () => {
   let isDark = false;
   try {
     const theme = useTheme();
     isDark = theme.isDark;
   } catch {
-    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
   return (
@@ -240,7 +242,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
           }}
         >
           <span role="img" aria-label="error">
-            <WarningAmberOutlined/>
+            <WarningAmberOutlined />
           </span>
         </div>
 
@@ -387,7 +389,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
   );
 };
 
-
 // Routes Configuration
 // const AppRoutes = () => {
 //   const { isAuthenticated, loading } = useAuth();
@@ -410,9 +411,9 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //         <Route path="/contact" element={<Contact />} />
 //         <Route path="/faq" element={<FAQ />} />
 //         <Route path="/privacy" element={<PrivacyPolicy />} />
-//         <Route path="/terms" element={<TermsConditions />} /> 
+//         <Route path="/terms" element={<TermsConditions />} />
 
-//         {/* Auth Routes 
+//         {/* Auth Routes
 //         <Route
 //           path="/auth/login"
 //           element={
@@ -433,12 +434,12 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //         <Route path="/auth/verify-email" element={<VerifyEmail />} />
 //         <Route path="/auth/verify-otp" element={<VerifyOTP />} />
 
-//         {/* Campaign Routes 
-//         {/* <Route path="/campaigns" element={<CampaignList />} /> 
+//         {/* Campaign Routes
+//         {/* <Route path="/campaigns" element={<CampaignList />} />
 //         {/* <Route path="/campaigns/:id" element={<CampaignDetails />} />
 //         <Route path="/campaigns/:id/donate" element={<DonationPage />} />
 
-//         <Route path="/charity/:id" element={<CharityProfile />} /> 
+//         <Route path="/charity/:id" element={<CharityProfile />} />
 
 //         <Route element={<ProtectedRoute />}>
 //           {/* <Route path="/dashboard" element={<Dashboard />} />
@@ -446,15 +447,15 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //           <Route path="/settings" element={<Settings />} />
 //           <Route path="/notifications" element={<NotificationPreferences />} />
 //           <Route path="/donations" element={<DonationHistory />} />
-//           <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> 
+//           <Route path="/donations/:id/receipt" element={<DonationReceipt />} />
 //         </Route>
 
-//         {/* Donor Routes 
+//         {/* Donor Routes
 //          <Route element={<DonorRoute />}>
 //           <Route path="/donor/dashboard" element={<DonorDashboard />} />
 //         </Route>
 
-//         {/* Charity Routes 
+//         {/* Charity Routes
 //         <Route element={<CharityRoute />}>
 //           <Route path="/charity/dashboard" element={<CharityDashboard />} />
 //           <Route
@@ -471,14 +472,14 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //           />
 //         </Route>
 
-//         {/* Admin Routes 
+//         {/* Admin Routes
 //         <Route element={<AdminRoute />}>
 //           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 //           <Route path="/admin/charities" element={<CharityManagement />} />
 //           <Route path="/admin/campaigns" element={<CampaignManagement />} />
 //         </Route>
 
-//         {/* Error Routes 
+//         {/* Error Routes
 //         <Route path="/unauthorized" element={<Unauthorized />} />
 //         <Route path="/maintenance" element={<Maintenance />} />
 //         <Route path="*" element={<NotFound />} />
@@ -488,8 +489,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 // }; */}
 
 // // Main App Component
-
-
 
 //       <Routes>
 //         {/* Public Routes */}
@@ -545,7 +544,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //           <Route path="/donor/dashboard" element={<DonorDashboard />} />
 //         </Route>
 
-//         {/* Charity Routes 
+//         {/* Charity Routes
 //         <Route element={<CharityRoute />}>
 //           <Route path="/charity/dashboard" element={<CharityDashboard />} />
 //           <Route
@@ -562,14 +561,14 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //           />
 //         </Route>
 
-//         {/* Admin Routes 
+//         {/* Admin Routes
 //         <Route element={<AdminRoute />}>
 //           <Route path="/admin/dashboard" element={<AdminDashboard />} />
 //           <Route path="/admin/charities" element={<CharityManagement />} />
 //           <Route path="/admin/campaigns" element={<CampaignManagement />} />
 //         </Route>
 
-//         {/* Error Routes 
+//         {/* Error Routes
 //         <Route path="/unauthorized" element={<Unauthorized />} />
 //         <Route path="/maintenance" element={<Maintenance />} />
 //         <Route path="*" element={<NotFound />} /> */}
@@ -577,7 +576,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //     </Suspense>
 //   );
 // };
-
 
 // Main App Component
 
@@ -597,14 +595,13 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //     },
 //   });
 
-  
 //   useEffect(() => {
 //     const checkMaintenance = async () => {
 //       try {
 //         const response = await api.get('/maintenance');
 //         setIsMaintenance(response.data.maintenance || false);
 //       } catch (error) {
-        
+
 //         const maintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
 //         setIsMaintenance(maintenanceMode);
 //       } finally {
@@ -615,7 +612,6 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 //     checkMaintenance();
 //   }, []);
 
-  
 //   useEffect(() => {
 //     const handleOnline = () => setIsOnline(true);
 //     const handleOffline = () => setIsOnline(false);
@@ -687,10 +683,11 @@ const DashboardRedirect = () => {
     return <PageLoader />;
   }
 
-  if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
-  if (user.role === 'donor') return <Navigate to="/donor/dashboard" replace />;
-  if (user.role === 'charity') return <Navigate to="/charity/dashboard" replace />;
-  
+  if (user.role === "admin") return <Navigate to="/admin/dashboard" replace />;
+  if (user.role === "donor") return <Navigate to="/donor/dashboard" replace />;
+  if (user.role === "charity")
+    return <Navigate to="/charity/dashboard" replace />;
+
   return <Navigate to="/unauthorized" replace />;
 };
 
@@ -705,31 +702,23 @@ const AppRoutes = () => {
     <Suspense fallback={<AuthLoader variant="logo" message="Loading..." />}>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<LandingPageLayout />} >
-           <Route index element={<LandingPage />} />
-           <Route path="/home" element={<LandingPage />} />
-           <Route path="/campaigns" element={<CampaignList />} />
-           <Route path="/campaigns/:id" element={<CampaignPage />} />
-           <Route path="/campaigns/:id/donate" element={<DonationPage />} />
+        <Route path="/" element={<LandingPageLayout />}>
+          <Route index element={<LandingPage />} />
+          <Route path="/home" element={<LandingPage />} />
+          <Route path="/campaigns" element={<CampaignLists />} />
+          <Route path="/campaigns/:id" element={<CampaignPage />} />
+          <Route path="/campaigns/:id/donate" element={<DonationPage />} />
+          <Route path="/contact" element={<ContactUs />} />
         </Route>
-
 
         {/* Auth Routes */}
         <Route
           path="/auth/login"
-          element={
-            isAuthenticated ? <DashboardRedirect /> : <Login />
-          }
+          element={isAuthenticated ? <DashboardRedirect /> : <Login />}
         />
         <Route
           path="/auth/register"
-          element={
-            isAuthenticated ? (
-              <DashboardRedirect />
-            ) : (
-              <Register />
-            )
-          }
+          element={isAuthenticated ? <DashboardRedirect /> : <Register />}
         />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth/verify-email" element={<VerifyEmail />} />
@@ -742,50 +731,53 @@ const AppRoutes = () => {
         <Route path="/charity/:id" element={<CharityProfile />} /> */}
 
         {/* Protected Routes - Require Authentication */}
-          {/* <Route path="/profile" element={<Profile />} />
+        {/* <Route path="/profile" element={<Profile />} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/settings" element={<Settings />} />
           <Route path="/notifications" element={<NotificationPreferences />} />
           <Route path="/donations" element={<DonationHistory />} />
         </Route>
           <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
 
-
-        <Route path="/admin" element={
-          <ProtectedRoute requiredRoles={['admin']}>
-            <AdminLayout/>
-          </ProtectedRoute>}>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute requiredRoles={["admin"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/charity" element={<AdminCharityApproval />} />
           <Route path="/admin/campaigns" element={<AdminCampaignApproval />} />
-          <Route path="/admin/donationreport" element={<AdminDonationsReport />} />
+          <Route
+            path="/admin/donationreport"
+            element={<AdminDonationsReport />}
+          />
+          <Route path="/admin/verification" element={<AdminVerification />} />
         </Route>
 
-          {/* <Route path="/admin/verification" element={<CharityVerification />} /> */}
-          <Route path="/admin/verification" element={<AdminVerification />} />
         {/* Donor Routes */}
-      <Route
-        path="/donor/*" 
-        element={
-          <ProtectedRoute requiredRoles={['donor']}>
-            <DonorRoutes />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Charity Routes */}
-      <Route 
-        path="/charity/*" 
-        element={
-          <ProtectedRoute requiredRoles={['charity']}>
-            <CharityRoutes />
-          </ProtectedRoute>
-        } 
-      />
-      
-      
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/donor/*"
+          element={
+            <ProtectedRoute requiredRoles={["donor"]}>
+              <DonorRoutes />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Charity Routes */}
+        <Route
+          path="/charity/*"
+          element={
+            <ProtectedRoute requiredRoles={["charity"]}>
+              <CharityRoutes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
 
         {/* Error Routes */}
         {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}
@@ -796,8 +788,6 @@ const AppRoutes = () => {
   );
 };
 
-
-
 // Main App Component
 function App() {
   const [isMaintenance, setIsMaintenance] = useState(false);
@@ -805,13 +795,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("App Mounted! If you see this rolling in the browser console, the whole app is unmounting.");
+    console.log(
+      "App Mounted! If you see this rolling in the browser console, the whole app is unmounting.",
+    );
     const checkMaintenance = async () => {
       try {
-        const response = await api.get('/maintenance');
+        const response = await api.get("/maintenance");
         setIsMaintenance(response.data.maintenance || false);
       } catch (error) {
-        const maintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
+        const maintenanceMode =
+          localStorage.getItem("maintenanceMode") === "true";
         setIsMaintenance(maintenanceMode);
       } finally {
         setIsLoading(false);
@@ -825,12 +818,12 @@ function App() {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
   const [initializing, setInitializing] = useState(true);
@@ -874,8 +867,8 @@ function App() {
     return (
       <ThemeProvider>
         <BrowserRouter>
-        <GlobalStyles styles={globalStyles} />
-        <OfflinePage />
+          <GlobalStyles styles={globalStyles} />
+          <OfflinePage />
         </BrowserRouter>
       </ThemeProvider>
     );
@@ -885,7 +878,7 @@ function App() {
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
       onReset={() => {
-        window.location.href = '/';
+        window.location.href = "/";
       }}
     >
       <ThemeProvider>
@@ -899,7 +892,5 @@ function App() {
     </ErrorBoundary>
   );
 }
-
-
 
 export default App;

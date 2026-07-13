@@ -338,7 +338,6 @@ const CharityVerification = ({ charityId, isAdmin = false }) => {
   const { isDark } = useTheme();
   const { user } = useAuth();
   const isMobile = useMediaQuery('(max-width:600px)');
-  
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -360,11 +359,10 @@ const CharityVerification = ({ charityId, isAdmin = false }) => {
   useEffect(() => {
     loadVerificationData();
   }, [charityId]);
-
   const loadVerificationData = async () => {
     setLoading(true);
     try {
-      const data = await verificationService.getVerificationStatus(charityId);
+      const data = await verificationService.getVerificationStatus(user.userId || charityId);
       setDocuments(data.documents || DOCUMENT_REQUIREMENTS);
       setVerificationStatus(data.status || 'pending');
       setEligibility(data.eligibility || {

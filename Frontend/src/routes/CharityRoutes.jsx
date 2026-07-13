@@ -9,8 +9,8 @@ const CharityCreateCampaign = lazy(() => import('../pages/charity/CharityCreateC
 const CharityDonations = lazy(() => import('../pages/charity/CharityDonations'));
 const CharityProfile = lazy(() => import('../pages/charity/CharityProfile'));
 const CharityCampaignUpdates = lazy(() => import('../pages/charity/CharityCampaignUpdates'));
-// const CharityAnalytics = lazy(() => import('../pages/charity/CharityAnalytics'));
-// const CharitySettings = lazy(() => import('../pages/charity/CharitySettings'));
+const CharityVerification = lazy(() => import('../pages/charity/CharityVerification'));
+const CharityDocuments = lazy(() => import('../pages/charity/CharityDocuments'));
 // const CharityNotifications = lazy(() => import('../pages/charity/CharityNotifications'));
 
 const CharityRoutes = () => {
@@ -24,9 +24,10 @@ const CharityRoutes = () => {
           <Route path="campaigns/create" element={<CharityCreateCampaign />} />
           <Route path="campaigns/updates" element={<CharityCampaignUpdates />} />
           <Route path="donations" element={<CharityDonations />} />
-          <Route path="profile" element={<CharityProfile />} />
+          <Route path="profile" element={<CharityProfile />} />          
+          <Route path="verification" element={<CharityVerification />} />
+          <Route path="documents" element={<CharityDocuments />} />
           {/* <Route path="analytics" element={<CharityAnalytics />} />
-          <Route path="settings" element={<CharitySettings />} />
           <Route path="notifications" element={<CharityNotifications />} /> */}
           <Route path="*" element={<Navigate to="/charity/dashboard" replace />} />
         </Route>

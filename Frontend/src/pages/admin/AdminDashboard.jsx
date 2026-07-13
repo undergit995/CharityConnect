@@ -331,7 +331,7 @@ const AdminDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Total Donations"
-              value={`₹${stats?.totalAmount?.toLocaleString() || '0'}`}
+              value={`₹${stats?.totalAmount?.toLocaleString('en-IN') || '0'}`}
               icon={<DonateIcon />}
               color="#f39c12"
               trend={stats?.donationGrowth > 0 ? 'up' : 'down'}
@@ -380,7 +380,7 @@ const AdminDashboard = () => {
                     }}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="amount" stroke="#667eea" strokeWidth={2} name="Amount ($)" />
+                  <Line type="monotone" dataKey="amount" stroke="#667eea" strokeWidth={2} name="Amount (₹)" />
                   <Line type="monotone" dataKey="count" stroke="#2ecc71" strokeWidth={2} name="Donations" />
                 </LineChart>
               </ResponsiveContainer>
@@ -455,7 +455,7 @@ const AdminDashboard = () => {
                           borderRadius: 8,
                         }}
                       />
-                      <Bar dataKey="amount" fill="#667eea" name="Amount ($)" />
+                      <Bar dataKey="amount" fill="#667eea" name="Amount (₹)" barSize={20} radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Paper>
@@ -492,7 +492,7 @@ const AdminDashboard = () => {
                           borderRadius: 8,
                         }}
                       />
-                      <Bar dataKey="amount" fill="#9b59b6" name="Total Raised ($)" />
+                      <Bar dataKey="amount" fill="#9b59b6" name="Total Raised (₹)" barSize={20} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Paper>
@@ -526,7 +526,7 @@ const AdminDashboard = () => {
                           borderRadius: 8,
                         }}
                       />
-                      <Bar dataKey="amount" fill="#2ecc71" name="Total Raised ($)" />
+                      <Bar dataKey="amount" fill="#2ecc71" name="Total Raised (₹)" barSize={20} radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Paper>

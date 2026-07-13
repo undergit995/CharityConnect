@@ -216,6 +216,7 @@ const CampaignCard = ({ campaign, onSave, isSaving }) => {
             background: isDark
               ? "rgba(12,12,20,.30)"
               : "rgba(255,255,255,.15)",
+            minHeight: 290, // Ensure consistent height
           }}
         >
           <Typography

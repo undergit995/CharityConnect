@@ -54,6 +54,7 @@ import {
   Description as DescriptionIcon,
   AttachFile as AttachFileIcon,
   Close as CloseIcon,
+  Shield as ShieldCheckIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
 import { useTheme } from "../../hooks/useTheme";
@@ -234,6 +235,9 @@ const AdminCharityApproval = () => {
     setDialogAction(action);
     setRejectionReason("");
     setOpenDialog(true);
+  };
+const handleFraudReview = (charityId) => {
+    navigate(`/admin/verification/${charityId}`);
   };
 
   // Get status chip
@@ -589,184 +593,81 @@ const AdminCharityApproval = () => {
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
-                ) : charities.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      align="center"
-                      sx={{ py: 4, color: isDark ? "#a0a0b8" : "#4a4a6a" }}
-                    >
-                      No charities found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  charities.map((charity) => (
-                    <TableRow key={charity._id}>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
-                        >
-                          <Avatar
-                            src={charity.profileImage}
-                            sx={{ width: 40, height: 40 }}
-                          >
-                            {charity.fullName?.charAt(0) || "C"}
-                          </Avatar>
-                          <Box>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 600,
-                                color: isDark ? "#e8e8f0" : "#1a1a2e",
-                              }}
-                            >
-                              {charity.charityDetails?.organizationName ||
-                                charity.fullName}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              sx={{ color: isDark ? "#6a6a80" : "#9a9ab0" }}
-                            >
-                              {charity.email}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: isDark ? "#e8e8f0" : "#1a1a2e" }}
-                        >
-                          {charity.phone}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: isDark ? "#6a6a80" : "#9a9ab0" }}
-                        >
-                          {charity.address?.city || "N/A"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: isDark ? "#e8e8f0" : "#1a1a2e" }}
-                        >
-                          {charity.charityDetails?.registrationNumber || "N/A"}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: isDark ? "#6a6a80" : "#9a9ab0" }}
-                        >
-                          {charity.charityDetails?.organizationType || "N/A"}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{getStatusChip(charity)}</TableCell>
-                      <TableCell align="center">
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "center",
-                            gap: 0.5,
-                          }}
-                        >
-                          <Tooltip title="View Details">
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                     navigate('/admin/verification')
-                                // if (typeof openActionDialog === "function") {
-                                //   openActionDialog(charity, "view");
-                                // } else {
-                                //   console.error(
-                                //     "openActionDialog is not a function!",
-                                //   );
-                                // }
-                              }}
-                              sx={{ color: isDark ? "#a0a0b8" : "#4a4a6a" }}
-                            >
-                              <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-
-                          {!charity.isApproved && (
-                            <>
-                              <Tooltip title="Approve">
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: "#2ecc71" }}
-                                  onClick={() =>
-                                     navigate('admin/verification')
-                                  }
-                                >
-                                  <ThumbUpIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                              <Tooltip title="Reject">
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: "#e74c3c" }}
-                                  onClick={() =>
-                                    openActionDialog(charity, "reject")
-                                  }
-                                >
-                                  <ThumbDownIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </>
-                          )}
-
-                          {/* Approved Actions */}
-                          {charity.isApproved &&
-                            !charity.charityDetails?.verified && (
-                              <Tooltip title="Verify">
-                                <IconButton
-                                  size="small"
-                                  sx={{ color: "#3498db" }}
-                                  onClick={() =>
-                                    openActionDialog(charity, "verify")
-                                  }
-                                >
-                                  <VerifiedIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-
-                          {/* Active/Suspend Actions */}
-                          {charity.isActive && charity.isApproved && (
-                            <Tooltip title="Suspend">
+                ) :
+            charities.map((charity) => (
+              <TableRow key={charity._id}>
+                <TableCell>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar>
+                      {charity.charityDetails?.organizationName?.charAt(0) || 'C'}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {charity.charityDetails?.organizationName || charity.fullName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {charity.email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">{charity.phone}</Typography>
+                  <Typography variant="caption">{charity.address?.city || 'N/A'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Chip
+                      label={`${charity.verifiedDocs}/${charity.totalDocs}`}
+                      size="small"
+                      sx={{ backgroundColor: 'rgba(46, 204, 113, 0.15)', color: '#2ecc71' }}
+                    />
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <StatusChip status={charity.verificationStatus} />
+                </TableCell>
+                <TableCell align="center">
+                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                    <Tooltip title="View Documents">
+                      <IconButton size="small">
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {/* <Tooltip title="Fraud & Legitimacy Review">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleFraudReview(charity._id, charity.charityDetails?.organizationName)}
+                        startIcon={<ShieldCheckIcon size={16} />}
+                        sx={{
+                          borderRadius: 2,
+                          backgroundColor: '#667eea',
+                          '&:hover': { backgroundColor: '#5a67d8' },
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          padding: '4px 12px',
+                        }}
+                      >
+                        Review
+                      </Button>
+                    </Tooltip> */}
+                    <Tooltip title="Fraud & Legitimacy Review">
                               <IconButton
                                 size="small"
-                                sx={{ color: "#e74c3c" }}
-                                onClick={() =>
-                                  openActionDialog(charity, "suspend")
-                                }
+                                onClick={() => handleFraudReview(campaign.charityId?._id)}
+                                sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
                               >
-                                <BlockIcon fontSize="small" />
+                                <ShieldCheckIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                          )}
-                          {!charity.isActive && charity.isApproved && (
-                            <Tooltip title="Activate">
-                              <IconButton
-                                size="small"
-                                sx={{ color: "#2ecc71" }}
-                                onClick={() =>
-                                  openActionDialog(charity, "activate")
-                                }
-                              >
-                                <CheckCircleIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
           {/* Pagination */}
           {charities.length > 0 && (

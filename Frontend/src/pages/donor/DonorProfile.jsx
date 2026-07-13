@@ -372,7 +372,7 @@ const DonorProfile = () => {
                   </Box>
                   <Box textAlign="center">
                     <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      $2,450
+                      ₹2,450
                     </Typography>
                     <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                       Total Given
@@ -565,7 +565,7 @@ const DonorProfile = () => {
                       </Box>
                       <Box sx={{ textAlign: 'right' }}>
                         <Typography variant="h6" sx={{ fontWeight: 700, color: '#2ecc71' }}>
-                          ${donation.amount}
+                          ₹{donation.amount.toLocaleString('en-IN')}
                         </Typography>
                         <Chip
                           label={donation.status}

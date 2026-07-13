@@ -78,6 +78,19 @@ const CharityDashboard = () => {
     paused: 0,
     completed: 0,
   });
+  const [isEligible, setIsEligible] = useState(false);
+
+  useEffect(() => {
+    const checkEligibility = async () => {
+      try {
+        const response = await api.get(`/verification/eligibility/${user._id}`);
+        setIsEligible(response.data.data.isEligible);
+      } catch (error) {
+        console.error('Failed to check eligibility:', error);
+      }
+    };
+    checkEligibility();
+  }, [user]);
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
@@ -159,6 +172,14 @@ const CharityDashboard = () => {
     <Box sx={{ py: 3 }}>
       <Container maxWidth="xl">
         {/* Header */}
+        {!isEligible && (
+        <Alert severity="warning">
+          Complete your verification to start fundraising.
+          <Button onClick={() => navigate('/charity/documents')}>
+            Complete Verification
+          </Button>
+        </Alert>
+      )}
         <Box
           sx={{
             display: "flex",
@@ -176,7 +197,7 @@ const CharityDashboard = () => {
                 mb: 0.5,
               }}
             >
-              Welcome back, {user?.fullName || "Charity"} 👋
+              Welcome back, {user?.fullName || "Charity"} 
             </Typography>
             <Typography
               variant="body2"
@@ -240,7 +261,7 @@ const CharityDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Total Raised"
-              value={`₹${stats?.totalRaised?.toLocaleString() || 0}`}
+              value={`₹${stats?.totalRaised?.toLocaleString('en-IN') || 0}`}
               icon={<MoneyIcon />}
               color="#f39c12"
               trend={stats?.growth > 0 ? "up" : "down"}
@@ -251,7 +272,7 @@ const CharityDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Total Donors"
-              value={stats?.totalDonors || 0}
+              value={stats?.totalDonors?.toLocaleString('en-IN') || 0}
               icon={<PeopleIcon />}
               color="#9b59b6"
               subtitle={`+${stats?.newDonors || 0} this month`}
@@ -677,7 +698,7 @@ const CharityDashboard = () => {
                       borderRadius: 8,
                     }}
                   />
-                  <Bar dataKey="amount" fill="#667eea" name="Amount (₹)" />
+                  <Bar dataKey="amount" fill="#667eea" name="Amount (₹)" barSize={20} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>

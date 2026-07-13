@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { Receipt as ReceiptIcon, Favorite as FavoriteIcon, TrendingUp as TrendingUpIcon, Money as MoneyIcon } from '@mui/icons-material';
 
-// Stats Card with Optimistic Updates
+
 const DonorStatsCard = ({ title, value, icon, color, loading, optimisticValue, subtitle }) => {
   const { isDark } = useTheme();
   const displayValue = optimisticValue !== undefined ? optimisticValue : value;
@@ -65,7 +65,6 @@ const DonorStats = ({ stats, optimisticStats, loading, saving }) => {
     return <div>Loading stats...</div>;
   }
   
-  // If loading is false but stats somehow still didn't load properly
   if (!stats) {
     return null; 
   }

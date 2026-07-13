@@ -38,7 +38,7 @@ const VerificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes
+
 VerificationSchema.index({ charityId: 1 });
 VerificationSchema.index({ status: 1 });
 

@@ -2,12 +2,13 @@ const express = require("express");
 const authController = require("../../Controllers/AuthController/authController");
 const { authMiddleware, authAndRole } = require("../../middlewares/auth");
 const { upload } = require("../../config/multerConfig");
+const { ensureVerificationRecord } = require("../../middlewares/eligibilityMiddleware");
 
 const router = express.Router();
 
 router.post("/setup-admin", authController.setupAdmin);
 router.post("/register", authController.register);
-router.post("/login", authController.login);
+router.post("/login",ensureVerificationRecord, authController.login);
 
 // ==================== REFRESH TOKEN ====================
 

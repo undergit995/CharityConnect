@@ -68,7 +68,7 @@ const AdminDonationsReport = () => {
 
   const itemsPerPage = 10;
 
-  // Fetch donations
+  
   const fetchDonations = async () => {
     setLoading(true);
     setError('');
@@ -160,13 +160,13 @@ const AdminDonationsReport = () => {
     },
     { 
       label: 'Total Amount', 
-      value: `$${summary.totalAmount?.toLocaleString() || 0}`, 
+      value: `₹${summary.totalAmount?.toLocaleString('en-IN') || 0}`, 
       icon: <MoneyIcon />, 
       color: '#2ecc71' 
     },
     { 
       label: 'Average Donation', 
-      value: `$${summary.averageAmount?.toFixed(2) || 0}`, 
+      value: `₹${summary.averageAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || 0}`, 
       icon: <TrendingUpIcon />, 
       color: '#9b59b6' 
     },
@@ -384,7 +384,7 @@ const AdminDonationsReport = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" sx={{ fontWeight: 600, color: '#2ecc71' }}>
-                          ${donation.amount?.toLocaleString() || 0}
+                          ₹{donation.amount?.toLocaleString('en-IN') || 0}
                         </Typography>
                       </TableCell>
                       <TableCell>

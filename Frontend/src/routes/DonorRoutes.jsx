@@ -22,8 +22,8 @@ const DonorRoutes = () => {
           <Route index element={<Navigate to="/donor/dashboard" replace />} />
           <Route path="dashboard" element={<DonorDashboard />} />
           <Route path="profile" element={<DonorProfile />} />
-          <Route path="campaigns" element={<CampaignList />} />
-           <Route path="campaigns/:id/donate" element={<DonationPage />} />
+          <Route path="campaign" element={<CampaignList />} />
+           <Route path="campaign/:id/donate" element={<DonationPage />} />
           {/*
           <Route path="settings" element={<DonorSettings />} />
           <Route path="notifications" element={<DonorNotifications />} /> */}

@@ -1,17 +1,17 @@
-// routes/verificationRoutes.js
 const express = require('express');
 const router = express.Router();
 const {authAndRole} = require('../../middlewares/auth');
 const {uploadDocument} = require('../../config/multerConfig');
 const User = require('../../models/User');
 const Verification = require('../../models/Verification');
+const { checkEligibility, DOCUMENT_REQUIREMENTS } = require('../../services/verficationService');
 
 /**
  * @route GET /api/verification/status/:charityId
  * @desc Get verification status
  * @access Private
  */
-router.get('/status/:charityId', authAndRole('admin'), async (req, res) => {
+router.get('/status/:charityId', async (req, res) => {
   try {
     const { charityId } = req.params;
     
@@ -22,6 +22,8 @@ router.get('/status/:charityId', authAndRole('admin'), async (req, res) => {
         charityId,
         documents: DOCUMENT_REQUIREMENTS.map(doc => ({
           documentId: doc.id,
+          label: doc.label,
+          description: doc.description,
           status: 'pending',
           required: doc.required,
         })),
@@ -32,7 +34,7 @@ router.get('/status/:charityId', authAndRole('admin'), async (req, res) => {
       return res.status(200).json({
         success: true,
         data: {
-          documents: DOCUMENT_REQUIREMENTS,
+          documents: newVerification.documents,
           status: 'pending',
           eligibility: {
             isEligible: false,
@@ -74,11 +76,278 @@ router.get('/status/:charityId', authAndRole('admin'), async (req, res) => {
 });
 
 /**
+ * @route GET /api/verification/pending
+ * @desc Get all pending verifications for admin
+ * @access Private (Admin only)
+ */
+router.get('/pending', authAndRole('admin'), async (req, res) => {
+  try {
+    // Check if user is admin
+    const admin = await User.findById(req.userId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.',
+      });
+    }
+
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '', 
+      status = 'all' 
+    } = req.query;
+
+    // Build query
+    let query = {};
+
+    // Filter by status
+    if (status === 'pending') {
+      query.status = 'pending';
+    } else if (status === 'submitted') {
+      query.status = 'submitted';
+    } else if (status === 'verified') {
+      query.status = 'verified';
+    } else if (status === 'rejected') {
+      query.status = 'rejected';
+    } else if (status === 'needs-info') {
+      query.status = 'needs-info';
+    }
+    // 'all' - no status filter
+
+    // Search by charity name or email
+    if (search) {
+      // First find charities matching search
+      const matchingCharities = await User.find({
+        role: 'charity',
+        $or: [
+          { fullName: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { 'charityDetails.organizationName': { $regex: search, $options: 'i' } },
+        ],
+      }).select('_id');
+
+      const charityIds = matchingCharities.map(c => c._id);
+      query.charityId = { $in: charityIds };
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get verifications with pagination
+    const [verifications, total] = await Promise.all([
+      Verification.find(query)
+        .populate('charityId', 'fullName email phone profileImage address charityDetails isApproved isVerified')
+        .skip(skip)
+        .limit(parseInt(limit))
+        .sort({ createdAt: -1 }),
+      Verification.countDocuments(query),
+    ]);
+
+    // Get statistics
+    const stats = await Verification.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          pending: {
+            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+          },
+          submitted: {
+            $sum: { $cond: [{ $eq: ['$status', 'submitted'] }, 1, 0] },
+          },
+          verified: {
+            $sum: { $cond: [{ $eq: ['$status', 'verified'] }, 1, 0] },
+          },
+          rejected: {
+            $sum: { $cond: [{ $eq: ['$status', 'rejected'] }, 1, 0] },
+          },
+          'needs-info': {
+            $sum: { $cond: [{ $eq: ['$status', 'needs-info'] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    // Format response
+    const formattedVerifications = verifications.map((verification) => {
+      const charity = verification.charityId || {};
+      const docStats = {
+        total: verification.documents?.length || 0,
+        verified: verification.documents?.filter(d => d.status === 'verified').length || 0,
+        rejected: verification.documents?.filter(d => d.status === 'rejected').length || 0,
+        pending: verification.documents?.filter(d => d.status === 'pending' || d.status === 'submitted').length || 0,
+      };
+
+      return {
+        _id: verification._id,
+        charityId: charity._id,
+        fullName: charity.fullName,
+        email: charity.email,
+        phone: charity.phone,
+        profileImage: charity.profileImage,
+        address: charity.address,
+        charityDetails: charity.charityDetails,
+        isApproved: charity.isApproved,
+        isVerified: charity.isVerified,
+        documents: verification.documents || [],
+        verificationStatus: verification.status,
+        documentsStats: docStats,
+        createdAt: verification.createdAt,
+        updatedAt: verification.updatedAt,
+        submittedAt: verification.submittedAt,
+        reviewedAt: verification.reviewedAt,
+        feedback: verification.feedback,
+      };
+    });
+
+    const statsData = stats[0] || {
+      total: 0,
+      pending: 0,
+      submitted: 0,
+      verified: 0,
+      rejected: 0,
+      'needs-info': 0,
+    };
+
+    res.status(200).json({
+      success: true,
+      data: formattedVerifications,
+      stats: statsData,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit)),
+      },
+    });
+
+  } catch (error) {
+    console.error('Get pending verifications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending verifications',
+      error: error.message,
+    });
+  }
+});
+
+
+/**
+ * @route PUT /api/verification/documents/:charityId/fraud_review
+ * @desc Update fraud review document
+ * @access Private (Admin only)
+ */
+router.put('/documents/:charityId/fraud_review', authAndRole('admin'), async (req, res) => {
+  try {
+    const { charityId } = req.params;
+    const { status, adminNotes } = req.body;
+
+    // Check if admin
+    const admin = await User.findById(req.userId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.',
+      });
+    }
+
+    // Find verification record
+    let verification = await Verification.findOne({ charityId });
+    if (!verification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Verification record not found',
+      });
+    }
+
+    // Find or create fraud review document
+    let fraudDoc = verification.documents.find(d => d.documentId === 'fraud_review');
+    
+    if (!fraudDoc) {
+      // Create fraud review document
+      verification.documents.push({
+        documentId: 'fraud_review',
+        label: 'Fraud & Legitimacy Review',
+        description: 'Admin fraud and legitimacy review report',
+        required: false,
+        status: status || 'pending',
+        adminNotes: adminNotes || '',
+        verifiedAt: status === 'verified' ? new Date() : null,
+        verifiedBy: status === 'verified' ? req.userId : null,
+        uploadedAt: new Date(),
+      });
+    } else {
+      // Update existing fraud review
+      fraudDoc.status = status || fraudDoc.status;
+      fraudDoc.adminNotes = adminNotes || fraudDoc.adminNotes;
+      if (status === 'verified') {
+        fraudDoc.verifiedAt = new Date();
+        fraudDoc.verifiedBy = req.userId;
+      }
+      fraudDoc.uploadedAt = new Date();
+    }
+
+    await verification.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Fraud review updated successfully',
+      data: verification,
+    });
+  } catch (error) {
+    console.error('Update fraud review error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update fraud review',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route GET /api/verification/eligibility/:charityId
+ * @desc Check charity eligibility for fundraising
+ * @access Private (Charity/Admin)
+ */
+router.get('/eligibility/:charityId', async (req, res) => {
+  try {
+    const { charityId } = req.params;
+    
+    // Check authorization
+    const user = await User.findById(req.userId);
+    const isAdmin = user?.role === 'admin';
+    const isOwner = charityId === req.userId;
+    
+    // if (!isAdmin && !isOwner) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Access denied',
+    //   });
+    // }
+
+    const eligibility = await checkEligibility(charityId);
+    
+    res.status(200).json({
+      success: true,
+      data: eligibility,
+    });
+  } catch (error) {
+    console.error('Eligibility check error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check eligibility',
+      error: error.message,
+    });
+  }
+});
+
+
+/**
  * @route POST /api/verification/upload/:charityId
  * @desc Upload document
  * @access Private
  */
-router.post('/upload/:charityId', authAndRole('admin'), uploadDocument, async (req, res) => {
+router.post('/upload/:charityId', authAndRole('charity','admin'), uploadDocument, async (req, res) => {
   try {
     const { charityId } = req.params;
     const { documentType } = req.body;
@@ -277,7 +546,7 @@ router.put('/documents/:charityId/verify-all', authAndRole('admin'), async (req,
  * @desc Submit for verification
  * @access Private
  */
-router.post('/submit/:charityId', authAndRole('admin'), async (req, res) => {
+router.post('/submit/:charityId', authAndRole('charity'), async (req, res) => {
   try {
     const { charityId } = req.params;
 
