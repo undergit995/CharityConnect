@@ -55,6 +55,8 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { api } from '../../Services/authServices';
+
 
 const TabPanel = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
@@ -64,7 +66,7 @@ const TabPanel = ({ children, value, index }) => (
 
 const CharityProfile = () => {
   const { isDark } = useTheme();
-  const { user, updateProfile, api } = useAuth();
+  const { user, updateProfile } = useAuth();
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [isEditing, setIsEditing] = useState(false);
@@ -142,40 +144,40 @@ const CharityProfile = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?._id) return;
+      if (!user?.userId) return;
       setDataLoading(true);
       try {
-        // Fetch stats, campaigns, and donations in parallel
         const [statsRes, campaignsRes, donationsRes] = await Promise.all([
           api.get('/charity/dashboard/stats'),
-          api.get(`/campaigns/charity/${user._id}?limit=5`),
-          api.get(`/charity/donations?limit=5`)
+          api.get('/charity/campaigns', { params: { limit: 5 } }),
+          api.get('/charity/donations', { params: { limit: 5 } })
         ]);
 
         if (statsRes.data.success) {
           const { stats: summaryStats, campaignStatus } = statsRes.data.data;
           setStats({
             totalRaised: summaryStats?.totalRaised || 0,
-            totalDonors: summaryStats?.totalDonors || 0,
+            totalDonors: statsRes.data.data.stats?.totalDonors || 0,
             activeCampaigns: campaignStatus?.active || 0,
           });
         }
 
-        if (campaignsRes.data.success) {
-          setCampaigns(campaignsRes.data.data);
+        if (campaignsRes.data) {
+          setCampaigns(campaignsRes.data.campaigns || []);
         }
 
-        if (donationsRes.data.success) {
-          setRecentDonations(donationsRes.data.data);
+        if (donationsRes.data) {
+          setRecentDonations(donationsRes.data.donations || []);
         }
       } catch (err) {
         setError('Failed to load profile data.');
       } finally {
+        
         setDataLoading(false);
       }
     };
     fetchData();
-  }, [user?._id, api]);
+  }, [user?.userId]);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;

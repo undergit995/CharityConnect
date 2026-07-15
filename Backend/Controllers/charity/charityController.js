@@ -716,3 +716,102 @@ exports.getDashboardStats = async (req, res) => {
       });
   }
 };
+
+/**
+ * @route GET /api/charity/profile
+ * @desc Get charity profile
+ * @access Private (Charity only)
+ */
+exports.getProfile = async (req, res) => {
+  try {
+    const charity = await User.findById(req.userId)
+      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .lean();
+
+    if (!charity || charity.role !== 'charity') {
+      return res.status(404).json({ success: false, message: 'Charity not found' });
+    }
+
+    const campaignSummary = await Campaign.aggregate([
+      { $match: { charityId: req.userId, isDeleted: false } },
+      {
+        $group: {
+          _id: null,
+          totalCampaigns: { $sum: 1 },
+          totalRaised: { $sum: '$raisedAmount' },
+          totalDonors: { $sum: '$stats.donorCount' },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        charity,
+        campaignSummary: campaignSummary[0] || {},
+      },
+    });
+  } catch (error) {
+    console.error('Get charity profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch charity profile',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @route PUT /api/charity/profile
+ * @desc Update charity profile
+ * @access Private (Charity only)
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const charity = await User.findById(req.userId);
+    if (!charity || charity.role !== 'charity') {
+      return res.status(404).json({ success: false, message: 'Charity not found' });
+    }
+
+    const {
+      firstName,
+      lastName,
+      phone,
+      address,
+      city,
+      state,
+      country,
+      zipCode,
+      bio,
+      charityDetails,
+    } = req.body;
+
+    if (firstName) charity.firstName = firstName;
+    if (lastName) charity.lastName = lastName;
+    if (firstName || lastName) charity.fullName = `${charity.firstName} ${charity.lastName}`;
+    if (phone) charity.phone = phone;
+    if (address) charity.address.street = address;
+    if (city) charity.address.city = city;
+    if (state) charity.address.state = state;
+    if (country) charity.address.country = country;
+    if (zipCode) charity.address.zipCode = zipCode;
+    if (bio) charity.bio = bio;
+
+    if (charityDetails) {
+      charity.charityDetails = { ...charity.charityDetails, ...charityDetails };
+    }
+
+    await charity.save();
+    const updatedCharity = charity.toObject();
+    delete updatedCharity.password;
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: { user: updatedCharity },
+    });
+  } catch (error) {
+    console.error('Update charity profile error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update profile', error: error.message });
+  }
+};

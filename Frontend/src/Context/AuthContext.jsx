@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     if (sessionTimeout) clearTimeout(sessionTimeout);
     
     const timeUntilExpiry = expiryTime - Date.now();
-    const warningTime = timeUntilExpiry - 5 * 60 * 1000; // 5 minutes before expiry
+    const warningTime = timeUntilExpiry - 5 * 60 * 1000;
     
     if (warningTime > 0) {
       const timeout = setTimeout(() => {
@@ -131,24 +131,23 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = async (email, password, rememberMe = false) => {
-    setLoading(true);
     setError(null);
+    setLoading(true);
     
     try {
-      const response = await authService.api.post('/auth/login', {
+      const response = await api.post('/auth/login', {
         email,
         password,
         rememberMe,
       });
 
       const payload = response.data.data || response.data; 
-      const { accessToken, refreshToken, user, permissions = [] } = payload;
+      const { accessToken, refreshToken, user, permissions = [], verificationStatus } = payload;
       authService.setTokens(accessToken, refreshToken, rememberMe);
 
       setUser(user);
       setIsAuthenticated(true);
       setPermissions(permissions || []);
-      
       
       if (accessToken) {
         try {
@@ -161,7 +160,22 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      return { user, permissions };
+      // Centralize redirection logic
+      let redirectPath = '/dashboard'; // Default redirect
+      if (user.role === 'admin') {
+        redirectPath = '/admin/dashboard';
+      } else if (user.role === 'donor') {
+        redirectPath = '/donor/dashboard';
+      } else if (user.role === 'charity') {
+        // Assumes backend now provides verificationStatus on login
+        if (verificationStatus?.status !== 'approved') {
+          redirectPath = '/charity/documents';
+        } else {
+          redirectPath = '/charity/dashboard';
+        }
+      }
+
+      return { success: true, user, permissions, redirectPath };
 
     } catch (err) {
       console.error("Real internal error inside AuthContext try block:", err);
@@ -205,9 +219,7 @@ export const AuthProvider = ({ children }) => {
 
   // Forgot password
   const forgotPassword = async (email) => {
-    setLoading(true);
     setError(null);
-
     try {
       await authService.api.post('/auth/forgot-password', { email });
       return { success: true, message: 'Password reset email sent' };
@@ -215,25 +227,20 @@ export const AuthProvider = ({ children }) => {
       const errorMessage = err.response?.data?.message || 'Failed to send reset email';
       setError(errorMessage);
       throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Reset password
-  const resetPassword = async (token, newPassword) => {
-    setLoading(true);
+  const resetPassword = async (token, newPassword, confirmPassword) => {
     setError(null);
 
     try {
-      await authService.api.post('/auth/reset-password', { token, newPassword });
+      await authService.api.post('/auth/reset-password', { token, newPassword,confirmPassword });
       return { success: true, message: 'Password reset successfully' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to reset password';
       setError(errorMessage);
       throw new Error(errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -312,7 +319,7 @@ export const AuthProvider = ({ children }) => {
   // Send OTP
   const sendOTP = async (identifier, purpose = 'verification') => {
     try {
-      const response = await authService.api.post('/otp/send-email', {
+      const response = await api.post('/otp/send-email', {
         email: identifier,
         purpose,
       });
@@ -364,7 +371,15 @@ export const AuthProvider = ({ children }) => {
     setError(null);
 
     try {
-      const response = await authService.api.put('/users/profile', profileData);
+      let endpoint = '/auth/profile'; // Default endpoint
+      if (user?.role === 'charity') {
+        endpoint = '/charity/profile';
+      } else if (user?.role === 'donor') {
+        endpoint = '/donor/profile';
+      }
+      // Admin can use the generic one or have its own if needed
+
+      const response = await authService.api.put(endpoint, profileData);
       setUser(response.data.user);
       return response.data;
     } catch (err) {

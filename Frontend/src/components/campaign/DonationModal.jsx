@@ -35,6 +35,8 @@ import {
   Phone as PhoneIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
+import PanoramaPhotosphereIcon from '@mui/icons-material/PanoramaPhotosphere';
+import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../Theme/ThemeContext';
 import { useAuth } from '../../Context/AuthContext';
@@ -62,13 +64,14 @@ const DonationPageModal = () => {
   const [donationSuccess, setDonationSuccess] = useState(false);
   const [donationData, setDonationData] = useState(null);
   
-  // Guest user info
+  // Guest user info - only if not anonymous
   const [guestInfo, setGuestInfo] = useState({
     name: '',
     email: '',
     phone: '',
   });
   const [guestErrors, setGuestErrors] = useState({});
+  const [showGuestInfo, setShowGuestInfo] = useState(!isAuthenticated);
 
   const quickAmounts = [100, 500, 1000, 2000, 5000];
 
@@ -90,14 +93,20 @@ const DonationPageModal = () => {
     }
   }, [id]);
 
-  const handleAmountSelect = (value) => {
-    setAmount(value.toString());
-    setError('');
-  };
+  // Handle anonymous toggle - hide/show guest info
+  useEffect(() => {
+    if (isAnonymous) {
+      setShowGuestInfo(false);
+      // Clear guest errors when anonymous
+      setGuestErrors({});
+    } else if (!isAuthenticated) {
+      setShowGuestInfo(true);
+    }
+  }, [isAnonymous, isAuthenticated]);
 
   const handleNext = () => {
-    // Validate guest info if not authenticated
-    if (!isAuthenticated) {
+    // Validate guest info only if not anonymous and not authenticated
+    if (!isAuthenticated && !isAnonymous) {
       const errors = {};
       if (!guestInfo.name.trim()) errors.name = 'Name is required';
       if (!guestInfo.email.trim()) errors.email = 'Email is required';
@@ -109,10 +118,6 @@ const DonationPageModal = () => {
       }
     }
 
-    if (!amount || parseFloat(amount) < 1) {
-      setError('Please enter a valid donation amount');
-      return;
-    }
     setError('');
     setStep(1);
   };
@@ -150,10 +155,10 @@ const DonationPageModal = () => {
   const handleContinueDonating = () => {
     setDonationSuccess(false);
     setStep(0);
-    setAmount('');
     setMessage('');
     setIsAnonymous(false);
     setGuestInfo({ name: '', email: '', phone: '' });
+    setGuestErrors({});
   };
 
   if (loading) {
@@ -408,16 +413,22 @@ const DonationPageModal = () => {
 
               {/* Stepper */}
               <Stepper activeStep={step} sx={{ mb: 4 }}>
-                <Step><StepLabel>Amount & Preferences</StepLabel></Step>
-                <Step><StepLabel>Details</StepLabel></Step>
-                <Step><StepLabel>Complete</StepLabel></Step>
+                <Step>
+                  <StepLabel>Amount & Preferences</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel>Details</StepLabel>
+                </Step>
+                <Step>
+                  <StepLabel>Complete</StepLabel>
+                </Step>
               </Stepper>
 
-              {/* Step 0: Amount & Preferences (Anonymous toggle here) */}
+              {/* Step 0: Amount & Preferences */}
               {step === 0 && (
                 <Box>
-                  {/* Guest Info - Only show if not logged in */}
-                  {!isAuthenticated && (
+                  {/* ✅ Guest Info - Only show if NOT anonymous and NOT logged in */}
+                  {!isAuthenticated && !isAnonymous && (
                     <Box sx={{ mb: 3 }}>
                       <Typography variant="subtitle2" sx={{ mb: 1, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
                         <PersonIcon sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
@@ -469,6 +480,18 @@ const DonationPageModal = () => {
                     </Box>
                   )}
 
+                  {/* ✅ Anonymous Info Message */}
+                  {isAnonymous && (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <VisibilityOffIcon sx={{ fontSize: 16 }} />
+                        <Typography variant="body2">
+                          You are donating anonymously. Your name will not appear on the campaign page.
+                        </Typography>
+                      </Box>
+                    </Alert>
+                  )}
+{/* 
                   <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                     Select or enter your donation amount
                   </Typography>
@@ -478,7 +501,10 @@ const DonationPageModal = () => {
                       <Button
                         key={value}
                         variant={amount === value.toString() ? 'contained' : 'outlined'}
-                        onClick={() => handleAmountSelect(value)}
+                        onClick={() => {
+                          setAmount(value.toString());
+                          setError('');
+                        }}
                         sx={{
                           borderRadius: 2,
                           flex: '1 0 auto',
@@ -506,54 +532,44 @@ const DonationPageModal = () => {
                         <InputAdornment position="start">₹</InputAdornment>
                       ),
                     }}
+                  /> */}
+
+
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={isAnonymous}
+                        onChange={(e) => {
+                          setIsAnonymous(e.target.checked);
+                          if (e.target.checked) {
+                            setGuestInfo({ name: '', email: '', phone: '' });
+                            setGuestErrors({});
+                          }
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {isAnonymous ? (
+                          <VisibilityOffIcon sx={{ fontSize: 18, color: '#2ecc71' }} />
+                        ) : (
+                          <PersonIcon sx={{ fontSize: 18 }} />
+                        )}
+                        <Typography variant="body2">
+                          {isAnonymous ? 'Donate Anonymously' : 'Donate Publicly'}
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ display: 'block', mb: 2 }}
                   />
-
-                  {/* ✅ Anonymous Donation Toggle - MOVED TO STEP 1 */}
-                  <Box sx={{ mt: 3, mb: 2, p: 2, borderRadius: 2, bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isAnonymous}
-                          onChange={(e) => setIsAnonymous(e.target.checked)}
-                          color="primary"
-                        />
-                      }
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {isAnonymous ? (
-                            <VisibilityOffIcon sx={{ fontSize: 18, color: '#2ecc71' }} />
-                          ) : (
-                            <PersonIcon sx={{ fontSize: 18 }} />
-                          )}
-                          <Typography variant="body2">
-                            {isAnonymous ? 'Donate Anonymously' : 'Donate Publicly'}
-                          </Typography>
-                        </Box>
-                      }
-                      sx={{ display: 'block' }}
-                    />
-
-                    {isAnonymous && (
-                      <Alert 
-                        severity="info" 
-                        sx={{ mt: 1, fontSize: '0.875rem' }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <VisibilityOffIcon sx={{ fontSize: 16 }} />
-                          <Typography variant="body2">
-                            Your name will not appear on the campaign page. The charity will still receive your donation and you'll get a receipt.
-                          </Typography>
-                        </Box>
-                      </Alert>
-                    )}
-                  </Box>
 
                   <Button
                     fullWidth
                     variant="contained"
                     size="large"
                     onClick={handleNext}
-                    disabled={!amount || parseFloat(amount) < 1 || !isActive}
+                    disabled={ !isActive}
                     sx={{
                       py: 1.5,
                       borderRadius: 2,
@@ -575,12 +591,9 @@ const DonationPageModal = () => {
                 </Box>
               )}
 
-              {/* Step 1: Details (Message only) */}
+
               {step === 1 && (
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-                    Amount: <strong>₹{amount}</strong>
-                  </Typography>
                   {isAnonymous && (
                     <Chip
                       icon={<VisibilityOffIcon sx={{ fontSize: 14 }} />}
@@ -594,7 +607,7 @@ const DonationPageModal = () => {
                     />
                   )}
 
-                  {!isAuthenticated && (
+                  {!isAuthenticated && !isAnonymous && (
                     <Alert severity="info" sx={{ mb: 2 }}>
                       We'll send your donation receipt to {guestInfo.email}
                     </Alert>
@@ -644,16 +657,43 @@ const DonationPageModal = () => {
                 </Box>
               )}
 
-              {/* Step 2: Success */}
+
               {step === 2 && (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <CheckCircleIcon sx={{ fontSize: 64, color: '#2ecc71', mb: 2 }} />
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 200,
+                      damping: 20,
+                      delay: 0.2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto',
+                        mb: 2,
+                      }}
+                    >
+                      <CheckCircleIcon sx={{ fontSize: 48, color: '#2ecc71' }} />
+                    </Box>
+                  </motion.div>
+
                   <Typography variant="h5" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e', mb: 1 }}>
                     Donation Successful! 🎉
                   </Typography>
                   <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a', mb: 2 }}>
-                    Thank you for your generous donation of <strong>₹{amount}</strong>
+                    Thank you for your generous donation of <strong>₹{donationData.amount}</strong>
                   </Typography>
+
                   {isAnonymous && (
                     <Chip
                       icon={<VisibilityOffIcon sx={{ fontSize: 14 }} />}
@@ -666,11 +706,13 @@ const DonationPageModal = () => {
                       }}
                     />
                   )}
+
                   {donationData?.receiptNumber && (
                     <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', display: 'block' }}>
                       Receipt: {donationData.receiptNumber}
                     </Typography>
                   )}
+
                   <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 3 }}>
                     <Button
                       variant="outlined"
@@ -692,14 +734,6 @@ const DonationPageModal = () => {
                   </Box>
                 </Box>
               )}
-
-              {/* Security Note */}
-              <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center' }}>
-                <LockIcon sx={{ fontSize: 16, color: isDark ? '#6a6a80' : '#9a9ab0' }} />
-                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                  Your payment is secure with Razorpay
-                </Typography>
-              </Box>
             </Paper>
           </Grid>
         </Grid>
@@ -710,7 +744,7 @@ const DonationPageModal = () => {
           onClose={handleRazorpayClose}
           campaign={campaign}
           onSuccess={handleRazorpaySuccess}
-          guestInfo={!isAuthenticated ? guestInfo : null}
+          guestInfo={!isAuthenticated && !isAnonymous ? guestInfo : null}
           amount={amount}
           isAnonymous={isAnonymous}
           message={message}

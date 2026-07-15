@@ -62,6 +62,7 @@ import { useAuth } from "../../Context/AuthContext";
 import { api } from "../../Services/authServices";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import StatusChip from "./StatusChip";
 
 const TabPanel = ({ children, value, index }) => (
   <div role="tabpanel" hidden={value !== index}>
@@ -102,20 +103,15 @@ const AdminCharityApproval = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await api.get("/admin/charities", {
+      const response = await api.get("/verification/pending", {
         params: {
           page,
           limit: itemsPerPage,
           search: searchTerm,
-          status:
-            tabValue === 0
-              ? "pending"
-              : tabValue === 1
-                ? "approved"
-                : "rejected",
+          status: 'all',
         },
       });
-      setCharities(response.data.charities || []);
+      setCharities(response.data.data || []);
       setTotalPages(response.data.totalPages || 1);
       if (response.data.stats) {
         setStats(response.data.stats);
@@ -136,7 +132,9 @@ const AdminCharityApproval = () => {
     if (!selectedCharity) return;
 
     try {
-      await api.put(`/admin/charities/${selectedCharity._id}/approve`);
+      await api.put(`/admin/charities/${selectedCharity._id}/approve`, {
+        adminNote: rejectionReason, // Re-using the rejectionReason state for the note
+      });
       setSuccess(
         `Charity "${selectedCharity.charityDetails?.organizationName || selectedCharity.fullName}" approved successfully!`,
       );
@@ -237,7 +235,9 @@ const AdminCharityApproval = () => {
     setOpenDialog(true);
   };
 const handleFraudReview = (charityId) => {
+    if (charityId) {
     navigate(`/admin/verification/${charityId}`);
+    }
   };
 
   // Get status chip
@@ -290,7 +290,7 @@ const handleFraudReview = (charityId) => {
         return {
           title: "Charity Details",
           message: `Viewing comprehensive details for "${charityName}".`,
-          action: () => {},
+          action: () => setOpenDialog(false),
           color: isDark ? "#a0a0b8" : "#4a4a6a",
           buttonText: "Close",
           isViewOnly: true,
@@ -302,6 +302,7 @@ const handleFraudReview = (charityId) => {
           action: handleApprove,
           color: "#2ecc71",
           buttonText: "Approve",
+          showReason: true, // Re-use the reason field for an optional note
         };
       case "reject":
         return {
@@ -346,6 +347,28 @@ const handleFraudReview = (charityId) => {
         };
     }
   };
+
+  // Get dialog content based on action
+  const getDialogNoteField = () => {
+    if (dialogAction === 'approve') {
+      return {
+        label: "Admin Note (Optional)",
+        placeholder: "Add an internal note for this approval..."
+      };
+    }
+    if (dialogAction === 'reject') {
+      return {
+        label: "Rejection Reason",
+        placeholder: "Please provide a reason for rejection..."
+      };
+    }
+    return null;
+  };
+
+  const noteField = getDialogNoteField();
+
+
+
 
   // Stats cards
   const statCards = [
@@ -558,20 +581,21 @@ const handleFraudReview = (charityId) => {
             }}
           >
             <Tab
+              
+              label={`All Charities (${stats.total})`} />
+            //   label={`Charities Review`}
+            //   iconPosition="start"
+            
+            {/* <Tab
               icon={<PendingIcon />}
-              label={`Pending (${stats.pending})`}
-              iconPosition="start"
-            />
-            <Tab
-              icon={<CheckCircleIcon />}
-              label={`Approved (${stats.approved})`}
+              label={`Charities Review`}
               iconPosition="start"
             />
             <Tab
               icon={<CancelIcon />}
               label={`Rejected (${stats.rejected})`}
               iconPosition="start"
-            />
+            /> */}
           </Tabs>
 
           {/* Table */}
@@ -595,7 +619,7 @@ const handleFraudReview = (charityId) => {
                   </TableRow>
                 ) :
             charities.map((charity) => (
-              <TableRow key={charity._id}>
+              <TableRow key={charity.charityId}>
                 <TableCell>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar>
@@ -630,7 +654,10 @@ const handleFraudReview = (charityId) => {
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
                     <Tooltip title="View Documents">
-                      <IconButton size="small">
+                      <IconButton
+                        size="small"
+                        onClick={() => openActionDialog(charity, 'view')}
+                      >
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -655,7 +682,7 @@ const handleFraudReview = (charityId) => {
                     <Tooltip title="Fraud & Legitimacy Review">
                               <IconButton
                                 size="small"
-                                onClick={() => handleFraudReview(campaign.charityId?._id)}
+                                onClick={() => handleFraudReview(charity?.charityId)}
                                 sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
                               >
                                 <ShieldCheckIcon fontSize="small" />
@@ -763,15 +790,15 @@ const handleFraudReview = (charityId) => {
                   {getDialogContent().message}
                 </Typography>
 
-                {getDialogContent().showReason && (
+                {noteField && (
                   <TextField
                     fullWidth
-                    label="Rejection Reason"
+                    label={noteField.label}
                     multiline
                     rows={3}
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
-                    placeholder="Please provide a reason for rejection..."
+                    placeholder={noteField.placeholder}
                     sx={{ mt: 2 }}
                   />
                 )}
@@ -844,7 +871,7 @@ const handleFraudReview = (charityId) => {
                 )}
               </DialogContent>
               <DialogActions sx={{ p: 3, pt: 0 }}>
-                <Button
+                {dialogAction !== 'view' && (<Button
                   onClick={() => {
                     setOpenDialog(false);
                     setRejectionReason("");
@@ -852,7 +879,7 @@ const handleFraudReview = (charityId) => {
                   sx={{ borderRadius: 2 }}
                 >
                   Cancel
-                </Button>
+                </Button>)}
                 {dialogAction !== "view" && (
                   <Button
                     variant="contained"
@@ -869,6 +896,21 @@ const handleFraudReview = (charityId) => {
                     {getDialogContent().buttonText}
                   </Button>
                 )}
+                {dialogAction === "view" && (
+                  <Button
+                    variant="contained"
+                    onClick={getDialogContent().action}
+                    sx={{
+                      borderRadius: 2,
+                      backgroundColor: getDialogContent().color,
+                      "&:hover": {
+                        backgroundColor: getDialogContent().color,
+                        opacity: 0.8,
+                      },
+                    }}
+                  >
+                    {getDialogContent().buttonText}
+                  </Button>)}
               </DialogActions>
             </>
           )}

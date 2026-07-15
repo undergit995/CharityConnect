@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Donation = require("../../models/Donation");
+const Donation = require("../../models/Donation.js");
 const Campaign = require("../../models/CampaignModel");
 const User = require("../../models/User");
 
@@ -9,7 +9,7 @@ exports.getDashboardStats = async (req, res) => {
     const donorId = req.userId;
 
     const user = await User.findById(donorId);
-    if (!user || user.role !== "donor") {
+    if (!user) {
       return res
         .status(403)
         .json({ success: false, message: "Access denied. Donor only." });

@@ -49,6 +49,7 @@ import {
   Article as ArticleIcon,
   Receipt as ReceiptIcon,
   Close as CloseIcon,
+  TextFields as TextFieldsIcon,
   ArrowForward as ArrowForwardIcon,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
@@ -58,6 +59,7 @@ import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
 import { useNavigate } from 'react-router-dom';
 import verificationServices from '../../Services/verificationServices';
+import DocumentCard from './components/DocumentCard';
 
 // Document requirements configuration
 const DOCUMENT_REQUIREMENTS = [
@@ -67,6 +69,7 @@ const DOCUMENT_REQUIREMENTS = [
     description: 'Proves legal existence of your organization',
     icon: <BusinessIcon />,
     required: true,
+    fields: ['organizationName', 'organizationType', 'registrationNumber'],
     acceptedFormats: 'PDF, JPG, PNG',
     maxSize: '5MB',
   },
@@ -76,6 +79,7 @@ const DOCUMENT_REQUIREMENTS = [
     description: 'Proves tax-exempt/nonprofit status',
     icon: <ReceiptIcon />,
     required: true,
+    fields: ['urn12a80g'],
     acceptedFormats: 'PDF, JPG, PNG',
     maxSize: '5MB',
   },
@@ -85,6 +89,7 @@ const DOCUMENT_REQUIREMENTS = [
     description: 'Financial identity verification',
     icon: <AssignmentIcon />,
     required: true,
+    fields: ['panNumber'],
     acceptedFormats: 'PDF, JPG, PNG',
     maxSize: '5MB',
   },
@@ -94,6 +99,7 @@ const DOCUMENT_REQUIREMENTS = [
     description: 'Defines governance structure & purpose',
     icon: <GavelIcon />,
     required: true,
+    fields: ['cin'],
     acceptedFormats: 'PDF, JPG, PNG',
     maxSize: '5MB',
   },
@@ -162,200 +168,6 @@ const DOCUMENT_REQUIREMENTS = [
   },
 ];
 
-// Document Card Component
-const DocumentCard = ({ document, onUpload, index }) => {
-  const { isDark } = useTheme();
-  const [uploading, setUploading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState('');
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file size
-      const maxSize = parseInt(document.maxSize);
-      if (file.size > maxSize * 1024 * 1024) {
-        setError(`File size exceeds ${document.maxSize}`);
-        return;
-      }
-      setSelectedFile(file);
-      setError('');
-      handleUpload(file);
-    }
-  };
-
-  const handleUpload = async (file) => {
-    setUploading(true);
-    setUploadProgress(0);
-    try {
-      await onUpload(document.documentId, file, (progress) => {
-        setUploadProgress(progress);
-      });
-      setUploadProgress(100);
-      setTimeout(() => {
-        setUploading(false);
-        setSelectedFile(null);
-      }, 500);
-    } catch (err) {
-      setError(err.message || 'Upload failed');
-      setUploading(false);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'verified': return '#2ecc71';
-      case 'rejected': return '#e74c3c';
-      case 'submitted': return '#3498db';
-      default: return '#f39c12';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'verified': return <CheckCircleIcon />;
-      case 'rejected': return <CancelIcon />;
-      case 'submitted': return <UploadIcon />;
-      default: return <PendingIcon />;
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
-      <Card
-        sx={{
-          borderRadius: 2,
-          border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-          background: isDark ? 'rgba(20,20,32,0.6)' : '#ffffff',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            transform: 'translateY(-2px)',
-            boxShadow: isDark
-              ? '0 8px 40px rgba(0,0,0,0.3)'
-              : '0 8px 40px rgba(0,0,0,0.08)',
-          },
-        }}
-      >
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(102,126,234,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#667eea',
-                flexShrink: 0,
-              }}
-            >
-                {document.icon || <DescriptionIcon />}
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                  {document.label}
-                </Typography>
-                {document.required && (
-                  <Chip
-                    label="Required"
-                    size="small"
-                    sx={{
-                      height: 18,
-                      backgroundColor: 'rgba(231, 76, 60, 0.15)',
-                      color: '#e74c3c',
-                      '& .MuiChip-label': { fontSize: '0.6rem', px: 1 },
-                    }}
-                  />
-                )}
-                {document.status && document.status !== 'pending' && (
-                  <Chip
-                    icon={getStatusIcon(document.status)}
-                    label={document.status.charAt(0).toUpperCase() + document.status.slice(1)}
-                    size="small"
-                    sx={{
-                      height: 18,
-                      backgroundColor: `${getStatusColor(document.status)}20`,
-                      color: getStatusColor(document.status),
-                      '& .MuiChip-label': { fontSize: '0.6rem', px: 1 },
-                    }}
-                  />
-                )}
-              </Box>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', display: 'block', mt: 0.5 }}>
-                {document.description}
-              </Typography>
-              <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', display: 'block' }}>
-                Accepted formats: {document.acceptedFormats || "PDF, Word, Excel, PPT"} • Max size: {document.maxSize || "10mb"}
-              </Typography>
-
-              {document.fileUrl && (
-                <Typography variant="caption" sx={{ color: '#2ecc71', display: 'block', mt: 0.5 }}>
-                  ✅ File uploaded: {document.fileName || 'Document'}
-                </Typography>
-              )}
-
-              {error && (
-                <Typography variant="caption" sx={{ color: '#e74c3c', display: 'block', mt: 0.5 }}>
-                  ❌ {error}
-                </Typography>
-              )}
-
-              {uploading && (
-                <Box sx={{ mt: 1 }}>
-                  <LinearProgress
-                    variant="determinate"
-                    value={uploadProgress}
-                    sx={{
-                      height: 4,
-                      borderRadius: 2,
-                      '& .MuiLinearProgress-bar': {
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      },
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
-                    Uploading... {Math.round(uploadProgress)}%
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-            <Box>
-              <Button
-                variant="outlined"
-                component="label"
-                size="small"
-                disabled={uploading || document.status === 'verified'}
-                startIcon={uploading ? <CircularProgress size={16} /> : <UploadIcon />}
-                sx={{
-                  borderRadius: 2,
-                  borderColor: document.status === 'verified' ? '#2ecc71' : undefined,
-                  color: document.status === 'verified' ? '#2ecc71' : undefined,
-                }}
-              >
-                {document.status === 'verified' ? 'Verified' : document.fileUrl ? 'Replace' : 'Upload'}
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
-                  onChange={handleFileChange}
-                  disabled={document.status === 'verified'}
-                />
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
 
 // Main Charity Documents Component
 const CharityDocuments = () => {
@@ -375,8 +187,10 @@ const CharityDocuments = () => {
 
   // Load documents
   useEffect(() => {
-    loadDocuments();
-  }, []);
+    if (user?.userId) {
+      loadDocuments();
+    }
+  }, [user?.userId]);
 
   const loadDocuments = async () => {
     setLoading(true);
@@ -621,7 +435,7 @@ const CharityDocuments = () => {
 
         <Grid container spacing={2}>
           {documents.map((doc, index) => (
-            <Grid item xs={12} key={doc.id}>
+            <Grid item xs={12} key={doc.documentId}>
               <DocumentCard
                 document={doc}
                 onUpload={handleUpload}

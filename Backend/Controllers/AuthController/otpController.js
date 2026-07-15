@@ -8,7 +8,7 @@ exports.sendEmailOtp = async (req, res) => {
     if (!email || !validateEmail(email)) {
       return res.status(400).json({ success: false, message: 'Valid email is required' });
     }
-    const otpData = otpService.createOTP(email, 'email', purpose);
+    const otpData = await otpService.createOTP(email, 'email', purpose);
     const result = await sendOTPEmail(email, otpData.otp, purpose, otpService.otpConfig.expiresIn / 60);
     res.status(200).json({
       success: true,
@@ -27,7 +27,7 @@ exports.verifyOtp = async (req, res) => {
     if (!identifier || !otp) {
       return res.status(400).json({ success: false, message: 'Identifier and OTP are required' });
     }
-    const result = otpService.verifyOTP(identifier, otp, purpose);
+    const result = await otpService.verifyOTP(identifier, otp, purpose);
     if (!result.success) {
       return res.status(400).json({ success: false, message: result.message });
     }
@@ -67,7 +67,7 @@ exports.getOtpStatus = async (req, res) => {
     if (!identifier) {
       return res.status(400).json({ success: false, message: 'Identifier is required' });
     }
-    const status = otpService.getOTPStatus(identifier);
+    const status = await otpService.getOTPStatus(identifier);
     res.status(200).json({ success: true, data: status });
   } catch (error) {
     console.error('Get OTP status error:', error);
@@ -81,7 +81,7 @@ exports.verifyAndRegister = async (req, res) => {
         if (!identifier || !otp) {
             return res.status(400).json({ success: false, message: 'Identifier and OTP are required' });
         }
-        const result = otpService.verifyOTP(identifier, otp, purpose);
+        const result = await otpService.verifyOTP(identifier, otp, purpose);
         if (!result.success) {
             return res.status(400).json({ success: false, message: result.message });
         }

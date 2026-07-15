@@ -16,6 +16,7 @@ const {
 const Validators = require("../../utils/validators");
 const { truncate } = require("fs");
 const { createVerificationRecord } = require("../../services/verficationService");
+const Verification = require("../../models/Verification");
 const JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
 
@@ -238,72 +239,204 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
-  try {
-    const { email, password, rememberMe = false } = req.body;
+exports.login =  async (req, res) => {
+    try {
+        const { email, password, rememberMe = false } = req.body;
 
-    if (!email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email and password are required" });
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
+        }
+
+        // Find user by email
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been deactivated. Please contact support."
+            });
+        }
+
+        // Check if user is deleted
+        if (user.isDeleted) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been deleted. Please contact support."
+            });
+        }
+
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            // Track failed login attempts
+            user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+            if (user.failedLoginAttempts >= 5) {
+                user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 minutes
+            }
+            await user.save();
+            
+            return res.status(401).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        // Reset failed login attempts on successful login
+        user.failedLoginAttempts = 0;
+        user.lockedUntil = null;
+
+        // Generate tokens and update last login
+        const { accessToken, refreshToken } = generateTokens(user);
+        user.lastLogin = new Date();
+        user.loginCount = (user.loginCount || 0) + 1;
+        await user.save();
+
+        // Log activity
+        const activity = new ActivityLog({
+            userId: user._id,
+            action: "User logged in",
+            type: "login",
+            details: { 
+                email: user.email,
+                role: user.role,
+                timestamp: new Date()
+            }
+        });
+        await activity.save();
+
+        // ✅ Get verification status for charity
+        let verificationStatus = null;
+        let verification = null;
+        let eligibility = null;
+
+        if (user.role === 'charity') {
+            // Get verification record
+            verification = await Verification.findOne({ charityId: user._id });
+            
+            if (verification) {
+                // Calculate document status
+                const requiredDocs = verification.documents.filter(d => d.required);
+                const verifiedDocs = requiredDocs.filter(d => d.status === 'verified');
+                const rejectedDocs = requiredDocs.filter(d => d.status === 'rejected');
+                const submittedDocs = requiredDocs.filter(d => d.status === 'submitted');
+                const pendingDocs = requiredDocs.filter(d => d.status === 'pending' || d.status === 'needs-info');
+
+                const isEligible = verifiedDocs.length === requiredDocs.length && rejectedDocs.length === 0;
+                const progress = requiredDocs.length > 0 ? (verifiedDocs.length / requiredDocs.length) * 100 : 0;
+
+                verificationStatus = {
+                    status: verification.status,
+                    isApproved: user.isApproved || false,
+                    isVerified: user.isVerified || false,
+                    documents: {
+                        total: requiredDocs.length,
+                        verified: verifiedDocs.length,
+                        rejected: rejectedDocs.length,
+                        submitted: submittedDocs.length,
+                        pending: pendingDocs.length,
+                    },
+                    progress: Math.round(progress),
+                    isEligible: isEligible,
+                    missingDocs: pendingDocs.map(d => d.label),
+                    lastUpdated: verification.updatedAt,
+                    submittedAt: verification.submittedAt,
+                    reviewedAt: verification.reviewedAt,
+                };
+
+                eligibility = {
+                    canCreateCampaigns: isEligible && user.isApproved && user.isVerified,
+                    reason: isEligible ? 'All documents verified' : `${pendingDocs.length} document(s) pending verification`,
+                };
+            } else {
+                // No verification record found - create one
+                verification = await createVerificationRecord(user._id);
+                verificationStatus = {
+                    status: 'pending',
+                    isApproved: false,
+                    isVerified: false,
+                    documents: {
+                        total: 0,
+                        verified: 0,
+                        rejected: 0,
+                        submitted: 0,
+                        pending: 0,
+                    },
+                    progress: 0,
+                    isEligible: false,
+                    missingDocs: [],
+                    lastUpdated: null,
+                    submittedAt: null,
+                    reviewedAt: null,
+                };
+                eligibility = {
+                    canCreateCampaigns: false,
+                    reason: 'Verification not started. Please complete document verification.',
+                };
+            }
+        }
+
+        // Remove password from response
+        const userResponse = user.toObject();
+        delete userResponse.password;
+        delete userResponse.resetPasswordToken;
+        delete userResponse.resetPasswordExpires;
+
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            data: {
+                user: userResponse,
+                accessToken,
+                refreshToken,
+                verificationStatus: verificationStatus,
+                eligibility: eligibility,
+                redirect: getRedirectPath(user.role, verificationStatus, eligibility),
+            }
+        });
+
+    } catch (error) {
+        console.error("Login error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
     }
+};
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+// Helper function to determine redirect path
+const getRedirectPath = (role, verificationStatus, eligibility) => {
+    if (role === 'admin') {
+        return '/admin/dashboard';
     }
-
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Your account has been deactivated.",
-      });
+    
+    if (role === 'charity') {
+        // If charity is not verified, redirect to document upload
+        if (!verificationStatus?.isApproved || !verificationStatus?.isVerified) {
+            return '/charity/documents';
+        }
+        // If charity is approved and verified but not eligible
+        if (!eligibility?.canCreateCampaigns) {
+            return '/charity/documents';
+        }
+        return '/charity/dashboard';
     }
-
-    if (user.role === "charity" && !user.isApproved) {
-      return res.status(403).json({
-        success: false,
-        message: "Your charity account is pending approval.",
-      });
+    
+    if (role === 'donor') {
+        return '/donor/dashboard';
     }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
-    }
-
-    const { accessToken, refreshToken } = generateTokens(user);
-
-    user.lastLogin = new Date();
-    await user.save();
-
-    await logActivity(user._id, "User logged in", { rememberMe });
-
-    const userResponse = user.toObject();
-    delete userResponse.password;
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      data: {
-        user: userResponse,
-        accessToken,
-        refreshToken,
-        isAuthenticated: true,
-      },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error during login",
-      error: error.message,
-    });
-  }
+    
+    return '/dashboard';
 };
 
 exports.refreshToken = async (req, res) => {

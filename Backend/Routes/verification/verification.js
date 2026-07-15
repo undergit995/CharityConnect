@@ -54,10 +54,21 @@ router.get('/status/:charityId', async (req, res) => {
     const isEligible = verifiedDocs.length === requiredDocs.length && rejectedDocs.length === 0;
     const progress = (verifiedDocs.length / requiredDocs.length) * 100;
 
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://charity-connect-p2t3.onrender.com' 
+      : `${req.protocol}://${req.get('host')}`;
+
+    const formattedDocuments = verification.documents.map(doc => {
+      const docObj = doc.toObject();
+      if (docObj.fileUrl && !docObj.fileUrl.startsWith('http')) {
+        docObj.fileUrl = `${baseUrl}/${docObj.fileUrl.replace(/\\/g, '/')}`;
+      }
+      return docObj;
+    });
     res.status(200).json({
       success: true,
       data: {
-        documents: verification.documents,
+        documents: formattedDocuments,
         status: verification.status,
         eligibility: {
           isEligible,
@@ -347,10 +358,10 @@ router.get('/eligibility/:charityId', async (req, res) => {
  * @desc Upload document
  * @access Private
  */
-router.post('/upload/:charityId', authAndRole('charity','admin'), uploadDocument, async (req, res) => {
+router.post('/upload/:charityId', authAndRole('charity'), uploadDocument, async (req, res) => {
   try {
     const { charityId } = req.params;
-    const { documentType } = req.body;
+    const { documentType, fieldsData } = req.body;
 
     if (!req.file) {
       return res.status(400).json({
@@ -376,13 +387,24 @@ router.post('/upload/:charityId', authAndRole('charity','admin'), uploadDocument
       });
     }
 
+    const relativePath = req.file.path.replace(/\\/g, '/');
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://charity-connect-p2t3.onrender.com' 
+      : `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${baseUrl}/${relativePath}`;
+
     document.status = 'submitted';
-    document.fileUrl = req.file.path;
+    document.fileUrl = fileUrl;
     document.uploadedAt = new Date();
+
+    // Save additional fields if provided
+    if (fieldsData) {
+      document.fieldsData = { ...document.fieldsData, ...JSON.parse(fieldsData) };
+    }
 
     // Update verification status
     if (verification.status === 'pending') {
-      verification.status = 'submitted';
+      verification.status = 'needs-info';
     }
 
     await verification.save();
@@ -391,7 +413,7 @@ router.post('/upload/:charityId', authAndRole('charity','admin'), uploadDocument
       success: true,
       message: 'Document uploaded successfully',
       data: {
-        fileUrl: req.file.path,
+        fileUrl: fileUrl,
         status: 'submitted',
       },
     });
@@ -540,6 +562,138 @@ router.put('/documents/:charityId/verify-all', authAndRole('admin'), async (req,
     });
   }
 });
+
+// routes/verificationRoutes.js
+
+/**
+ * @route GET /api/verification/documents/:charityId/:documentId/view
+ * @desc Get document for viewing
+ * @access Private (Admin only)
+ */
+router.get('/documents/:charityId/:documentId/view', authAndRole('admin'), async (req, res) => {
+  try {
+    const { charityId, documentId } = req.params;
+
+    // Check if admin
+    const admin = await User.findById(req.userId);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin only.',
+      });
+    }
+
+    // Find verification record
+    const verification = await Verification.findOne({ charityId });
+    if (!verification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Verification record not found',
+      });
+    }
+
+    // Find document
+    const document = verification.documents.find(d => d.documentId === documentId);
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    if (!document.fileUrl) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not uploaded yet',
+      });
+    }
+
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        documentId: document.documentId,
+        label: document.label,
+        fileUrl: document.fileUrl,
+        status: document.status,
+        uploadedAt: document.uploadedAt,
+        verifiedAt: document.verifiedAt,
+        adminNotes: document.adminNotes,
+      },
+    });
+  } catch (error) {
+    console.error('View document error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to view document',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route GET /api/verification/documents/:charityId/:documentId
+ * @desc Get a single document's details for viewing
+ * @access Private (Admin only)
+ */
+router.get('/documents/:charityId/:documentId', authAndRole('admin'), async (req, res) => {
+  try {
+    const { charityId, documentId } = req.params;
+
+    // Find verification record
+    const verification = await Verification.findOne({ charityId });
+    if (!verification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Verification record not found',
+      });
+    }
+
+    // Find document
+    const document = verification.documents.find(d => d.documentId === documentId);
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+    }
+
+    if (!document.fileUrl) {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not uploaded yet',
+      });
+    }
+
+    // Ensure fileUrl uses forward slashes for compatibility
+    const relativePath = document.fileUrl.replace(/\\/g, '/');
+    const baseUrl = process.env.NODE_ENV === 'production'
+      ? 'https://charity-connect-p2t3.onrender.com'
+      : `${req.protocol}://${req.get('host')}`;
+    const fullFileUrl = relativePath.startsWith(baseUrl) ? relativePath : `${baseUrl}/${relativePath}`;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        documentId: document.documentId,
+        label: document.label,
+        fileUrl: fullFileUrl,
+        status: document.status,
+        uploadedAt: document.uploadedAt,
+        verifiedAt: document.verifiedAt,
+        adminNotes: document.adminNotes,
+      },
+    });
+  } catch (error) {
+    console.error('View document error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to view document',
+      error: error.message,
+    });
+  }
+});
+
 
 /**
  * @route POST /api/verification/submit/:charityId

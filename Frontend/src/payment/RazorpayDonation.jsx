@@ -23,6 +23,7 @@ import {
   Close as CloseIcon,
   CheckCircleOutlineRounded,
   Person as PersonIcon,
+  CheckCircle as CheckCircleIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import PanoramaPhotosphereIcon from '@mui/icons-material/PanoramaPhotosphere';
@@ -30,11 +31,11 @@ import { useAuth } from '../Context/AuthContext';
 import { api } from '../Services/authServices';
 import { useTheme } from '../Theme/ThemeContext';
 
-const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => {
+const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo, isAnonymous: initialIsAnonymous }) => {
   const { user } = useAuth();
   const { isDark } = useTheme();
   const [amount, setAmount] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(initialIsAnonymous || false);
   const [message, setMessage] = useState('');
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,12 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => 
       };
     }
   }, [open]);
+
+  // Sync with prop
+  useEffect(() => {
+    setIsAnonymous(initialIsAnonymous || false);
+  }, [initialIsAnonymous]);
+
 
   const handleAmountSelect = (value) => {
     setAmount(value.toString());
@@ -259,7 +266,9 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => 
             <StepLabel>Amount</StepLabel>
           </Step>
           <Step>
-            <StepLabel>Details</StepLabel>
+            <StepLabel>
+              Details
+            </StepLabel>
           </Step>
           <Step>
             <StepLabel>Complete</StepLabel>
@@ -335,7 +344,8 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => 
 
             {/* ✅ Anonymous Donation Toggle with Info */}
             <Box sx={{ mb: 2 }}>
-              <FormControlLabel
+              {isAnonymous ?null : (
+                <FormControlLabel
                 control={
                   <Switch
                     checked={isAnonymous}
@@ -353,7 +363,7 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => 
                   </Box>
                 }
                 sx={{ display: 'block' }}
-              />
+              />)}
 
               {isAnonymous && (
                 <Box sx={{ mt: 1 }}>
@@ -368,7 +378,6 @@ const RazorpayDonation = ({ open, onClose, campaign, onSuccess, guestInfo }) => 
                     <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
                       • Your name will not appear on the campaign page
                       • The charity will still receive your donation
-                      • You will still receive a receipt via email
                       • Your identity remains private
                     </Typography>
                   </Alert>

@@ -704,8 +704,8 @@ const CharityCampaigns = () => {
 
   // Initial load
   useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+    if (user) fetchCampaigns();
+  }, [fetchCampaigns, user]);
 
   // Auto-refresh every 30 seconds
   useEffect(() => {

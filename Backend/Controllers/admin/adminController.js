@@ -157,6 +157,95 @@ exports.getCharities = async (req, res) => {
 };
 
 /**
+ * @route GET /api/admin/donations
+ * @desc Get all donations with filters
+ * @access Private (Admin only)
+ */
+exports.getDonations = async (req, res) => {
+    try {
+        const { 
+            page = 1, 
+            limit = 10, 
+            search = '', 
+            status = 'all',
+            campaignId,
+            charityId
+        } = req.query;
+
+        const query = {};
+
+        // Filter by status
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+        
+        if (campaignId) {
+            query.campaignId = campaignId;
+        }
+
+        if (charityId) {
+            query.charityId = charityId;
+        }
+
+        // Search
+        if (search) {
+            const users = await User.find({
+                $or: [
+                    { fullName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                ]
+            }).select('_id');
+            const userIds = users.map(u => u._id);
+
+            const campaigns = await Campaign.find({
+                title: { $regex: search, $options: 'i' }
+            }).select('_id');
+            const campaignIds = campaigns.map(c => c._id);
+
+            query.$or = [
+                { transactionId: { $regex: search, $options: 'i' } },
+                { receiptNumber: { $regex: search, $options: 'i' } },
+                { donorId: { $in: userIds } },
+                { charityId: { $in: userIds } },
+                { campaignId: { $in: campaignIds } },
+            ];
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [donations, total] = await Promise.all([
+            Donation.find(query)
+                .skip(skip)
+                .limit(parseInt(limit))
+                .sort({ donationDate: -1 })
+                .populate('donorId', 'fullName email')
+                .populate('charityId', 'charityDetails.organizationName fullName')
+                .populate('campaignId', 'title'),
+            Donation.countDocuments(query)
+        ]);
+
+        res.status(200).json({
+            success: true,
+            donations,
+            pagination: {
+                page: parseInt(page),
+                limit: parseInt(limit),
+                total,
+                pages: Math.ceil(total / parseInt(limit))
+            }
+        });
+
+    } catch (error) {
+        console.error("Get admin donations error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch donations",
+            error: error.message
+        });
+    }
+};
+
+/**
  * @route GET /api/admin/charities/:id
  * @desc Get single charity details
  * @access Private (Admin only)

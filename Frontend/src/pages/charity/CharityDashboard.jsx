@@ -81,9 +81,11 @@ const CharityDashboard = () => {
   const [isEligible, setIsEligible] = useState(false);
 
   useEffect(() => {
+    if (!user?.userId) return;
+
     const checkEligibility = async () => {
       try {
-        const response = await api.get(`/verification/eligibility/${user._id}`);
+        const response = await api.get(`/verification/eligibility/${user.userId}`);
         setIsEligible(response.data.data.isEligible);
       } catch (error) {
         console.error('Failed to check eligibility:', error);
@@ -172,13 +174,13 @@ const CharityDashboard = () => {
     <Box sx={{ py: 3 }}>
       <Container maxWidth="xl">
         {/* Header */}
-        {!isEligible && (
-        <Alert severity="warning">
-          Complete your verification to start fundraising.
-          <Button onClick={() => navigate('/charity/documents')}>
-            Complete Verification
-          </Button>
-        </Alert>
+        {!isEligible && (null
+        // <Alert severity="warning">
+        //   Complete your verification to start fundraising.
+        //   <Button onClick={() => navigate('/charity/documents')}>
+        //     Complete Verification
+        //   </Button>
+        // </Alert>
       )}
         <Box
           sx={{
@@ -704,7 +706,7 @@ const CharityDashboard = () => {
             </Paper>
 
             {/* Recent Activity */}
-            <Paper
+            {/* <Paper
               sx={{
                 p: 3,
                 borderRadius: 3,
@@ -799,7 +801,7 @@ const CharityDashboard = () => {
                   </Box>
                 ))
               )}
-            </Paper>
+            </Paper> */}
           </>
         )}
 

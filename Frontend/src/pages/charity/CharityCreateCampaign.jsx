@@ -87,31 +87,41 @@ const CharityCreateCampaign = () => {
   const [showEligibilityDialog, setShowEligibilityDialog] = useState(false);
 
     useEffect(() => {
+    // if (!user?.userId) return;
+
     const checkEligibility = async () => {
-      setEligibility(prev => ({ ...prev, isLoading: true }));
+      setEligibility(prev => ({ ...prev, isLoading: true, status: 'checking' }));
       try {
-        const data = await verificationService.checkEligibility(user._id);
+        const data = await verificationService.checkEligibility(user.userId);
         if (data) {
           setEligibility({
             isEligible: data.isEligible,
-            isLoading: false,
             status: data.isEligible ? 'eligible' : 'not_eligible',
-            reason: data.reason || '',
+            reason: data.reason || 'Your charity is not eligible to create campaigns.',
+            missingDocs: data.missingDocs || [],
+            progress: data.progress || 0,
           });
           
           if (!data.isEligible) {
             setShowEligibilityDialog(true);
           }
+        } else {
+          // Handle case where API returns no data
+          setEligibility(prev => ({
+            ...prev,
+            status: 'error',
+          }));
         }
       } catch (err) {
         setEligibility({
           isEligible: false,
-          isLoading: false,
           status: 'error',
           reason: 'Failed to check eligibility',
           missingDocs: [],
           progress: 0,
         });
+      } finally {
+        setEligibility(prev => ({ ...prev, isLoading: false }));
       }
     };
     checkEligibility();

@@ -177,7 +177,6 @@ const DonorSidebar = () => {
     { text: 'Saved Campaigns', icon: <FavoriteIcon />, path: '/donor/saved' },
     { text: 'Explore Campaigns', icon: <SearchIcon />, path: '/donor/campaign' },
     { text: 'Profile', icon: <PersonIcon />, path: '/donor/profile' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/donor/settings' },
   ];
 
   // Fetch donor dashboard data with optimistic locking

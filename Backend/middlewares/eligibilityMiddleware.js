@@ -1,3 +1,8 @@
+const Verification = require("../models/Verification");
+const User = require('../models/User');
+const { createVerificationRecord, checkEligibility } = require("../services/verficationService");
+
+
 const ensureVerificationRecord = async (req, res, next) => {
   try {
     const userId = req.userId;

@@ -13,9 +13,7 @@ import {
 const formatINR = (n) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
-// Official Indian government portals used to cross-check a charity's legitimacy.
-// Each one is opened by the admin, who manually enters the org's ID on the portal
-// (these portals don't support public prefilled search links).
+// Verification sources
 const VERIFICATION_SOURCES = [
   {
     id: "darpan",

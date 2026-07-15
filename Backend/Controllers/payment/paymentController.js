@@ -20,6 +20,7 @@ exports.createOrder = async (req, res) => {
       isAnonymous,
       message,
     } = req.body;
+    const { guestInfo } = req.body;
 
     if (!amount || amount < 1) {
       return res.status(400).json({
@@ -66,9 +67,16 @@ exports.createOrder = async (req, res) => {
 
     const order = await razorpay.orders.create(options);
 
+    // Get user details if logged in
+    const user = req.userId ? await User.findById(req.userId) : null;
+
     // Save order in database with pending status
     const donation = new Donation({
       donorId: req.userId,
+      // Use guest info if available, otherwise use logged-in user's info
+      donorName: guestInfo?.name || user?.fullName,
+      donorEmail: guestInfo?.email || user?.email,
+      donorPhone: guestInfo?.phone || user?.phone,
       campaignId: campaignId,
       charityId: campaign.charityId,
       amount: amount,
@@ -166,10 +174,21 @@ exports.verifyPayment = async (req, res) => {
     }
 
     // Send receipt email
-    const donor = await User.findById(donation.donorId);
-    if (donor && donor.email) {
+    let donorEmail = null;
+    let donorName = 'Donor';
+
+    if (donation.donorId) {
+      const user = await User.findById(donation.donorId);
+      donorEmail = user?.email;
+      donorName = user?.fullName || 'Donor';
+    } else if (donation.donorEmail) {
+      donorEmail = donation.donorEmail;
+      donorName = donation.donorName || 'Guest Donor';
+    }
+
+    if (donorEmail) {
       await sendEmail({
-        to: donor.email,
+        to: donorEmail,
         subject: `Donation Receipt - ${donation.receiptNumber}`,
         html: `
           <!DOCTYPE html>
@@ -190,7 +209,7 @@ exports.verifyPayment = async (req, res) => {
                 <h1>Thank You! 🙏</h1>
               </div>
               <div class="content">
-                <h2>Dear ${donor.fullName || "Donor"},</h2>
+                <h2>Dear ${donorName},</h2>
                 <p>Thank you for your generous donation to <strong>${campaign.title}</strong>.</p>
                 <div class="receipt-box">
                   <div class="row">

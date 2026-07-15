@@ -264,7 +264,6 @@ const Register = () => {
 
     setSubmitLoading(true);
     try {
-      // Prepare data matching your User schema
       const userData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
@@ -290,15 +289,17 @@ const Register = () => {
       const response = await api.post('/auth/register',userData);
 
       if (response?.data?.success) {
-        if (response?.data?.user?.role === "admin") {
-          navigate("/admin/dashboard");
-        } else if (response?.data?.user?.role === "charity") {
-          navigate("/charity/dashboard");
-        } else if (response?.data?.user?.role === "donor") {
-          navigate("/donor/dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+          navigate("/auth/login");
+
+        // if (response?.data?.user?.role === "admin") {
+        //   navigate("/admin/dashboard");
+        // } else if (response?.data?.user?.role === "charity") {
+        //   navigate("/charity/dashboard");
+        // } else if (response?.data?.user?.role === "donor") {
+        //   navigate("/donor/dashboard");
+        // } else {
+        //   navigate("/dashboard");
+        // }
       } else {
         navigate("/auth/verify-email", {
           state: {
@@ -1026,7 +1027,11 @@ const Register = () => {
                     transition: "all 0.3s ease",
                   }}
                 >
-                  Next
+                  {submitLoading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Next"
+                  )}
                 </Button>
               )}
             </Box>

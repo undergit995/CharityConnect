@@ -333,7 +333,7 @@ const DocumentCard = ({ document, onUpload, onVerify, onDelete, isAdmin, isEligi
   );
 };
 
-// Main Charity Verification Component
+
 const CharityVerification = ({ charityId, isAdmin = false }) => {
   const { isDark } = useTheme();
   const { user } = useAuth();
@@ -358,11 +358,11 @@ const CharityVerification = ({ charityId, isAdmin = false }) => {
   // Load verification data
   useEffect(() => {
     loadVerificationData();
-  }, [charityId]);
+  }, [user]);
   const loadVerificationData = async () => {
     setLoading(true);
     try {
-      const data = await verificationService.getVerificationStatus(user.userId || charityId);
+      const data = await verificationService.getVerificationStatus(user?.userId);
       setDocuments(data.documents || DOCUMENT_REQUIREMENTS);
       setVerificationStatus(data.status || 'pending');
       setEligibility(data.eligibility || {

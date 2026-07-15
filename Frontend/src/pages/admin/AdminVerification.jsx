@@ -730,6 +730,7 @@
 
 // export default AdminVerification;
 
+// pages/admin/AdminVerification.jsx
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
@@ -756,23 +757,53 @@ import {
   FormControlLabel,
   Checkbox,
   Snackbar,
+  Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tab,
+  Tabs,
+  Badge,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
-  AdminPanelSettings as ShieldCheckIcon,
-  FindInPage as FileSearchIcon,          
-  PrivacyTip as ShieldAlertIcon,          
+  GppGood as ShieldCheckIcon,
+  FindInPage as FileSearchIcon,
+  GppMaybe as ShieldAlertIcon,
   CheckCircleOutlineOutlined as CheckCircle2Icon,
-  WarningAmber as AlertTriangleIcon,     
-  CancelOutlined as XCircleIcon,         
-  Launch as ExternalLinkIcon,            
-  AccountBalance as LandmarkIcon,        
+  Warning as AlertTriangleIcon,
+  HighlightOff as XCircleIcon,
+  OpenInNew as ExternalLinkIcon,
+  AccountBalance as LandmarkIcon,
   Verified as VerifiedIcon,
   Cancel as CancelIcon,
   Refresh as RefreshIcon,
   Save as SaveIcon,
   Print as PrintIcon,
+  Visibility as VisibilityIcon,
   Download as DownloadIcon,
+  PictureAsPdf as PdfIcon,
+  Description as DescriptionIcon,
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  LocationOn as LocationIcon,
+  Receipt as ReceiptIcon,
+  Assignment as AssignmentIcon,
+  Apartment as BuildingIcon,
+  AccountBalanceWallet as WalletIcon,
+  Article as FileTextIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as AlertCircleIcon,
 } from '@mui/icons-material';
+
 import { motion } from 'framer-motion';
 import { useTheme } from '../../Theme/ThemeContext';
 import { useAuth } from '../../Context/AuthContext';
@@ -790,28 +821,79 @@ const VERIFICATION_SOURCES = [
     label: 'NGO Darpan (NITI Aayog)',
     url: 'https://ngodarpan.gov.in',
     field: 'darpanId',
-    what: 'Confirms the org is a government-recognised voluntary organisation and pulls up its registered profile.',
+    required: true,
+    what: 'Confirms the organization is registered on NGO Darpan and displays its government-recognized profile.',
   },
   {
     id: 'incometax',
-    label: 'Income Tax e-filing portal',
+    label: 'Income Tax e-Filing',
     url: 'https://www.incometax.gov.in',
     field: 'urn12a80g',
-    what: 'Confirms the 12A (tax-exempt status) and 80G (donor tax deduction) registration is active, not expired or withdrawn.',
+    required: true,
+    what: 'Verifies that 12AB and 80G registrations are active and valid.',
   },
   {
+    id: 'pan',
+    label: 'PAN Verification',
+    url: 'https://www.incometax.gov.in',
+    field: 'pan',
+    required: true,
+    what: 'Confirms the Permanent Account Number belongs to the registered organization.',
+  },
+
+  {
+    id: 'gst',
+    label: 'GST Search',
+    url: 'https://www.gst.gov.in',
+    field: 'gstin',
+    required: true,
+    what: 'Verifies GST registration status and legal business name.',
+  },
+
+  {
+    id: 'epfo',
+    label: 'EPFO Establishment Search',
+    url: 'https://www.epfindia.gov.in',
+    field: 'epfoId',
+    required: true,
+    what: 'Confirms the organization is registered as an employer with EPFO.',
+  },
+
+  {
     id: 'mca',
-    label: 'MCA21 company/LLP search',
-    url: 'https://www.mca.gov.in/mcafoportal/companyLLPMasterData.do',
+    label: 'MCA21 Company / LLP Search',
+    url: 'https://www.mca.gov.in',
     field: 'cin',
-    what: 'For Section 8 companies — confirms the CIN is active and the registered name matches exactly.',
+    required: false,
+    applicableTo: 'Section 8 Companies',
+    what: 'Confirms the Corporate Identification Number (CIN) is active and matches the legal entity.',
   },
   {
     id: 'fcra',
-    label: 'FCRA Online (Ministry of Home Affairs)',
+    label: 'FCRA Online',
     url: 'https://fcraonline.nic.in',
     field: 'fcraNumber',
-    what: 'Required only if the charity accepts foreign donations — confirms FCRA registration is valid.',
+    required: false,
+    applicableTo: 'Organizations receiving foreign donations',
+    what: 'Checks whether the FCRA registration is valid and not suspended or cancelled.',
+  },
+
+  {
+    id: 'esic',
+    label: 'ESIC Employer Search',
+    url: 'https://www.esic.gov.in',
+    field: 'esicCode',
+    required: false,
+    what: 'Checks whether the organization is registered with ESIC for employee insurance.',
+  },
+
+  {
+    id: 'csr1',
+    label: 'CSR-1 Registration (MCA)',
+    url: 'https://www.mca.gov.in',
+    field: 'csr1Number',
+    required: false,
+    what: 'Confirms eligibility to receive Corporate Social Responsibility (CSR) funds from companies.',
   },
 ];
 
@@ -827,6 +909,386 @@ const RED_FLAGS = [
   { id: 'urgency_pressure', label: 'Campaign copy uses high-pressure urgency with vague fund usage' },
   { id: 'duplicate_bank', label: 'Bank account already linked to a different organisation on the platform' },
 ];
+
+// Document Viewer Dialog
+const DocumentViewerDialog = ({ open, onClose, document, charityName }) => {
+  const { isDark } = useTheme();
+
+  if (!document) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
+          backdropFilter: 'blur(20px)',
+          minHeight: 500,
+        },
+      }}
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              {document.label}
+            </Typography>
+            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+              {charityName} • {document.documentId}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Download">
+              <IconButton
+                component="a"
+                href={document.fileUrl}
+                download
+                target="_blank"
+                sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
+              >
+                <DownloadIcon size={20} />
+              </IconButton>
+            </Tooltip>
+            <IconButton onClick={onClose}>
+              <XCircleIcon size={20} />
+            </IconButton>
+          </Box>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={{ mt: 2 }}>
+          {document.fileUrl ? (
+            document.fileUrl.endsWith('.pdf') ? (
+              <Box
+                component="iframe"
+                src={document.fileUrl}
+                sx={{
+                  width: '100%',
+                  height: '70vh',
+                  border: 'none',
+                  borderRadius: 2,
+                }}
+                title={document.label}
+              />
+            ) : (
+              <Box
+                component="img"
+                src={document.fileUrl}
+                alt={document.label}
+                sx={{
+                  width: '100%',
+                  maxHeight: '70vh',
+                  objectFit: 'contain',
+                  borderRadius: 2,
+                }}
+              />
+            )
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '50vh',
+                bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                borderRadius: 2,
+              }}
+            >
+              <DescriptionIcon size={48} className="text-slate-400" />
+              <Typography variant="body2" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', mt: 2 }}>
+                No document uploaded yet
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Chip
+            label={`Status: ${document.status}`}
+            size="small"
+            sx={{
+              backgroundColor: document.status === 'verified' 
+                ? 'rgba(46, 204, 113, 0.15)' 
+                : document.status === 'rejected'
+                ? 'rgba(231, 76, 60, 0.15)'
+                : 'rgba(243, 156, 18, 0.15)',
+              color: document.status === 'verified' ? '#2ecc71' : document.status === 'rejected' ? '#e74c3c' : '#f39c12',
+            }}
+          />
+          {document.uploadedAt && (
+            <Chip
+              label={`Uploaded: ${new Date(document.uploadedAt).toLocaleDateString()}`}
+              size="small"
+              variant="outlined"
+            />
+          )}
+          {document.verifiedAt && (
+            <Chip
+              label={`Verified: ${new Date(document.verifiedAt).toLocaleDateString()}`}
+              size="small"
+              variant="outlined"
+              sx={{ borderColor: '#2ecc71', color: '#2ecc71' }}
+            />
+          )}
+        </Box>
+
+        {document.adminNotes && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+              Admin Notes:
+            </Typography>
+            <Paper
+              sx={{
+                p: 2,
+                mt: 0.5,
+                borderRadius: 2,
+                bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+              }}
+            >
+              <Typography variant="body2">{document.adminNotes}</Typography>
+            </Paper>
+          </Box>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Charity Details Dialog
+const CharityDetailsDialog = ({ open, onClose, charity }) => {
+  const { isDark } = useTheme();
+
+  if (!charity) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
+          backdropFilter: 'blur(20px)',
+        },
+      }}
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Charity Details
+          </Typography>
+          <IconButton onClick={onClose}>
+            <XCircleIcon size={20} />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+      <DialogContent>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar
+                src={charity.profileImage}
+                sx={{ width: 56, height: 56 }}
+              >
+                {charity.fullName?.charAt(0) || 'C'}
+              </Avatar>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {charity.charityDetails?.organizationName || charity.fullName}
+                </Typography>
+                <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                  {charity.email}
+                </Typography>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  {charity.phone}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Divider />
+          </Grid>
+
+          {/* Organization Details */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+              Organization Details
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  Organization Name
+                </Typography>
+                <Typography variant="body2">
+                  {charity.charityDetails?.organizationName || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  Organization Type
+                </Typography>
+                <Typography variant="body2">
+                  {charity.charityDetails?.organizationType || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  Registration Number
+                </Typography>
+                <Typography variant="body2">
+                  {charity.charityDetails?.registrationNumber || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  PAN Number
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {charity.charityDetails?.panNumber || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  NGO Darpan ID
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {charity.charityDetails?.darpanId || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  12A/80G URN
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {charity.charityDetails?.urn12a80g || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  MCA CIN
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {charity.charityDetails?.cin || 'N/A'}
+                </Typography>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                  FCRA Number
+                </Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  {charity.charityDetails?.fcraNumber || 'N/A'}
+                </Typography>
+              </Grid>
+            </Grid>
+          </Grid>
+
+          {/* Address */}
+          {charity.address && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                Address
+              </Typography>
+              <Typography variant="body2">
+                {charity.address.street}, {charity.address.city}, {charity.address.state}, {charity.address.country} - {charity.address.zipCode}
+              </Typography>
+            </Grid>
+          )}
+
+          {/* Bank Details */}
+          {charity.charityDetails?.bankDetails && (
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                Bank Details
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                    Account Holder Name
+                  </Typography>
+                  <Typography variant="body2">
+                    {charity.charityDetails.bankDetails.accountHolderName || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                    Bank Name
+                  </Typography>
+                  <Typography variant="body2">
+                    {charity.charityDetails.bankDetails.bankName || 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                    Account Number
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    {charity.charityDetails.bankDetails.accountNumber ? '••••' + charity.charityDetails.bankDetails.accountNumber.slice(-4) : 'N/A'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                    IFSC Code
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    {charity.charityDetails.bankDetails.ifscCode || 'N/A'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Verification Status */}
+          <Grid item xs={12}>
+            <Divider />
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>
+              Verification Status
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Chip
+                label={`Documents: ${charity.verificationStatus || 'Pending'}`}
+                sx={{
+                  backgroundColor: charity.verificationStatus === 'verified' 
+                    ? 'rgba(46, 204, 113, 0.15)' 
+                    : charity.verificationStatus === 'rejected'
+                    ? 'rgba(231, 76, 60, 0.15)'
+                    : 'rgba(243, 156, 18, 0.15)',
+                  color: charity.verificationStatus === 'verified' ? '#2ecc71' : charity.verificationStatus === 'rejected' ? '#e74c3c' : '#f39c12',
+                }}
+              />
+              <Chip
+                label={`Approval: ${charity.isApproved ? 'Approved' : 'Pending'}`}
+                sx={{
+                  backgroundColor: charity.isApproved ? 'rgba(46, 204, 113, 0.15)' : 'rgba(243, 156, 18, 0.15)',
+                  color: charity.isApproved ? '#2ecc71' : '#f39c12',
+                }}
+              />
+              <Chip
+                label={`Verified: ${charity.isVerified ? 'Yes' : 'No'}`}
+                sx={{
+                  backgroundColor: charity.isVerified ? 'rgba(46, 204, 113, 0.15)' : 'rgba(231, 76, 60, 0.15)',
+                  color: charity.isVerified ? '#2ecc71' : '#e74c3c',
+                }}
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} sx={{ borderRadius: 2 }}>
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 // Main Component
 const AdminVerification = () => {
@@ -856,85 +1318,223 @@ const AdminVerification = () => {
   const [flags, setFlags] = useState({});
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [actionType, setActionType] = useState('');
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [charityDetailsOpen, setCharityDetailsOpen] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
-  
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const charityResponse = await api.get(`/admin/charities/${user.userId}`);
+        const charityResponse = await api.get(`/admin/charities/${id}`);
         if (charityResponse.data.success) {
-          const charityData = charityResponse.data.data;
+          const charityData = charityResponse.data.data.charity;
           setCharity(charityData);
           
-          
-          const verificationResponse = await api.get(`/verification/status/${user.userId}`);
+          const verificationResponse = await api.get(`/verification/status/${id}`          );
           if (verificationResponse.data.success) {
             const verificationData = verificationResponse.data.data;
             setVerification(verificationData);
             
-            
-            const fraudReviewDoc = verificationData.documents?.find(d => d.documentId === 'fraud_review');
-            if (fraudReviewDoc && fraudReviewDoc.status === 'verified') {
-              const reviewData = JSON.parse(fraudReviewDoc.adminNotes || '{}');
-              setSourceChecked(reviewData.sourceChecked || {});
-              setFlags(reviewData.flags || {});
-              setOrg(reviewData.org || {
-                orgName: charityData.charityDetails?.organizationName || '',
-                panNumber: charityData.charityDetails?.panNumber || '',
-                darpanId: charityData.charityDetails?.darpanId || '',
-                urn12a80g: charityData.charityDetails?.urn12a80g || '',
-                cin: charityData.charityDetails?.cin || '',
-                fcraNumber: charityData.charityDetails?.fcraNumber || '',
-                bankAccountName: charityData.charityDetails?.bankDetails?.accountHolderName || '',
-                requestedAmount: 0,
-              });
-            } else {
-              // Initialize with charity data
-              setOrg({
-                orgName: charityData.charityDetails?.organizationName || '',
-                panNumber: charityData.charityDetails?.panNumber || '',
-                darpanId: charityData.charityDetails?.darpanId || '',
-                urn12a80g: charityData.charityDetails?.urn12a80g || '',
-                cin: charityData.charityDetails?.cin || '',
-                fcraNumber: charityData.charityDetails?.fcraNumber || '',
-                bankAccountName: charityData.charityDetails?.bankDetails?.accountHolderName || '',
-                requestedAmount: 0,
-              });
-            }
+            // ✅ Extract details from documents
+            await extractDetailsFromDocuments(verificationData.documents, charityData);
           }
         }
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch data');
-      } finally {
+        setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to fetch data', severity: 'error' });
+      } finally { 
         setLoading(false);
       }
     };
-    if (user.userId) {
+    if (id) {
       fetchData();
     }
-  }, [user.userId]);
+  }, [id]);
+
+  // ✅ Function to extract details from uploaded documents
+  const extractDetailsFromDocuments = async (documents, charityData) => {
+    setExtracting(true);
+    try {
+      // Initialize with charity data
+      let extractedData = {
+        orgName: charityData.charityDetails?.organizationName || '',
+        panNumber: charityData.charityDetails?.panNumber || '',
+        darpanId: charityData.charityDetails?.darpanId || '',
+        urn12a80g: charityData.charityDetails?.urn12a80g || '',
+        cin: charityData.charityDetails?.cin || '',
+        fcraNumber: charityData.charityDetails?.fcraNumber || '',
+        bankAccountName: charityData.charityDetails?.bankDetails?.accountHolderName || '',
+        requestedAmount: 0,
+      };
+
+      // Check if fraud review exists
+      const fraudReviewDoc = documents?.find(d => d.documentId === 'fraud_review');
+      if (fraudReviewDoc && fraudReviewDoc.status === 'verified') {
+        const reviewData = JSON.parse(fraudReviewDoc.adminNotes || '{}');
+        if (reviewData.org) {
+          extractedData = {
+            ...extractedData,
+            ...reviewData.org,
+          };
+        }
+        setSourceChecked(reviewData.sourceChecked || {});
+        setFlags(reviewData.flags || {});
+      }
+
+      // ✅ Extract PAN from PAN document
+      const panDoc = documents?.find(d => d.documentId === 'panNumber');
+      if (panDoc && panDoc.status === 'verified' && panDoc.adminNotes) {
+        try {
+          const panData = JSON.parse(panDoc.adminNotes);
+          if (panData.panNumber) extractedData.panNumber = panData.panNumber;
+        } catch (e) {
+          // If adminNotes contains plain text PAN
+          if (panDoc.adminNotes.match(/[A-Z]{5}[0-9]{4}[A-Z]{1}/)) {
+            extractedData.panNumber = panDoc.adminNotes.match(/[A-Z]{5}[0-9]{4}[A-Z]{1}/)[0];
+          }
+        }
+      }
+
+      // ✅ Extract Darpan ID from Darpan document
+      const darpanDoc = documents?.find(d => d.documentId === 'darpanId');
+      if (darpanDoc && darpanDoc.status === 'verified' && darpanDoc.adminNotes) {
+        try {
+          const darpanData = JSON.parse(darpanDoc.adminNotes);
+          if (darpanData.darpanId) extractedData.darpanId = darpanData.darpanId;
+        } catch (e) {
+          // If adminNotes contains plain text Darpan ID
+          if (darpanDoc.adminNotes.match(/[A-Z]{2}\/[0-9]{4}\/[0-9]{7}/)) {
+            extractedData.darpanId = darpanDoc.adminNotes.match(/[A-Z]{2}\/[0-9]{4}\/[0-9]{7}/)[0];
+          }
+        }
+      }
+
+      // ✅ Extract 12A/80G URN from document
+      const taxDoc = documents?.find(d => d.documentId === 'urn12a80g');
+      if (taxDoc && taxDoc.status === 'verified' && taxDoc.adminNotes) {
+        try {
+          const taxData = JSON.parse(taxDoc.adminNotes);
+          if (taxData.urn12a80g) extractedData.urn12a80g = taxData.urn12a80g;
+        } catch (e) {
+          // If adminNotes contains plain text URN
+          if (taxDoc.adminNotes.match(/[A-Z0-9]{16}/)) {
+            extractedData.urn12a80g = taxDoc.adminNotes.match(/[A-Z0-9]{16}/)[0];
+          }
+        }
+      }
+
+      // ✅ Extract CIN from document
+      const cinDoc = documents?.find(d => d.documentId === 'cin');
+      if (cinDoc && cinDoc.status === 'verified' && cinDoc.adminNotes) {
+        try {
+          const cinData = JSON.parse(cinDoc.adminNotes);
+          if (cinData.cin) extractedData.cin = cinData.cin;
+        } catch (e) {
+          // If adminNotes contains plain text CIN
+          if (cinDoc.adminNotes.match(/[A-Z0-9]{21}/)) {
+            extractedData.cin = cinDoc.adminNotes.match(/[A-Z0-9]{21}/)[0];
+          }
+        }
+      }
+
+      // ✅ Extract FCRA Number from document
+      const fcraDoc = documents?.find(d => d.documentId === 'fcraNumber');
+      if (fcraDoc && fcraDoc.status === 'verified' && fcraDoc.adminNotes) {
+        try {
+          const fcraData = JSON.parse(fcraDoc.adminNotes);
+          if (fcraData.fcraNumber) extractedData.fcraNumber = fcraData.fcraNumber;
+        } catch (e) {
+          // If adminNotes contains plain text FCRA Number
+          if (fcraDoc.adminNotes.match(/[0-9]{10}/)) {
+            extractedData.fcraNumber = fcraDoc.adminNotes.match(/[0-9]{10}/)[0];
+          }
+        }
+      }
+
+      // ✅ Extract Bank Account Holder Name from bank document
+      const bankDoc = documents?.find(d => d.documentId === 'bankAccountProof');
+      if (bankDoc && bankDoc.status === 'verified' && bankDoc.adminNotes) {
+        try {
+          const bankData = JSON.parse(bankDoc.adminNotes);
+          if (bankData.accountHolderName) extractedData.bankAccountName = bankData.accountHolderName;
+        } catch (e) {
+          // If adminNotes contains plain text bank name
+          if (bankDoc.adminNotes) {
+            // Try to extract from text
+            const lines = bankDoc.adminNotes.split('\n');
+            for (const line of lines) {
+              if (line.toLowerCase().includes('account holder') || line.toLowerCase().includes('account name')) {
+                const parts = line.split(':');
+                if (parts.length > 1) {
+                  extractedData.bankAccountName = parts[1].trim();
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // ✅ Extract Requested Amount from campaign request
+      const campaignDoc = documents?.find(d => d.documentId === 'campaign_request');
+      if (campaignDoc && campaignDoc.status === 'verified' && campaignDoc.adminNotes) {
+        try {
+          const campaignData = JSON.parse(campaignDoc.adminNotes);
+          if (campaignData.requestedAmount) extractedData.requestedAmount = campaignData.requestedAmount;
+        } catch (e) {
+          // If adminNotes contains plain text amount
+          if (campaignDoc.adminNotes.match(/[0-9,]+/)) {
+            const amountStr = campaignDoc.adminNotes.replace(/,/g, '').match(/[0-9]+/);
+            if (amountStr) extractedData.requestedAmount = parseInt(amountStr[0]);
+          }
+        }
+      }
+
+      setOrg(extractedData);
+    } catch (error) {
+      console.error('Error extracting details:', error);
+    } finally {
+      setExtracting(false);
+    }
+  };
 
   const flaggedCount = Object.values(flags).filter(Boolean).length;
-  const sourcesConfirmed = Object.values(sourceChecked).filter(Boolean).length;
+
+  const requiredSources = useMemo(() => VERIFICATION_SOURCES.filter(src => src.required), []);
+  const requiredSourcesConfirmedCount = useMemo(() => requiredSources.filter(src => sourceChecked[src.id]).length, [requiredSources, sourceChecked]);
 
   const riskLevel = useMemo(() => {
     if (flaggedCount >= 3) return 'high';
     if (flaggedCount >= 1) return 'medium';
     return 'low';
   }, [flaggedCount]);
-
-  const eligible = sourcesConfirmed === VERIFICATION_SOURCES.length && flaggedCount === 0;
+  
+  const eligible = useMemo(() => {
+    const allRequiredConfirmed = requiredSources.every(src => sourceChecked[src.id]);
+    return allRequiredConfirmed && flaggedCount === 0;
+  }, [requiredSources, sourceChecked, flaggedCount]);
 
   const updateOrg = (field, value) => setOrg((prev) => ({ ...prev, [field]: value }));
   const toggleSource = (id) => setSourceChecked((prev) => ({ ...prev, [id]: !prev[id] }));
   const toggleFlag = (id) => setFlags((prev) => ({ ...prev, [id]: !prev[id] }));
+  
+  const handleViewDocument = (document) => {
+    setSelectedDocument(document);
+    setDocumentViewerOpen(true);
+  };
+
+  const handleViewCharityDetails = () => {
+    setCharityDetailsOpen(true);
+  };
 
   const handleSaveReview = async () => {
     setSaving(true);
     setError('');
-    setSuccess('');
+    setSnackbar({ open: false, message: '', severity: 'success' });
     try {
       const reviewData = {
         sourceChecked,
@@ -944,19 +1544,17 @@ const AdminVerification = () => {
         eligible,
       };
 
-      
       const response = await api.put(`/verification/documents/${id}/fraud_review`, {
         status: 'submitted',
         adminNotes: JSON.stringify(reviewData),
       });
 
       if (response.data.success) {
-        setSuccess('Review saved successfully!');
-        setSnackbarOpen(true);
+        setSnackbar({ open: true, message: 'Review saved successfully!', severity: 'success' });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save review');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to save review', severity: 'error' });
     } finally {
       setSaving(false);
     }
@@ -973,23 +1571,22 @@ const AdminVerification = () => {
         eligible,
       };
 
-      // Save fraud review as verified
       await api.put(`/verification/documents/${id}/fraud_review`, {
         status: 'verified',
         adminNotes: JSON.stringify(reviewData),
       });
 
-      // Approve the charity
-      await api.put(`/admin/charities/${id}/approve`);
+      await api.put(`/admin/charities/${id}/approve`, {
+        adminNote: `Approved after fraud review by ${user?.fullName || 'Admin'}.`,
+      });
 
-      setSuccess('Charity approved successfully! 🎉');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: 'Charity approved successfully! 🎉', severity: 'success' });
       setTimeout(() => {
         navigate('/admin/verification');
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to approve charity');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to approve charity', severity: 'error' });
     } finally {
       setSaving(false);
       setShowConfirmDialog(false);
@@ -1008,25 +1605,22 @@ const AdminVerification = () => {
         rejectionReason: 'Fraud review failed',
       };
 
-      // Save fraud review as rejected
       await api.put(`/verification/documents/${id}/fraud_review`, {
         status: 'rejected',
         adminNotes: JSON.stringify(reviewData),
       });
 
-      // Reject the charity
       await api.put(`/admin/charities/${id}/reject`, {
         rejectionReason: 'Failed fraud and legitimacy review',
       });
 
-      setSuccess('Charity rejected.');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: 'Charity rejected.', severity: 'success' });
       setTimeout(() => {
         navigate('/admin/verification');
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reject charity');
-      setSnackbarOpen(true);
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Failed to reject charity', severity: 'error' });
     } finally {
       setSaving(false);
       setShowConfirmDialog(false);
@@ -1056,6 +1650,17 @@ const AdminVerification = () => {
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 Fraud & Legitimacy Review
               </Typography>
+              {extracting && (
+                <Chip
+                  icon={<ScanIcon size={14} />}
+                  label="Extracting Details..."
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                    color: '#667eea',
+                  }}
+                />
+              )}
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
@@ -1075,23 +1680,31 @@ const AdminVerification = () => {
               >
                 {saving ? <CircularProgress size={20} /> : 'Save Draft'}
               </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PersonIcon size={18} />}
+                onClick={handleViewCharityDetails}
+                sx={{ borderRadius: 2 }}
+              >
+                View Details
+              </Button>
             </Box>
           </Box>
         </motion.div>
 
-        {/* Error/Success Snackbar */}
+        {/* Snackbar */}
         <Snackbar
-          open={snackbarOpen}
+          open={snackbar.open}
           autoHideDuration={6000}
-          onClose={() => setSnackbarOpen(false)}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         >
           <Alert
-            severity={error ? 'error' : 'success'}
-            onClose={() => setSnackbarOpen(false)}
+            severity={snackbar.severity}
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
             sx={{ borderRadius: 2 }}
           >
-            {error || success}
+            {snackbar.message}
           </Alert>
         </Snackbar>
 
@@ -1140,13 +1753,21 @@ const AdminVerification = () => {
                       fontWeight: 600,
                     }}
                   />
+                  <Chip
+                    label={`${flaggedCount} Red Flags`}
+                    sx={{
+                      backgroundColor: flaggedCount > 0 ? 'rgba(231, 76, 60, 0.15)' : 'rgba(46, 204, 113, 0.15)',
+                      color: flaggedCount > 0 ? '#e74c3c' : '#2ecc71',
+                      fontWeight: 600,
+                    }}
+                  />
                 </Box>
               </Grid>
             </Grid>
           </Paper>
         )}
 
-        {/* Organisation Details */}
+        {/* Document List Section */}
         <Paper
           sx={{
             p: 4,
@@ -1156,9 +1777,147 @@ const AdminVerification = () => {
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
-            Organisation Details
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <FileTextIcon className="h-5 w-5 text-slate-400" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Uploaded Documents
+            </Typography>
+            <Chip
+              label={`${verification?.documents?.filter(d => d.status === 'verified').length || 0}/${verification?.documents?.length || 0} Verified`}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                color: '#2ecc71',
+                fontWeight: 600,
+              }}
+            />
+            {extracting && (
+              <Chip
+                icon={<ScanIcon size={14} />}
+                label="Extracting Data..."
+                size="small"
+                sx={{
+                  backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                  color: '#667eea',
+                }}
+              />
+            )}
+          </Box>
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Document</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Uploaded</TableCell>
+                  <TableCell align="center">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {verification?.documents?.map((doc) => (
+                  <TableRow key={doc.documentId}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <DescriptionIcon size={18} className="text-slate-400" />
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                            {doc.label}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
+                            {doc.documentId}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={doc.status}
+                        size="small"
+                        sx={{
+                          backgroundColor: doc.status === 'verified' 
+                            ? 'rgba(46, 204, 113, 0.15)' 
+                            : doc.status === 'rejected'
+                            ? 'rgba(231, 76, 60, 0.15)'
+                            : 'rgba(243, 156, 18, 0.15)',
+                          color: doc.status === 'verified' ? '#2ecc71' : doc.status === 'rejected' ? '#e74c3c' : '#f39c12',
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : 'N/A'}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title="View Document">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleViewDocument(doc)}
+                          disabled={!doc.fileUrl}
+                          sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
+                        >
+                          <VisibilityIcon size={18} />
+                        </IconButton>
+                      </Tooltip>
+                      {doc.fileUrl && (
+                        <Tooltip title="Download">
+                          <IconButton
+                            size="small"
+                            component="a"
+                            href={doc.fileUrl}
+                            download
+                            target="_blank"
+                            sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
+                          >
+                            <DownloadIcon size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+
+        {/* Organisation Details - Auto-populated from documents */}
+        <Paper
+          sx={{
+            p: 4,
+            mb: 4,
+            borderRadius: 3,
+            background: isDark ? 'rgba(20,20,32,0.8)' : '#ffffff',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+            <BuildingIcon className="h-5 w-5 text-slate-400" />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Organisation Details
+            </Typography>
+            {extracting ? (
+              <Chip
+                icon={<CircularProgress size={14} />}
+                label="Extracting from documents..."
+                size="small"
+                sx={{
+                  backgroundColor: 'rgba(102, 126, 234, 0.15)',
+                  color: '#667eea',
+                }}
+              />
+            ) : (
+              <Chip
+                icon={<FileTextIcon size={14} />}
+                label="Auto-populated from documents"
+                size="small"
+                sx={{
+                  backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                  color: '#2ecc71',
+                }}
+              />
+            )}
+          </Box>
+
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
@@ -1170,6 +1929,20 @@ const AdminVerification = () => {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
+                }}
+                InputProps={{
+                  endAdornment: org.orgName && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -1185,6 +1958,20 @@ const AdminVerification = () => {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
                 }}
+                InputProps={{
+                  endAdornment: org.panNumber && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -1198,6 +1985,20 @@ const AdminVerification = () => {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
+                }}
+                InputProps={{
+                  endAdornment: org.darpanId && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -1213,6 +2014,20 @@ const AdminVerification = () => {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
                 }}
+                InputProps={{
+                  endAdornment: org.urn12a80g && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -1226,6 +2041,20 @@ const AdminVerification = () => {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
+                }}
+                InputProps={{
+                  endAdornment: org.cin && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -1241,6 +2070,20 @@ const AdminVerification = () => {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
                 }}
+                InputProps={{
+                  endAdornment: org.fcraNumber && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1253,6 +2096,20 @@ const AdminVerification = () => {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
+                }}
+                InputProps={{
+                  endAdornment: org.bankAccountName && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -1268,6 +2125,20 @@ const AdminVerification = () => {
                   '& .MuiOutlinedInput-root': {
                     bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                   },
+                }}
+                InputProps={{
+                  endAdornment: org.requestedAmount > 0 && (
+                    <Chip
+                      label="Extracted"
+                      size="small"
+                      sx={{
+                        height: 16,
+                        backgroundColor: 'rgba(46, 204, 113, 0.15)',
+                        color: '#2ecc71',
+                        '& .MuiChip-label': { fontSize: '0.5rem' },
+                      }}
+                    />
+                  ),
                 }}
               />
             </Grid>
@@ -1289,6 +2160,17 @@ const AdminVerification = () => {
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Cross-check on Official Indian Portals
             </Typography>
+             <Chip
+              label={`${requiredSourcesConfirmedCount}/${requiredSources.length} Required Confirmed`}
+              size="small"
+              sx={{
+                backgroundColor: requiredSourcesConfirmedCount === requiredSources.length
+                  ? 'rgba(46, 204, 113, 0.15)' 
+                  : 'rgba(243, 156, 18, 0.15)',
+                color: requiredSourcesConfirmedCount === requiredSources.length ? '#2ecc71' : '#f39c12',
+                fontWeight: 600,
+              }}
+            />
           </Box>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1309,6 +2191,18 @@ const AdminVerification = () => {
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                         {src.label}
+                        {!src.required && (
+                          <Chip
+                            label="Optional"
+                            size="small"
+                            sx={{
+                              ml: 1,
+                              height: 18,
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                              '& .MuiChip-label': { fontSize: '0.6rem', px: 1 },
+                            }}
+                          />
+                        )}
                       </Typography>
                       <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a', fontSize: '0.875rem' }}>
                         {src.what}
@@ -1364,8 +2258,8 @@ const AdminVerification = () => {
 
           <Box sx={{ mt: 2 }}>
             <LinearProgress
-              variant="determinate"
-              value={(sourcesConfirmed / VERIFICATION_SOURCES.length) * 100}
+               variant="determinate"
+              value={(requiredSourcesConfirmedCount / requiredSources.length) * 100}
               sx={{
                 height: 6,
                 borderRadius: 3,
@@ -1377,7 +2271,7 @@ const AdminVerification = () => {
               }}
             />
             <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0', mt: 0.5 }}>
-              {sourcesConfirmed}/{VERIFICATION_SOURCES.length} sources confirmed
+              {requiredSourcesConfirmedCount}/{requiredSources.length} required sources confirmed
             </Typography>
           </Box>
         </Paper>
@@ -1486,8 +2380,8 @@ const AdminVerification = () => {
               <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                 Sources Confirmed
               </Typography>
-              <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                {sourcesConfirmed}/{VERIFICATION_SOURCES.length}
+              <Typography variant="h5" sx={{ fontWeight: 700 }}> 
+                {requiredSourcesConfirmedCount}/{requiredSources.length}
               </Typography>
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -1631,6 +2525,24 @@ const AdminVerification = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Document Viewer Dialog */}
+        <DocumentViewerDialog
+          open={documentViewerOpen}
+          onClose={() => {
+            setDocumentViewerOpen(false);
+            setSelectedDocument(null);
+          }}
+          document={selectedDocument}
+          charityName={charity?.charityDetails?.organizationName || charity?.fullName}
+        />
+
+        {/* Charity Details Dialog */}
+        <CharityDetailsDialog
+          open={charityDetailsOpen}
+          onClose={() => setCharityDetailsOpen(false)}
+          charity={charity}
+        />
       </Container>
     </Box>
   );

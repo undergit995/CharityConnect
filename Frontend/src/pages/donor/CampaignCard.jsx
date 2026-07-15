@@ -94,7 +94,7 @@ export const CampaignCard = ({ campaign, onSave, isSaving, onDonate }) => {
       transition={{ duration: 0.3 }}
     >
       <Card
-        onClick={() => navigate(`/campaigns/${campaign._id}`)}
+        onClick={() => navigate(`/campaign/${campaign._id}`)}
         sx={{
           height: '100%',
           borderRadius: 3,

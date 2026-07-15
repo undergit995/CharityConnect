@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import {
   Box,
   Container,
@@ -24,14 +24,15 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../Context/AuthContext';
 import { useTheme } from '../../hooks/useTheme';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
-  const { forgotPassword, resetPassword, loading } = useAuth();
+  const { forgotPassword, resetPassword } = useAuth();
+  const [searchParams] = useSearchParams();
   const { isDark } = useTheme();
   
   const [activeStep, setActiveStep] = useState(0);
@@ -45,8 +46,18 @@ const ForgotPassword = () => {
   const [success, setSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const steps = ['Request Reset', 'Set New Password', 'Complete'];
+
+  // Check for token in URL on component mount
+  useEffect(() => {
+    const urlToken = searchParams.get('token');
+    if (urlToken) {
+      setToken(urlToken);
+      setActiveStep(1); // Go directly to the password reset step
+    }
+  }, [searchParams]);
 
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,12 +79,15 @@ const ForgotPassword = () => {
       return;
     }
 
+    setLoading(true);
     try {
       await forgotPassword(email);
       setActiveStep(1);
       setSuccess('Password reset link has been sent to your email.');
     } catch (err) {
       setError(err.message || 'Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,8 +106,9 @@ const ForgotPassword = () => {
       return;
     }
 
+    setLoading(true);
     try {
-      await resetPassword(token, newPassword);
+      await resetPassword(token, newPassword,confirmPassword);
       setActiveStep(2);
       setSuccess('Password has been reset successfully!');
       
@@ -103,16 +118,21 @@ const ForgotPassword = () => {
       }, 3000);
     } catch (err) {
       setError(err.message || 'Failed to reset password. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResendEmail = async () => {
+    setLoading(true);
     try {
       setError('');
       await forgotPassword(email);
       setSuccess('Reset link resent successfully!');
     } catch (err) {
       setError(err.message || 'Failed to resend email.');
+    } finally {
+      setLoading(false);
     }
   };
 

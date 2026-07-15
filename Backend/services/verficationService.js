@@ -1,4 +1,6 @@
 const Verification = require("../models/Verification");
+const User = require('../models/User');
+const mongoose = require('mongoose');
 
 const DOCUMENT_REQUIREMENTS = [
   {
@@ -128,6 +130,15 @@ const createVerificationRecord = async (charityId) => {
  */
 const checkEligibility = async (charityId) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(charityId)) {
+      console.error(`Invalid charityId passed to checkEligibility: ${charityId}`);
+      return {
+        isEligible: false,
+        reason: 'Invalid Charity ID provided.',
+        missingDocs: [],
+        progress: 0,
+      };
+    }
     
     const verification = await Verification.findOne({ charityId });
     

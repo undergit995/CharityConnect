@@ -69,31 +69,13 @@ const Login = () => {
     try {
       const response = await login(email, password, rememberMe);
       
-    if (!response || !response.user) {
-    throw new Error('Login failed - no response'); 
-  }
+     if (response?.success && response.redirectPath) {
+        navigate(response.redirectPath);
 
-   if (response?.user?.role === 'charity') {
-     console.log("verificationStatus.data.data.status")
-     const verificationStatus = await api.get(`/verification/status/${response.user._id}`);
-     console.log("verificationStatus.data.data.status",verificationStatus.data.data.status)
-      
-      if (verificationStatus.data.data.status === 'pending' || 
-          verificationStatus.data.data.status === 'rejected' ||
-          !verificationStatus.data.data.documents?.some(d => d.status !== 'pending')) {
-        navigate('/charity/documents');
-      } else {
-        console.log("charity");
-        
-        navigate('/charity/dashboard');
-      }
+    
     } else {
-  const roleRoutes = {
-    admin: "/admin/dashboard",
-    donor: "/donor/dashboard",
-  };
-      navigate(roleRoutes[response?.user?.role] || '/dashboard');
-    }
+        navigate('/auth/login');
+      }
   
     } catch (err) {
       console.error("Login error:", err);
