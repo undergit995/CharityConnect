@@ -22,6 +22,7 @@ const CharityRoutes = () => {
           <Route path="dashboard" element={<CharityDashboard />} />
           <Route path="campaigns" element={<CharityCampaigns />} />
           <Route path="campaigns/create" element={<CharityCreateCampaign />} />
+          <Route path="campaigns/:id/edit" element={<CharityCreateCampaign />} />
           <Route path="campaigns/updates" element={<CharityCampaignUpdates />} />
           <Route path="donations" element={<CharityDonations />} />
           <Route path="profile" element={<CharityProfile />} />          

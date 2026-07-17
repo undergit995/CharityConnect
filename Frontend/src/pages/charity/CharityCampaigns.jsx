@@ -236,6 +236,11 @@ const CampaignRow = ({ campaign, onAction, isProcessing, version }) => {
   const handleAction = (action) => {
     onAction(campaign._id, action, {
       optimisticStatus,
+      handleView: () => {
+        setSelectedCampaignForView(campaign);
+        setViewDialogOpen(true);
+      },
+
       setOptimisticStatus,
       optimisticRaised,
       setOptimisticRaised,
@@ -251,7 +256,7 @@ const CampaignRow = ({ campaign, onAction, isProcessing, version }) => {
     actions.push({
       label: 'View',
       icon: <VisibilityIcon fontSize="small" />,
-      onClick: () => navigate(`/campaigns/${campaign._id}`),
+      onClick: () => handleAction('view'),
       color: isDark ? '#a0a0b8' : '#4a4a6a',
     });
 
@@ -312,7 +317,7 @@ const CampaignRow = ({ campaign, onAction, isProcessing, version }) => {
     }
 
     // Delete (only for draft, pending, cancelled)
-    if (['draft', 'pending', 'cancelled'].includes(optimisticStatus)) {
+    if (['draft', 'pending', 'cancelled', 'paused'].includes(optimisticStatus)) {
       actions.push({
         label: 'Delete',
         icon: <DeleteIcon fontSize="small" />,
@@ -442,6 +447,8 @@ const CharityCampaigns = () => {
   const [isLocked, setIsLocked] = useState(false);
   const [lockInfo, setLockInfo] = useState(null);
   const [conflictOpen, setConflictOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [selectedCampaignForView, setSelectedCampaignForView] = useState(null);
   const [conflictData, setConflictData] = useState(null);
   const [version, setVersion] = useState(0);
 
@@ -571,84 +578,46 @@ const CharityCampaigns = () => {
   // Handle campaign actions with optimistic locking
   const handleCampaignAction = useCallback(async (campaignId, action, state) => {
     setProcessing(true);
-    
+
     const campaign = campaigns.find(c => c._id === campaignId);
     if (!campaign) return;
 
-    const {
-      optimisticStatus,
-      setOptimisticStatus,
-      localVersion,
-      setLocalVersion,
-    } = state;
+    const { setOptimisticStatus, setLocalVersion } = state;
 
-    // Optimistic update
-    let newStatus = campaign.status;
-    let optimisticUpdate = () => {};
-    let actionData = {};
+    const optimisticUpdates = {
+      'submit': { status: 'pending' },
+      'cancel-request': { status: 'draft' },
+      'pause': { status: 'paused' },
+      'resume': { status: 'active' },
+      'complete': { status: 'completed' },
+      'delete': { isDeleted: true },
+    };
 
-    switch (action) {
-      case 'submit':
-        newStatus = 'pending';
-        optimisticUpdate = () => {
-          setOptimisticStatus('pending');
-          setLocalVersion((localVersion || 0) + 1);
-        };
-        actionData = { action: 'submit' };
-        break;
-      case 'cancel-request':
-        newStatus = 'draft';
-        optimisticUpdate = () => {
-          setOptimisticStatus('draft');
-          setLocalVersion((localVersion || 0) + 1);
-        };
-        actionData = { action: 'cancel-request' };
-        break;
-      case 'pause':
-        newStatus = 'paused';
-        optimisticUpdate = () => {
-          setOptimisticStatus('paused');
-          setLocalVersion((localVersion || 0) + 1);
-        };
-        actionData = { action: 'pause' };
-        break;
-      case 'resume':
-        newStatus = 'active';
-        optimisticUpdate = () => {
-          setOptimisticStatus('active');
-          setLocalVersion((localVersion || 0) + 1);
-        };
-        actionData = { action: 'resume' };
-        break;
-      case 'complete':
-        newStatus = 'completed';
-        optimisticUpdate = () => {
-          setOptimisticStatus('completed');
-          setLocalVersion((localVersion || 0) + 1);
-        };
-        actionData = { action: 'complete' };
-        break;
-      case 'delete':
-        optimisticUpdate = () => {
-          // Remove from list optimistically
-          setCampaigns(prev => prev.filter(c => c._id !== campaignId));
-        };
-        actionData = { action: 'delete' };
-        break;
-      default:
-        return;
+    if (action === 'view') {
+      state.handleView();
+      return;
     }
 
-    // Apply optimistic update
-    optimisticUpdate();
+    const updateInfo = optimisticUpdates[action];
+
+    if (!updateInfo) {
+      setProcessing(false);
+      return;
+    }
+
+    // Perform optimistic UI update
+    if (action === 'delete') {
+      setCampaigns(prev => prev.filter(c => c._id !== campaignId));
+    } else {
+      setOptimisticStatus(updateInfo.status);
+    }
+    setLocalVersion(prev => (prev || campaign.__v || 0) + 1);
 
     try {
-      const response = await queueUpdate(
-        campaignId,
-        `/charity/campaigns/${campaignId}/${action}`,
-        { ...actionData, version: localVersion },
-        optimisticUpdate
-      );
+      const endpoint = `/charity/campaigns/${campaignId}/${action}`;
+      const method = action === 'delete' ? 'delete' : 'put';
+      
+      await apimethod;
 
       // Update stats
       fetchCampaigns();
@@ -656,19 +625,8 @@ const CharityCampaigns = () => {
       setSnackbarOpen(true);
     } catch (error) {
       // Rollback
-      setCampaigns(prev => {
-        const existing = prev.find(c => c._id === campaignId);
-        if (!existing) {
-          // If campaign was deleted, restore it
-          return [...prev, campaign];
-        }
-        // Restore status
-        return prev.map(c => 
-          c._id === campaignId 
-            ? { ...c, status: campaign.status, __v: campaign.__v }
-            : c
-        );
-      });
+      // Refetching the list is the simplest way to ensure consistency on error.
+      fetchCampaigns();
       setError('Failed to update campaign');
       setSnackbarOpen(true);
     } finally {
@@ -973,6 +931,73 @@ const CharityCampaigns = () => {
           </Alert>
         </Snackbar>
       </Container>
+
+      {/* View Dialog */}
+      <Dialog
+        open={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            background: isDark ? 'rgba(20,20,32,0.95)' : '#ffffff',
+            backdropFilter: 'blur(20px)',
+          },
+        }}
+      >
+        {selectedCampaignForView && (
+          <>
+            <DialogTitle>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Campaign Details
+              </Typography>
+            </DialogTitle>
+            <DialogContent>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                    {selectedCampaignForView.title}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                    {selectedCampaignForView.category}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedCampaignForView.description}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                    Goal Amount
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    ₹{selectedCampaignForView.goalAmount?.toLocaleString('en-IN') || 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                    Raised Amount
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#2ecc71' }}>
+                    ₹{selectedCampaignForView.raisedAmount?.toLocaleString('en-IN') || 0}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
+                    End Date
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(selectedCampaignForView.endDate).toLocaleDateString()}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions><Button onClick={() => setViewDialogOpen(false)}>Close</Button></DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 };

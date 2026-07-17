@@ -388,7 +388,7 @@ const AdminDashboard = () => {
 
             {/* Category Distribution & Monthly Donations */}
             <Grid container spacing={3} sx={{ mb: 3 }}>
-              <Grid size={{xs:12}} item xs={12} >
+              <Grid size={{xs:12 , md:6}}>
                 <Paper
                   sx={{
                     p: 3,
@@ -430,7 +430,7 @@ const AdminDashboard = () => {
                 </Paper>
               </Grid>
 
-              <Grid size={{xs:12}} item xs={12} >
+              <Grid size={{xs:12 , md:6}}>
                 <Paper
                   sx={{
                     p: 3,
@@ -464,7 +464,7 @@ const AdminDashboard = () => {
 
             {/* Top Charities & Top Campaigns */}
             <Grid container spacing={3}>
-              <Grid size={{xs:12}} >
+              <Grid size={{xs:12 , md:6}}>
                 <Paper
                   sx={{
                     p: 3,
@@ -498,7 +498,7 @@ const AdminDashboard = () => {
                 </Paper>
               </Grid>
 
-              <Grid size={{xs:12}}  >
+              <Grid size={{xs:12 , md:6}}>
                 <Paper
                   sx={{
                     p: 3,

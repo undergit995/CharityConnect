@@ -106,8 +106,8 @@ const DonationHistoryTable = ({ donations, loading, onUpdate }) => {
 
   const getStatusChip = (status) => {
     const statusMap = {
-      pending: { label: 'Pending', color: '#f39c12' },
-      completed: { label: 'Completed', color: '#2ecc71' },
+      Pending: { label: 'Pending', color: '#f39c12' },
+      Completed: { label: 'Completed', color: '#2ecc71' },
       failed: { label: 'Failed', color: '#e74c3c' },
       refunded: { label: 'Refunded', color: '#95a5a6' },
     };
@@ -203,8 +203,8 @@ const DonorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width:600px)');
-  
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [stats, setStats] = useState({
     totalDonations: 0,
@@ -234,18 +234,21 @@ const DonorDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get('/donor/dashboard', {
+      const response = await api.get('/donor/dashboard/stats', {
         headers: {
           'X-Version': version,
         },
       });
       
-      setStats(response.data.stats);
-      setRecentDonations(response.data.recentDonations || []);
-      setSavedCampaigns(response.data.savedCampaigns || []);
-      setRecommendedCampaigns(response.data.recommendedCampaigns || []);
-      setVersion(response.data.version || 0);
-      setOptimisticStats(response.data.stats);
+      if (response.data.success) {
+        const data = response.data.data;
+        setStats(data.stats);
+        setRecentDonations(data.recentDonations || []);
+        setSavedCampaigns(data.savedCampaigns || []);
+        setRecommendedCampaigns(data.recommendedCampaigns || []);
+        setVersion(data.version || 0);
+        setOptimisticStats(data.stats);
+      }
     } catch (err) {
       if (err.response?.status === 409) {
         setConflictData({

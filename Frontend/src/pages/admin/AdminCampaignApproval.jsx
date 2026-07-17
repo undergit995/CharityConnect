@@ -48,6 +48,8 @@ import {
   Verified as VerifiedIcon,
   People as PeopleIcon,
   AttachMoney as MoneyIcon,
+  Pause as PauseIcon,
+  PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
@@ -158,6 +160,23 @@ const AdminCampaignApproval = () => {
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reject campaign');
       setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  // Handle pause/resume
+  const handlePauseResume = async (campaign, action) => {
+    if (!campaign) return;
+
+    try {
+      await api.put(`/admin/campaigns/${campaign._id}/${action}`);
+      setSuccess(
+        `Campaign "${campaign.title}" ${action}d successfully!`,
+      );
+      fetchCampaigns();
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || `Failed to ${action} campaign`);
+      setTimeout(() => setError(""), 3000);
     }
   };
 
@@ -315,7 +334,7 @@ const AdminCampaignApproval = () => {
             }}
           >
             <Tab label={`Pending (${stats.pending})`} />
-            <Tab label={`Approved (${stats.approved})`} />
+            <Tab label={`Active (${stats.approved})`} />
             <Tab label={`Rejected (${stats.rejected})`} />
             <Tab label="All" />
           </Tabs>
@@ -442,6 +461,28 @@ const AdminCampaignApproval = () => {
                                   </IconButton>
                                 </Tooltip>
                               </>
+                            )}
+                            {campaign.status === 'active' && (
+                              <Tooltip title="Pause Campaign">
+                                <IconButton
+                                  size="small"
+                                  sx={{ color: '#3498db' }}
+                                  onClick={() => handlePauseResume(campaign, 'pause')}
+                                >
+                                  <PauseIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {campaign.status === 'paused' && (
+                              <Tooltip title="Resume Campaign">
+                                <IconButton
+                                  size="small"
+                                  sx={{ color: '#2ecc71' }}
+                                  onClick={() => handlePauseResume(campaign, 'resume')}
+                                >
+                                  <PlayArrowIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                             )}
                           </Box>
                         </TableCell>

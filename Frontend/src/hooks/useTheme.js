@@ -4,7 +4,7 @@ import { ThemeContext } from '../Theme/ThemeContext';
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    console.warn('useTheme used outside of ThemeProvider, using default values');
+    //console.warn('useTheme used outside of ThemeProvider, using default values');
     return {
       mode: 'light',
       isDark: false,

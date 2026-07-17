@@ -193,7 +193,7 @@ const getResetPasswordTemplate = (data) => {
           </div>
           
           <p>This link will expire in <strong>1 hour</strong>.</p>
-          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p>If the button doesn't work, copy and paste this token into token input box in registration page:</p>
           <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
           
           <div class="warning">
@@ -564,12 +564,12 @@ const getDefaultTemplate = (data) => {
 // const sendEmail = async (options) => {
 //   // Check if email is configured
 //   if (!sendMail) {
-//     console.warn('⚠️ Email not sent - senMail not configured');
+//     //console.warn('⚠️ Email not sent - senMail not configured');
 //     logger.warn('Email not sent - sendMail not configured');
     
 //     // In development, log the email content instead of sending
 //     if (process.env.NODE_ENV === 'development') {
-//       console.log('📧 [DEV] Email would be sent:', {
+//       //console.log('📧 [DEV] Email would be sent:', {
 //         to: options.to,
 //         subject: options.subject,
 //         html: options.html ? options.html.substring(0, 200) + '...' : undefined,
@@ -599,11 +599,11 @@ const getDefaultTemplate = (data) => {
 //     };
 
 //     const info = await mailConfig.sendMail(mailOptions);
-//     console.log(`✅ Email sent to ${options.to}: ${info.messageId}`);
+//     //console.log(`✅ Email sent to ${options.to}: ${info.messageId}`);
 //     logger.info(`Email sent to ${options.to}: ${info.messageId}`);
 //     return { success: true, messageId: info.messageId };
 //   } catch (error) {
-//     console.error('❌ Email send error:', error);
+//     //console.error('❌ Email send error:', error);
 //     logger.error('Email send error:', error);
 //     throw error;
 //   }
@@ -665,6 +665,7 @@ const sendOTPEmail = async (to, otp, purpose = 'verification', expiresIn = 5) =>
   try{
     return await sendTemplateEmail(to, 'otpVerification', { otp, purpose, expiresIn });
   }catch(error){
+    console.log(error.message)
     logger.error('OTP email send error:', error.message);
     throw error;
   }

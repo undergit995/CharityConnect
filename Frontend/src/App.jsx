@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CssBaseline, GlobalStyles } from "@mui/material";
+import { SettingsProvider } from "./Context/SettingsContext";
 import { ErrorBoundary } from "react-error-boundary";
 import { AuthProvider, useAuth } from "./Context/AuthContext";
 import Maintenance from "./pages/Maintenance";
@@ -64,6 +65,8 @@ const CharityVerification = lazy(
 );
 const AdminVerification = lazy(() => import("./pages/admin/AdminVerification"));
 const AdminDonations = lazy(() => import("./pages/admin/AdminDonations"));
+const AdminInfo = lazy(() => import("./pages/admin/AdminInfo"));
+const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 
 // Common pages
 // const HomePage = lazy(() => import('./pages/HomePage'));
@@ -194,7 +197,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
 
   useEffect(() => {
     // Log error to error tracking service
-    console.error("Application Error:", error);
+    ////////consolesole.error("Application Error:", error);
   }, [error]);
 
   const handleGoHome = () => {
@@ -390,290 +393,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
   );
 };
 
-// Routes Configuration
-// const AppRoutes = () => {
-//   const { isAuthenticated, loading } = useAuth();
 
-//   if (loading) {
-//     return <PageLoader />;
-//   }
-
-//   return (
-//     <Suspense
-//       fallback={<AuthLoader variant="logo" message="Initializing..." />}
-//     >
-//       {/* <Routes>
-//         {/* Public Routes
-//          <Route path="/" element={<LandingPageLayout />} >
-//           <Route index element={<LandingPage />} />
-//           <Route path="/home" element={<LandingPage />} />
-//         </Route>
-//         {/*<Route path="/about" element={<About />} />
-//         <Route path="/contact" element={<Contact />} />
-//         <Route path="/faq" element={<FAQ />} />
-//         <Route path="/privacy" element={<PrivacyPolicy />} />
-//         <Route path="/terms" element={<TermsConditions />} />
-
-//         {/* Auth Routes
-//         <Route
-//           path="/auth/login"
-//           element={
-//             isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-//           }
-//         />
-//         <Route
-//           path="/auth/register"
-//           element={
-//             isAuthenticated ? (
-//               <Navigate to="/dashboard" replace />
-//             ) : (
-//               <Register />
-//             )
-//           }
-//         />
-//         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-//         <Route path="/auth/verify-email" element={<VerifyEmail />} />
-//         <Route path="/auth/verify-otp" element={<VerifyOTP />} />
-
-//         {/* Campaign Routes
-//         {/* <Route path="/campaigns" element={<CampaignList />} />
-//         {/* <Route path="/campaigns/:id" element={<CampaignDetails />} />
-//         <Route path="/campaigns/:id/donate" element={<DonationPage />} />
-
-//         <Route path="/charity/:id" element={<CharityProfile />} />
-
-//         <Route element={<ProtectedRoute />}>
-//           {/* <Route path="/dashboard" element={<Dashboard />} />
-//           <Route path="/profile" element={<Profile />} />
-//           <Route path="/settings" element={<Settings />} />
-//           <Route path="/notifications" element={<NotificationPreferences />} />
-//           <Route path="/donations" element={<DonationHistory />} />
-//           <Route path="/donations/:id/receipt" element={<DonationReceipt />} />
-//         </Route>
-
-//         {/* Donor Routes
-//          <Route element={<DonorRoute />}>
-//           <Route path="/donor/dashboard" element={<DonorDashboard />} />
-//         </Route>
-
-//         {/* Charity Routes
-//         <Route element={<CharityRoute />}>
-//           <Route path="/charity/dashboard" element={<CharityDashboard />} />
-//           <Route
-//             path="/charity/campaigns/create"
-//             element={<CreateCampaign />}
-//           />
-//           <Route
-//             path="/charity/campaigns/:id/edit"
-//             element={<EditCampaign />}
-//           />
-//           <Route
-//             path="/charity/campaigns/manage"
-//             element={<CampaignManagement />}
-//           />
-//         </Route>
-
-//         {/* Admin Routes
-//         <Route element={<AdminRoute />}>
-//           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-//           <Route path="/admin/charities" element={<CharityManagement />} />
-//           <Route path="/admin/campaigns" element={<CampaignManagement />} />
-//         </Route>
-
-//         {/* Error Routes
-//         <Route path="/unauthorized" element={<Unauthorized />} />
-//         <Route path="/maintenance" element={<Maintenance />} />
-//         <Route path="*" element={<NotFound />} />
-//       </Routes>
-//     </Suspense>
-//   );
-// }; */}
-
-// // Main App Component
-
-//       <Routes>
-//         {/* Public Routes */}
-//          <Route path="/" element={<LandingPageLayout />} >
-//           <Route index element={<LandingPage />} />
-//           <Route path="/home" element={<LandingPage />} />
-//         </Route>
-//         {/*<Route path="/about" element={<About />} />
-//         <Route path="/contact" element={<Contact />} />
-//         <Route path="/faq" element={<FAQ />} />
-//         <Route path="/privacy" element={<PrivacyPolicy />} />
-//         <Route path="/terms" element={<TermsConditions />} /> */}
-
-//         {/* Auth Routes */}
-//         <Route
-//           path="/auth/login"
-//           element={
-//             isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-//           }
-//         />
-//         <Route
-//           path="/auth/register"
-//           element={
-//             isAuthenticated ? (
-//               <Navigate to="/dashboard" replace />
-//             ) : (
-//               <Register />
-//             )
-//           }
-//         />
-//         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-//         <Route path="/auth/verify" element={<VerifyEmail />} />
-//         <Route path="/auth/verify-otp" element={<VerifyOTP />} />
-
-//         {/* Campaign Routes */}
-//         {/* <Route path="/campaigns" element={<CampaignList />} /> */}
-//         {/* <Route path="/campaigns/:id" element={<CampaignDetails />} />
-//         <Route path="/campaigns/:id/donate" element={<DonationPage />} />
-
-//         <Route path="/charity/:id" element={<CharityProfile />} /> */}
-
-//         <Route element={<ProtectedRoute />}>
-//           {/* <Route path="/dashboard" element={<Dashboard />} />
-//           <Route path="/profile" element={<Profile />} />
-//           <Route path="/settings" element={<Settings />} />
-//           <Route path="/notifications" element={<NotificationPreferences />} />
-//           <Route path="/donations" element={<DonationHistory />} />
-//           <Route path="/donations/:id/receipt" element={<DonationReceipt />} /> */}
-//         </Route>
-
-//         {/* Donor Routes */}
-//         {/* <Route element={<DonorRoute />}>
-//           <Route path="/donor/dashboard" element={<DonorDashboard />} />
-//         </Route>
-
-//         {/* Charity Routes
-//         <Route element={<CharityRoute />}>
-//           <Route path="/charity/dashboard" element={<CharityDashboard />} />
-//           <Route
-//             path="/charity/campaigns/create"
-//             element={<CreateCampaign />}
-//           />
-//           <Route
-//             path="/charity/campaigns/:id/edit"
-//             element={<EditCampaign />}
-//           />
-//           <Route
-//             path="/charity/campaigns/manage"
-//             element={<CampaignManagement />}
-//           />
-//         </Route>
-
-//         {/* Admin Routes
-//         <Route element={<AdminRoute />}>
-//           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-//           <Route path="/admin/charities" element={<CharityManagement />} />
-//           <Route path="/admin/campaigns" element={<CampaignManagement />} />
-//         </Route>
-
-//         {/* Error Routes
-//         <Route path="/unauthorized" element={<Unauthorized />} />
-//         <Route path="/maintenance" element={<Maintenance />} />
-//         <Route path="*" element={<NotFound />} /> */}
-//       </Routes>
-//     </Suspense>
-//   );
-// };
-
-// Main App Component
-
-// function App() {
-//   const [isMaintenance, setIsMaintenance] = useState(false);
-//   const [isOnline, setIsOnline] = useState(navigator.onLine);
-//   const [isLoading, setIsLoading] = useState(true);
-
-//   // API base URL
-//   const API_BASE_URL = import.meta.env.VITE_REACT_APP__API_URL || 'http://localhost:7000/api';
-
-//   // Create axios instance for maintenance check
-//   const api = axios.create({
-//     baseURL: API_BASE_URL,
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//   });
-
-//   useEffect(() => {
-//     const checkMaintenance = async () => {
-//       try {
-//         const response = await api.get('/maintenance');
-//         setIsMaintenance(response.data.maintenance || false);
-//       } catch (error) {
-
-//         const maintenanceMode = localStorage.getItem('maintenanceMode') === 'true';
-//         setIsMaintenance(maintenanceMode);
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-
-//     checkMaintenance();
-//   }, []);
-
-//   useEffect(() => {
-//     const handleOnline = () => setIsOnline(true);
-//     const handleOffline = () => setIsOnline(false);
-
-//     window.addEventListener('online', handleOnline);
-//     window.addEventListener('offline', handleOffline);
-
-//     return () => {
-//       window.removeEventListener('online', handleOnline);
-//       window.removeEventListener('offline', handleOffline);
-//     };
-//   }, []);
-
-//   // Loading state
-//   if (isLoading) {
-//     return (
-//       <ThemeProvider>
-//         <PageLoader />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Maintenance page
-//   if (isMaintenance) {
-//     return (
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <Maintenance />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Offline page
-//   if (!isOnline) {
-//     return (
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <OfflinePage />
-//       </ThemeProvider>
-//     );
-//   }
-
-//   // Main App - Everything wrapped with ThemeProvider at the top level
-//   return (
-//     <ErrorBoundary
-//       FallbackComponent={ErrorFallback}
-//       onReset={() => {
-//         window.location.href = '/';
-//       }}
-//     >
-//       <ThemeProvider>
-//         <GlobalStyles styles={globalStyles} />
-//         <BrowserRouter>
-//           <AuthProvider>
-//             <AppRoutes />
-//           </AuthProvider>
-//         </BrowserRouter>
-//       </ThemeProvider>
-//     </ErrorBoundary>
-//   );
-// }
 
 // Component to redirect users to their specific dashboard after login
 const DashboardRedirect = () => {
@@ -689,7 +409,6 @@ const DashboardRedirect = () => {
   if (user.role === "charity")
     return <Navigate to="/charity/dashboard" replace />;
 
-  return <Navigate to="/unauthorized" replace />;
 };
 
 const AppRoutes = () => {
@@ -725,12 +444,6 @@ const AppRoutes = () => {
         <Route path="/auth/verify-email" element={<VerifyEmail />} />
         <Route path="/auth/verify-otp" element={<VerifyOTP />} />
 
-        {/* Campaign Routes */}
-        {/* <Route path="/campaigns" element={<CampaignList />} />
-        <Route path="/campaigns/:id" element={<CampaignDetails />} />
-        <Route path="/campaigns/:id/donate" element={<DonationPage />} />
-        <Route path="/charity/:id" element={<CharityProfile />} /> */}
-
         {/* Protected Routes - Require Authentication */}
         {/* <Route path="/profile" element={<Profile />} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
@@ -752,6 +465,8 @@ const AppRoutes = () => {
           <Route path="/admin/charity" element={<AdminCharityApproval />} />
           <Route path="/admin/campaigns" element={<AdminCampaignApproval />} />
           <Route path="/admin/donations" element={<AdminDonations />} />
+          <Route path="/admin/info" element={<AdminInfo />} />
+          <Route path="/admin/profile" element={<AdminProfile />} />
           <Route
             path="/admin/donationreport"
             element={<AdminDonationsReport />}
@@ -797,9 +512,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log(
-      "App Mounted! If you see this rolling in the browser console, the whole app is unmounting.",
-    );
+    //////////console.log(
+    //   "App Mounted! If you see this rolling in the browser //////////console, the whole app is unmounting.",
+    // );
     const checkMaintenance = async () => {
       try {
         const response = await api.get("/maintenance");
@@ -886,9 +601,11 @@ function App() {
       <ThemeProvider>
         <GlobalStyles styles={globalStyles} />
         <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
+          <SettingsProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </SettingsProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ErrorBoundary>

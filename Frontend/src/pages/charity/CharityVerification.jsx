@@ -189,7 +189,7 @@ const DocumentCard = ({ document, onUpload, onVerify, onDelete, isAdmin, isEligi
       await onUpload(document.id, file);
       setFile(null);
     } catch (error) {
-      console.error('Upload error:', error);
+      //console.error('Upload error:', error);
     } finally {
       setUploading(false);
     }

@@ -48,10 +48,10 @@ const CampaignStats = ({ campaign }) => {
       <Box sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
           <Typography variant="body2" sx={{ fontWeight: 600, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-            ${campaign.raisedAmount?.toLocaleString() || 0}
+            ₹{campaign.raisedAmount?.toLocaleString() || 0}
           </Typography>
           <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-            ${campaign.goalAmount?.toLocaleString() || 0}
+            ₹{campaign.goalAmount?.toLocaleString() || 0}
           </Typography>
         </Box>
         <LinearProgress

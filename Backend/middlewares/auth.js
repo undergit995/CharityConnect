@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const logger = require('../utils/logger');
+const User = require('../models/User.js');
+const logger = require('../utils/logger.js');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'CharityConnectSecretKey';
 
@@ -50,7 +50,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     // Check if user exists
-    const user = await User.findById(decoded.id || decoded.userId)
+    const user = await User.findById(decoded.user?.id || decoded.user?._id || decoded.id || decoded.userId)
       .select('-password -resetPasswordToken -resetPasswordExpires');
 
     if (!user) {
@@ -166,7 +166,7 @@ const optionalAuth = async (req, res, next) => {
       if (token) {
         try {
           const decoded = jwt.verify(token, JWT_SECRET);
-          const user = await User.findById(decoded.id || decoded.userId)
+          const user = await User.findById(decoded.user?.id || decoded.user?._id || decoded.id || decoded.userId)
             .select('-password -resetPasswordToken -resetPasswordExpires');
           
           if (user && user.isActive && !user.isDeleted) {

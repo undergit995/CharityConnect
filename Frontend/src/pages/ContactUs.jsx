@@ -1,4 +1,3 @@
-// pages/ContactUs.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -18,6 +17,7 @@ import {
   Divider,
   useMediaQuery,
   InputAdornment,
+  Avatar,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -104,8 +104,8 @@ const ContactUs = () => {
   // Contact info from backend
   const [contactInfo, setContactInfo] = useState({
     email: 'support@charityconnect.com',
-    phone: '+1 (234) 567-890',
-    address: '123 Charity Street, Giving City, GC 12345',
+    phone: '+91 9234567890',
+    address: '123 Charity Street, Hyderabad, 12345',
     workingHours: 'Mon-Fri: 9:00 AM - 6:00 PM',
     socialMedia: {
       facebook: 'https://facebook.com/charityconnect',
@@ -131,11 +131,12 @@ const ContactUs = () => {
     const fetchContactInfo = async () => {
       try {
         const response = await api.get('/settings/contact');
+        
         if (response.data.success) {
           setContactInfo(response.data.data);
         }
       } catch (err) {
-        console.error('Failed to fetch contact info:', err);
+        //console.error('Failed to fetch contact info:', err);
         // Use default values if API fails
       }
     };
@@ -495,7 +496,7 @@ const ContactUs = () => {
                 >
                   {/* Google Maps Embed */}
                   <iframe
-                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(contactInfo.address)}`}
+                    src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY || "g"}&q=${encodeURIComponent(contactInfo.address)}`}
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}

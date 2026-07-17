@@ -5,6 +5,7 @@ const corsOptions = {
             'http://localhost:3000',
             'http://192.168.56.1:5173',
             'http://10.200.168.97:5173',
+            'https://charity-connect-wbyo.vercel.app'
         ];
 
         if (!origin || allowedOrigins.includes(origin)) {

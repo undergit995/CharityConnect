@@ -26,6 +26,7 @@ import {
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   CloudUpload as CloudUploadIcon,
   Image as ImageIcon,
   VideoCall as VideoIcon,
@@ -37,9 +38,9 @@ import {
   Category as CategoryIcon,
   Warning as WarningIcon,
   Verified as VerifiedIcon
-} from '@mui/icons-material';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+} from "@mui/icons-material";
+import { AnimatePresence, motion } from 'framer-motion';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
 import { api } from '../../Services/authServices';
@@ -53,8 +54,10 @@ const categories = [
 
 const CharityCreateCampaign = () => {
   const { isDark } = useTheme();
-  const { user } = useAuth();
+  const { user, updateCurrentUser } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = !!id;
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [loading, setLoading] = useState(false);
@@ -78,7 +81,7 @@ const CharityCreateCampaign = () => {
   const [errors, setErrors] = useState({});
  const [eligibility, setEligibility] = useState({
     isEligible: false,
-    isLoading: true,
+    isLoading: false,
     status: 'checking',
     reason: '',
     missingDocs: [],
@@ -87,12 +90,15 @@ const CharityCreateCampaign = () => {
   const [showEligibilityDialog, setShowEligibilityDialog] = useState(false);
 
     useEffect(() => {
-    // if (!user?.userId) return;
-
     const checkEligibility = async () => {
+      if (!user?._id) return;
+
+      const freshUser = await updateCurrentUser();
+      const targetUser = freshUser || user;
+
       setEligibility(prev => ({ ...prev, isLoading: true, status: 'checking' }));
       try {
-        const data = await verificationService.checkEligibility(user.userId);
+        const data = await verificationService.checkEligibility(user._id);
         if (data) {
           setEligibility({
             isEligible: data.isEligible,
@@ -106,10 +112,9 @@ const CharityCreateCampaign = () => {
             setShowEligibilityDialog(true);
           }
         } else {
-          // Handle case where API returns no data
           setEligibility(prev => ({
             ...prev,
-            status: 'error',
+            status: 'error'
           }));
         }
       } catch (err) {
@@ -121,11 +126,42 @@ const CharityCreateCampaign = () => {
           progress: 0,
         });
       } finally {
-        setEligibility(prev => ({ ...prev, isLoading: false }));
+        // setEligibility(prev => ({ ...prev, isLoading: false }));
+        // setEligibility(prev => ({ ...prev, isLoading: false }));
       }
     };
     checkEligibility();
-  }, [user]);
+  }, [user?._id]);
+
+  // Fetch campaign data if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchCampaignData = async () => {
+        setLoading(true);
+        try {
+          const response = await api.get(`/charity/campaigns/${id}`);
+          const campaign = response.data.data;
+          setFormData({
+            title: campaign.title || '',
+            category: campaign.category || '',
+            description: campaign.description || '',
+            shortDescription: campaign.shortDescription || '',
+            goalAmount: campaign.goalAmount || '',
+            endDate: campaign.endDate ? new Date(campaign.endDate).toISOString().split('T')[0] : '',
+            location: campaign.location || '',
+            beneficiaryInfo: campaign.beneficiaryInfo || '',
+            impactDetails: campaign.impactDetails || '',
+          });
+          // Note: Image editing is more complex and not handled in this diff.
+        } catch (err) {
+          setError('Failed to load campaign data for editing.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCampaignData();
+    }
+  }, [isEditMode, id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -197,39 +233,49 @@ const CharityCreateCampaign = () => {
     setError('');
     setSuccess('');
 
+    const formDataToSend = new FormData();
+    Object.keys(formData).forEach(key => {
+      formDataToSend.append(key, formData[key]);
+    });
+    images.forEach(image => {
+      formDataToSend.append('campaignImages', image.file);
+    });
+
     try {
-      const formDataToSend = new FormData();
-      
-      // Append all text fields
-      Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
-      });
-
-      // Append images
-      images.forEach((image, index) => {
-        formDataToSend.append('campaignImages', image.file);
-      });
-
-      formDataToSend.append('charityId', user._id);
-
-      const response = await api.post('/campaigns', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setProgress(percentCompleted);
-        },
-      });
+      let response;
+      if (isEditMode) {
+        // Update existing campaign
+        response = await api.put(`/charity/campaigns/${id}`, formDataToSend, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            setProgress(percentCompleted);
+          },
+        });
+      } else {
+        // Create new campaign
+        formDataToSend.append('charityId', user._id);
+        response = await api.post('/campaigns', formDataToSend, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            setProgress(percentCompleted);
+          },
+        });
+      }
 
       if (response.data.success) {
-        setSuccess('Campaign created successfully!');
+        setSuccess(
+          isEditMode
+            ? 'Campaign updated successfully! It will be reviewed again.'
+            : 'Campaign created successfully! It will be reviewed by an admin.'
+        );
         setTimeout(() => {
           navigate('/charity/campaigns');
         }, 2000);
       }
     } catch (err) {
-      console.log(err.message);
+      //console.log(err.message);
       if (err.response?.status === 403) {
         setShowEligibilityDialog(true);
         setError(err.response?.data?.message || 'Your charity is not eligible for fundraising.');
@@ -450,10 +496,10 @@ const CharityCreateCampaign = () => {
                   color: isDark ? '#e8e8f0' : '#1a1a2e'
                 }}
               >
-                Create Campaign
+                {isEditMode ? 'Edit Campaign' : 'Create Campaign'}
               </Typography>
               <Typography variant="body2" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
-                Launch a new fundraising campaign for your charity
+                {isEditMode ? 'Update the details of your campaign.' : 'Launch a new fundraising campaign for your charity.'}
               </Typography>
             </Box>
             <Chip
@@ -491,7 +537,7 @@ const CharityCreateCampaign = () => {
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3} sx={{justifyContent:'center'}}>
               {/* Left Column - Main Form */}
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }}>
                 <Paper
                   sx={{
                     p: 3,
@@ -667,7 +713,7 @@ const CharityCreateCampaign = () => {
               </Grid>
 
               {/* Right Column - Details */}
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Paper
                   sx={{
                     p: 3,
@@ -760,7 +806,7 @@ const CharityCreateCampaign = () => {
                         },
                       }}
                     >
-                      {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Campaign'}
+                {loading ? <CircularProgress size={24} color="inherit" /> : isEditMode ? 'Update Campaign' : 'Create Campaign'}
                     </Button>
                     <Button
                       fullWidth

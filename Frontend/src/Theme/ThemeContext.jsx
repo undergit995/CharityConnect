@@ -334,7 +334,7 @@
 //       }
 //       return 'light';
 //     } catch (error) {
-//       console.error('Error reading theme mode:', error);
+//       //console.error('Error reading theme mode:', error);
 //       return 'light';
 //     }
 //   });
@@ -344,7 +344,7 @@
 //     try {
 //       return mode === 'dark' ? darkTheme : lightTheme;
 //     } catch (error) {
-//       console.error('Error getting theme:', error);
+//       //console.error('Error getting theme:', error);
 //       return lightTheme; // Fallback to light theme
 //     }
 //   }, [mode]);
@@ -367,7 +367,7 @@
 //         document.documentElement.classList.remove('dark-mode');
 //       }
 //     } catch (error) {
-//       console.error('Error updating theme:', error);
+//       //console.error('Error updating theme:', error);
 //     }
 //   }, [mode]);
 
@@ -384,7 +384,7 @@
 //       mediaQuery.addEventListener('change', handleChange);
 //       return () => mediaQuery.removeEventListener('change', handleChange);
 //     } catch (error) {
-//       console.error('Error listening to system theme:', error);
+//       //console.error('Error listening to system theme:', error);
 //     }
 //   }, []);
 
@@ -418,7 +418,7 @@
 
 //   // Ensure theme exists before rendering
 //   if (!theme || typeof theme !== 'object') {
-//     console.error('Theme is undefined or invalid, using fallback');
+//     //console.error('Theme is undefined or invalid, using fallback');
 //     // Return a safe fallback
 //     return (
 //       <MuiThemeProvider theme={lightTheme}>
@@ -617,43 +617,31 @@ const darkThemeConfig = {
 };
 
 // Create themes with createTheme() - DO THIS ONCE OUTSIDE COMPONENT
-console.log('Creating light theme...');
 const lightTheme = createTheme(lightThemeConfig);
-console.log('Light theme created:', lightTheme ? 'Success' : 'Failed');
-
-console.log('Creating dark theme...');
 const darkTheme = createTheme(darkThemeConfig);
-console.log('Dark theme created:', darkTheme ? 'Success' : 'Failed');
-
 // Theme Provider Component
 export const ThemeProvider = ({ children }) => {
-  console.log('ThemeProvider rendering...');
 
   const [mode, setMode] = useState(() => {
     try {
       const savedMode = localStorage.getItem('themeMode');
       if (savedMode) {
-        console.log('Using saved mode:', savedMode);
         return savedMode;
       }
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      console.log('Using system preference:', prefersDark ? 'dark' : 'light');
       return prefersDark ? 'dark' : 'light';
     } catch (error) {
-      console.error('Error reading theme mode:', error);
+      //console.error('Error reading theme mode:', error);
       return 'light';
     }
   });
 
   // Get the current theme based on mode - using useMemo for performance
   const theme = useMemo(() => {
-    console.log('Getting theme for mode:', mode);
     const selectedTheme = mode === 'dark' ? darkTheme : lightTheme;
-    console.log('Selected theme:', selectedTheme ? 'Valid' : 'Undefined');
-    
     // Verify theme is valid
     if (!selectedTheme || typeof selectedTheme !== 'object') {
-      console.error('Invalid theme detected! Using light theme as fallback.');
+      //console.error('Invalid theme detected! Using light theme as fallback.');
       return lightTheme;
     }
     
@@ -676,7 +664,7 @@ export const ThemeProvider = ({ children }) => {
         document.documentElement.classList.remove('dark-mode');
       }
     } catch (error) {
-      console.error('Error updating theme:', error);
+      //console.error('Error updating theme:', error);
     }
   }, [mode]);
 
@@ -693,7 +681,7 @@ export const ThemeProvider = ({ children }) => {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     } catch (error) {
-      console.error('Error listening to system theme:', error);
+      //console.error('Error listening to system theme:', error);
     }
   }, []);
 
@@ -724,7 +712,7 @@ export const ThemeProvider = ({ children }) => {
 
   // CRITICAL: Ensure theme exists before rendering
   if (!theme) {
-    console.error('Theme is undefined! Using fallback.');
+    //console.error('Theme is undefined! Using fallback.');
     return (
       <MuiThemeProvider theme={lightTheme}>
         <CssBaseline />
@@ -733,7 +721,7 @@ export const ThemeProvider = ({ children }) => {
     );
   }
 
-  console.log('Rendering ThemeProvider with theme:', theme.palette.mode);
+  //console.log('Rendering ThemeProvider with theme:', theme.palette.mode);
 
   return (
     <ThemeContext.Provider value={contextValue}>

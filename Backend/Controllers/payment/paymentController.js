@@ -59,7 +59,7 @@ exports.createOrder = async (req, res) => {
       receipt: `donation_${Date.now()}`,
       notes: {
         campaignId: campaignId.toString(),
-        userId: req.userId,
+        userId: req.userId || null,
         isAnonymous: isAnonymous ? "true" : "false",
         message: message || "",
       },
@@ -73,10 +73,10 @@ exports.createOrder = async (req, res) => {
     // Save order in database with pending status
     const donation = new Donation({
       donorId: req.userId,
-      // Use guest info if available, otherwise use logged-in user's info
-      donorName: guestInfo?.name || user?.fullName,
-      donorEmail: guestInfo?.email || user?.email,
-      donorPhone: guestInfo?.phone || user?.phone,
+      // Use guest info if available and not anonymous, otherwise use logged-in user's info
+      donorName: !isAnonymous ? (guestInfo?.name || user?.fullName) : 'Anonymous',
+      donorEmail: !isAnonymous ? (guestInfo?.email || user?.email) : null,
+      donorPhone: !isAnonymous ? (guestInfo?.phone || user?.phone) : null,
       campaignId: campaignId,
       charityId: campaign.charityId,
       amount: amount,
@@ -90,7 +90,7 @@ exports.createOrder = async (req, res) => {
     });
 
     await donation.save();
-    console.log(donation);
+    //console.log(donation);
 
     res.status(200).json({
       success: true,
@@ -103,7 +103,7 @@ exports.createOrder = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Create order error:", error);
+    //console.error("Create order error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to create payment order",
@@ -118,128 +118,145 @@ exports.createOrder = async (req, res) => {
  * @access Private
  */
 exports.verifyPayment = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { orderId, paymentId, signature, donationId } = req.body;
 
-    // Verify signature
     const isValid = verifyPaymentSignature(orderId, paymentId, signature);
-
     if (!isValid) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid payment signature",
-      });
+      throw new Error("Invalid payment signature");
     }
 
-    // Find donation
-    const donation = await Donation.findById(donationId);
+    const donation = await Donation.findById(donationId).session(session);
     if (!donation) {
-      return res.status(404).json({
-        success: false,
-        message: "Donation not found",
+      throw new Error("Donation not found");
+    }
+
+    if (donation.status === 'Completed') {
+      // If already completed (e.g., by webhook), just return success.
+      await session.commitTransaction();
+      session.endSession();
+      return res.status(200).json({
+        success: true,
+        message: "Payment already verified",
+        data: {
+          donationId: donation._id,
+          receiptNumber: donation.receiptNumber,
+        },
       });
     }
 
-    // Update donation status
+    const orderDetails = await razorpay.orders.fetch(orderId);
+    const originalUserId = orderDetails.notes?.userId;
+
+    if (originalUserId && !donation.donorId) {
+      donation.donorId = originalUserId;
+    }
+
     donation.status = "Completed";
     donation.razorpayPaymentId = paymentId;
     donation.razorpaySignature = signature;
     donation.transactionId = paymentId;
     donation.completedAt = new Date();
-
-    // Generate receipt number
-    const receiptNumber = `DON-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    donation.receiptNumber = receiptNumber;
+    donation.receiptNumber = `DON-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     await donation.save();
 
-    // Update campaign stats
-    const campaign = await Campaign.findById(donation.campaignId);
+    const campaign = await Campaign.findById(donation.campaignId).session(session);
     if (campaign) {
       campaign.raisedAmount = (campaign.raisedAmount || 0) + donation.amount;
       campaign.stats.donorCount = (campaign.stats.donorCount || 0) + 1;
-      campaign.stats.averageDonation =
-        campaign.raisedAmount / campaign.stats.donorCount;
+      campaign.stats.averageDonation = campaign.raisedAmount / campaign.stats.donorCount;
       await campaign.save();
     }
 
-    // Update donor stats
     if (donation.donorId) {
       await User.findByIdAndUpdate(donation.donorId, {
         $inc: {
           "stats.totalDonations": 1,
           "stats.totalDonationAmount": donation.amount,
         },
-      });
+      }, { session });
     }
 
-    // Send receipt email
+    await session.commitTransaction();
+    session.endSession();
+
+    // Send email after the transaction is successfully committed
     let donorEmail = null;
     let donorName = 'Donor';
 
     if (donation.donorId) {
       const user = await User.findById(donation.donorId);
-      donorEmail = user?.email;
-      donorName = user?.fullName || 'Donor';
+      if (user) {
+        donorEmail = user.email;
+        donorName = user.fullName || 'Donor';
+      }
     } else if (donation.donorEmail) {
       donorEmail = donation.donorEmail;
       donorName = donation.donorName || 'Guest Donor';
     }
 
     if (donorEmail) {
-      await sendEmail({
-        to: donorEmail,
-        subject: `Donation Receipt - ${donation.receiptNumber}`,
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; }
-              .content { padding: 30px; }
-              .receipt-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
-              .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1>Thank You! 🙏</h1>
-              </div>
-              <div class="content">
-                <h2>Dear ${donorName},</h2>
-                <p>Thank you for your generous donation to <strong>${campaign.title}</strong>.</p>
-                <div class="receipt-box">
-                  <div class="row">
-                    <span><strong>Receipt Number</strong></span>
-                    <span>${donation.receiptNumber}</span>
-                  </div>
-                  <div class="row">
-                    <span><strong>Amount</strong></span>
-                    <span>₹${donation.amount}</span>
-                  </div>
-                  <div class="row">
-                    <span><strong>Transaction ID</strong></span>
-                    <span>${donation.transactionId}</span>
-                  </div>
-                  <div class="row">
-                    <span><strong>Date</strong></span>
-                    <span>${new Date(donation.completedAt).toLocaleString()}</span>
-                  </div>
+      try {
+        await sendEmail({
+          to: donorEmail,
+          subject: `Donation Receipt - ${donation.receiptNumber}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; }
+                .content { padding: 30px; }
+                .receipt-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e9ecef; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>Thank You! 🙏</h1>
                 </div>
-                <p style="text-align: center;">
-                  <a href="${process.env.FRONTEND_URL}/donor/donations/${donation._id}/receipt" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">
-                    Download Full Receipt
-                  </a>
-                </p>
+                <div class="content">
+                  <h2>Dear ${donorName},</h2>
+                  <p>Thank you for your generous donation to <strong>${campaign.title}</strong>.</p>
+                  <div class="receipt-box">
+                    <div class="row">
+                      <span><strong>Receipt Number</strong></span>
+                      <span>${donation.receiptNumber}</span>
+                    </div>
+                    <div class="row">
+                      <span><strong>Amount</strong></span>
+                      <span>₹${donation.amount}</span>
+                    </div>
+                    <div class="row">
+                      <span><strong>Transaction ID</strong></span>
+                      <span>${donation.transactionId}</span>
+                    </div>
+                    <div class="row">
+                      <span><strong>Date</strong></span>
+                      <span>${new Date(donation.completedAt).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <p style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL}/donor/donations/${donation._id}/receipt" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px;">
+                      Download Full Receipt
+                    </a>
+                  </p>
+                </div>
               </div>
-            </div>
-          </body>
-          </html>
-        `,
-      });
+            </body>
+            </html>
+          `,
+        });
+      } catch (emailError) {
+        console.error("Failed to send donation receipt email:", emailError);
+      }
     }
 
     res.status(200).json({
@@ -251,6 +268,8 @@ exports.verifyPayment = async (req, res) => {
       },
     });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     console.error("Verify payment error:", error);
     res.status(500).json({
       success: false,
@@ -259,6 +278,7 @@ exports.verifyPayment = async (req, res) => {
     });
   }
 };
+
 
 /**
  * @desc Razorpay webhook handler
@@ -327,7 +347,7 @@ exports.handleWebhook = async (req, res) => {
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Webhook error:", error);
+    //console.error("Webhook error:", error);
     res.status(500).json({
       success: false,
       message: "Webhook processing failed",

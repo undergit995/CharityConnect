@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -23,6 +23,10 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -48,6 +52,8 @@ import {
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { api } from '../../Services/authServices';
+import OTPInput from '../auth/components/OTPInput';
 
 // Tab Panel Component
 const TabPanel = ({ children, value, index }) => (
@@ -58,14 +64,24 @@ const TabPanel = ({ children, value, index }) => (
 
 const DonorProfile = () => {
   const { isDark } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateCurrentUser, sendOTP, verifyOTP } = useAuth();
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    totalDonations: 0,
+    totalAmount: 0,
+    savedCampaigns: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [emailChangeToken, setEmailChangeToken] = useState('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -122,6 +138,25 @@ const DonorProfile = () => {
     }
   }, [user]);
 
+  // Fetch donor stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?._id) return;
+      setStatsLoading(true);
+      try {
+        const response = await api.get('/donor/dashboard/stats');
+        if (response.data.success) {
+          setStats(response.data.data.stats);
+        }
+      } catch (err) {
+        //console.error("Failed to fetch donor stats for profile:", err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+  }, [user]);
+
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
     if (name.includes('.')) {
@@ -153,30 +188,80 @@ const DonorProfile = () => {
     }
   };
 
+  const handleEmailChangeRequest = async () => {
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const result = await sendOTP(formData.email, 'email-change');
+      if (result.success) {
+        setOtpDialogOpen(true);
+      } else {
+        setError(result.message || 'Failed to send OTP to new email.');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while sending OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyEmailAndSave = useCallback(async (otp) => {
+    if (otp.length !== 6) return;
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      // We don't need to call verifyOTP here, the backend will do it.
+      // We just need to set the token to be sent with the profile update.
+      setEmailChangeToken(otp);
+      setOtpDialogOpen(false);
+      // Use a timeout to allow the dialog to close before submitting the main form
+      setTimeout(() => {
+        document.getElementById('profile-update-form-submit-button').click();
+      }, 100);
+    } catch (err) {
+      setOtpError(err.message || 'Invalid OTP');
+    } finally {
+      setOtpLoading(false);
+    }
+  }, [formData.email, verifyOTP]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
+    if (formData.email !== user.email && !emailChangeToken) {
+      handleEmailChangeRequest();
+      setLoading(false);
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (typeof formData[key] === 'object') {
-          formDataToSend.append(key, JSON.stringify(formData[key]));
-        } else {
-          formDataToSend.append(key, formData[key]);
-        }
+        Object.keys(formData).forEach((key) => {
+        const value = formData[key];
+        formDataToSend.append(key, typeof value === 'object' && value !== null ? JSON.stringify(value) : value);
       });
+
       if (profileImage) {
         formDataToSend.append('profileImage', profileImage);
       }
 
-      await updateProfile(formDataToSend);
+      if (emailChangeToken) {
+        formDataToSend.append('emailChangeToken', emailChangeToken);
+      }
+
+      await api.put('/donor/profile', formDataToSend);
+      
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
+      await updateCurrentUser(); 
+      setEmailChangeToken(''); // Reset token
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
+      console.log(err.response.data.message);
+      
       setError(err.response?.data?.message || 'Failed to update profile');
       setTimeout(() => setError(''), 3000);
     } finally {
@@ -364,7 +449,7 @@ const DonorProfile = () => {
                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 2 }}>
                   <Box textAlign="center">
                     <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      12
+                      {statsLoading ? <CircularProgress size={20} /> : stats.totalDonations}
                     </Typography>
                     <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                       Donations
@@ -372,7 +457,7 @@ const DonorProfile = () => {
                   </Box>
                   <Box textAlign="center">
                     <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      ₹2,450
+                      {statsLoading ? <CircularProgress size={20} /> : `₹${stats.totalAmount.toLocaleString('en-IN')}`}
                     </Typography>
                     <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                       Total Given
@@ -380,7 +465,7 @@ const DonorProfile = () => {
                   </Box>
                   <Box textAlign="center">
                     <Typography variant="h6" sx={{ fontWeight: 700, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
-                      5
+                      {statsLoading ? <CircularProgress size={20} /> : stats.savedCampaigns}
                     </Typography>
                     <Typography variant="caption" sx={{ color: isDark ? '#6a6a80' : '#9a9ab0' }}>
                       Saved
@@ -391,7 +476,7 @@ const DonorProfile = () => {
 
               {/* Profile Info */}
               <Grid item xs={12} md={9}>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} id="profile-update-form">
                   <Grid container spacing={3}>
                     <Grid item xs={12} sm={6}>
                       <TextField
@@ -431,7 +516,7 @@ const DonorProfile = () => {
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        disabled={true}
+                        disabled={!isEditing}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
@@ -490,6 +575,7 @@ const DonorProfile = () => {
                           </Button>
                           <Button
                             type="submit"
+                            id="profile-update-form-submit-button"
                             variant="contained"
                             disabled={loading}
                             startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
@@ -512,6 +598,44 @@ const DonorProfile = () => {
             </Grid>
           </Paper>
         </motion.div>
+
+        <Dialog open={otpDialogOpen} onClose={() => setOtpDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Verify New Email Address</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              We've sent a verification code to <strong>{formData.email}</strong>. Please enter it below to confirm the change.
+            </Typography>
+            {otpError && <Alert severity="error" sx={{ mb: 2 }}>{otpError}</Alert>}
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+              <OTPInput
+                length={6}
+                onComplete={handleVerifyEmailAndSave}
+                disabled={otpLoading}
+              />
+            </Box>
+            {otpLoading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2">Verifying...</Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOtpDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                // This is a bit of a hack to trigger the form submission from the dialog
+                const otpInputs = document.querySelectorAll('input[aria-label="Please enter verification code"]');
+                const otpValue = Array.from(otpInputs).map(input => input.value).join('');
+                handleVerifyEmailAndSave(otpValue);
+              }}
+              variant="contained"
+              disabled={otpLoading}
+            >
+              Verify & Save
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Tabs Section */}
         <Paper
@@ -536,13 +660,13 @@ const DonorProfile = () => {
               },
             }}
           >
-            <Tab icon={<ReceiptIcon />} label="Donations" />
+            {/* <Tab icon={<ReceiptIcon />} label="Donations" /> */}
             <Tab icon={<FavoriteIcon />} label="Saved Campaigns" />
             <Tab icon={<SettingsIcon />} label="Preferences" />
           </Tabs>
 
           {/* Donations Tab */}
-          <TabPanel value={tabValue} index={0}>
+          {/* <TabPanel value={tabValue} index={0}>
             <Box sx={{ p: 3 }}>
               {donations.map((donation) => (
                 <Card
@@ -583,10 +707,10 @@ const DonorProfile = () => {
                 </Card>
               ))}
             </Box>
-          </TabPanel>
+          </TabPanel> */}
 
           {/* Saved Campaigns Tab */}
-          <TabPanel value={tabValue} index={1}>
+          <TabPanel value={tabValue} index={0}>
             <Box sx={{ p: 3, textAlign: 'center' }}>
               <Typography variant="body1" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}>
                 You haven't saved any campaigns yet.
@@ -605,7 +729,7 @@ const DonorProfile = () => {
           </TabPanel>
 
           {/* Preferences Tab */}
-          <TabPanel value={tabValue} index={2}>
+          <TabPanel value={tabValue} index={1}>
             <Box sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2, color: isDark ? '#e8e8f0' : '#1a1a2e' }}>
                 Giving Preferences

@@ -177,7 +177,7 @@ const CharityDocuments = () => {
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEligible, setIsEligible] = useState(false);
@@ -187,15 +187,15 @@ const CharityDocuments = () => {
 
   // Load documents
   useEffect(() => {
-    if (user?.userId) {
+    if (user?._id) {
       loadDocuments();
     }
-  }, [user?.userId]);
+  }, [user]);
 
   const loadDocuments = async () => {
     setLoading(true);
     try {
-      const data = await verificationServices.getVerificationStatus(user.userId);
+      const data = await verificationServices.getVerificationStatus(user._id);
       if (data) {
         setDocuments(data.documents || []);
         setVerificationStatus(data.status || 'pending');
@@ -216,7 +216,7 @@ const CharityDocuments = () => {
 
   const handleUpload = async (documentId, file, onProgress) => {
     try {
-      const response = await verificationServices.uploadDocument(user.userId, documentId, file, (progressEvent) => {
+      const response = await verificationServices.uploadDocument(user._id, documentId, file, (progressEvent) => {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
           onProgress(percentCompleted);
@@ -251,7 +251,7 @@ const CharityDocuments = () => {
 
   const handleSubmitForVerification = async () => {
     try {
-      await verificationServices.submitForVerification(user.userId);
+      await verificationServices.submitForVerification(user._id);
       setVerificationStatus('submitted');
       setShowSuccessDialog(true);
       setTimeout(() => {

@@ -1,22 +1,22 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const User = require("../../models/User");
-const ActivityLog = require("../../models/ActivityLog");
-const generateTokens = require("../../utils/refreshToken");
+const User = require("../../models/User.js");
+const ActivityLog = require("../../models/ActivityLog.js");
+const generateTokens = require("../../utils/refreshToken.js");
 const {
   sendWelcomeEmail,
   sendPasswordResetEmail,
-} = require("../../utils/emailService");
+} = require("../../utils/emailService.js");
 const {
   getFileUrl,
   validateEmail,
   validatePasswordDetailed,
-} = require("../../utils/validators");
-const Validators = require("../../utils/validators");
+} = require("../../utils/validators.js");
+const Validators = require("../../utils/validators.js");
 const { truncate } = require("fs");
-const { createVerificationRecord } = require("../../services/verficationService");
-const Verification = require("../../models/Verification");
+const { createVerificationRecord } = require("../../services/verificationService.js");
+const Verification = require("../../models/Verification.js");
 const JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET || "CharityConnectRefreshSecretKey";
 
@@ -29,7 +29,6 @@ const logActivity = async (userId, action, details = {}) => {
       timestamp: new Date(),
     });
   } catch (error) {
-    console.error("Error logging activity:", error);
   }
 };
 
@@ -78,7 +77,6 @@ exports.setupAdmin = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Setup admin error:", error);
     res.status(500).json({
       success: false,
       message: "Error setting up admin",
@@ -230,7 +228,7 @@ exports.register = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    // //console.error("Registration error:", error);
     res.status(500).json({
       success: false,
       message: "Error registering user",
@@ -358,29 +356,10 @@ exports.login =  async (req, res) => {
                     reason: isEligible ? 'All documents verified' : `${pendingDocs.length} document(s) pending verification`,
                 };
             } else {
-                // No verification record found - create one
-                verification = await createVerificationRecord(user._id);
-                verificationStatus = {
-                    status: 'pending',
-                    isApproved: false,
-                    isVerified: false,
-                    documents: {
-                        total: 0,
-                        verified: 0,
-                        rejected: 0,
-                        submitted: 0,
-                        pending: 0,
-                    },
-                    progress: 0,
-                    isEligible: false,
-                    missingDocs: [],
-                    lastUpdated: null,
-                    submittedAt: null,
-                    reviewedAt: null,
-                };
+                verificationStatus = { status: 'pending', isApproved: false, isVerified: false, progress: 0, isEligible: false, missingDocs: [] };
                 eligibility = {
                     canCreateCampaigns: false,
-                    reason: 'Verification not started. Please complete document verification.',
+                    reason: 'Verification record not found. Please try again.',
                 };
             }
         }
@@ -405,7 +384,7 @@ exports.login =  async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Login error:", error);
+        // //console.error("Login error:", error);
         res.status(500).json({
             success: false,
             message: "Internal server error",
@@ -451,8 +430,8 @@ exports.refreshToken = async (req, res) => {
     try {
       decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
     } catch (error) {
-      console.log(error.name);
-      console.log(error.message);
+      // //console.log(error.name);
+      // //console.log(error.message);
       return res
         .status(401)
         .json({ success: false, message: "Invalid or expired refresh token" });
@@ -475,7 +454,7 @@ exports.refreshToken = async (req, res) => {
       data: { accessToken, refreshToken: newRefreshToken },
     });
   } catch (error) {
-    console.error("Refresh token error:", error);
+    // //console.error("Refresh token error:", error);
     res.status(500).json({
       success: false,
       message: "Error refreshing token",
@@ -509,11 +488,15 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/auth/reset-password?token=${resetToken}`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    if (!frontendUrl) {
+      console.error("FATAL: FRONTEND_URL environment variable is not set.");
+    }
+    const resetUrl = `token=${resetToken}`;
 
     await sendPasswordResetEmail(email, user.fullName, resetUrl).catch(
       (error) => {
-        console.error("Forgot password email sending error:", error);
+        // //console.error("Forgot password email sending error:", error);
       },
     );
 
@@ -522,7 +505,7 @@ exports.forgotPassword = async (req, res) => {
       message: "If an account exists, a reset link will be sent.",
     });
   } catch (error) {
-    console.error("Forgot password error:", error);
+    // //console.error("Forgot password error:", error);
     res.status(500).json({
       success: false,
       message: "Error processing request",
@@ -581,7 +564,7 @@ exports.resetPassword = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Password reset successfully." });
   } catch (error) {
-    console.error("Reset password error:", error);
+    // //console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
       message: "Error resetting password",
@@ -620,7 +603,7 @@ exports.verifyEmail = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Email verified successfully" });
   } catch (error) {
-    console.error("Verify email error:", error);
+    // //console.error("Verify email error:", error);
     res.status(500).json({
       success: false,
       message: "Error verifying email",
@@ -659,7 +642,7 @@ exports.resendVerification = async (req, res) => {
       data: { otpId: result.otpId, expiresIn: result.expiresIn },
     });
   } catch (error) {
-    console.error("Resend verification error:", error);
+    // //console.error("Resend verification error:", error);
     res.status(500).json({
       success: false,
       message: "Error resending verification",
@@ -673,7 +656,7 @@ exports.logout = async (req, res) => {
     await logActivity(req.userId, "User logged out");
     res.status(200).json({ success: true, message: "Logout successful" });
   } catch (error) {
-    console.error("Logout error:", error);
+    // //console.error("Logout error:", error);
     res.status(500).json({
       success: false,
       message: "Error during logout",
@@ -724,7 +707,7 @@ exports.changePassword = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Password changed successfully" });
   } catch (error) {
-    console.error("Change password error:", error);
+    // //console.error("Change password error:", error);
     res.status(500).json({
       success: false,
       message: "Error changing password",
@@ -745,7 +728,7 @@ exports.getCurrentUser = async (req, res) => {
     }
     res.status(200).json({ success: true, data: { user } });
   } catch (error) {
-    console.error("Get user error:", error);
+    // //console.error("Get user error:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching user",
@@ -796,7 +779,7 @@ exports.updateProfile = async (req, res) => {
       data: { user: userResponse },
     });
   } catch (error) {
-    console.error("Update profile error:", error);
+    // //console.error("Update profile error:", error);
     res.status(500).json({
       success: false,
       message: "Error updating profile",
@@ -840,7 +823,7 @@ exports.getAllUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get users error:", error);
+    // //console.error("Get users error:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching users",
@@ -876,7 +859,7 @@ exports.updateUser = async (req, res) => {
       data: { user: userResponse },
     });
   } catch (error) {
-    console.error("Update user error:", error);
+    // //console.error("Update user error:", error);
     res.status(500).json({
       success: false,
       message: "Error updating user",
@@ -908,7 +891,7 @@ exports.deleteUser = async (req, res) => {
       .status(200)
       .json({ success: true, message: "User deleted successfully" });
   } catch (error) {
-    console.error("Delete user error:", error);
+    // //console.error("Delete user error:", error);
     res.status(500).json({
       success: false,
       message: "Error deleting user",

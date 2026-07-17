@@ -282,10 +282,10 @@ const CampaignList = () => {
         sort: filters.sort,
         categories: filters.categories.join(','),
         minGoal: filters.minGoal,
-        maxGoal: filters.maxGoal,
-        showActive: filters.showActive,
-        showUrgent: filters.showUrgent,
-        showCompleted: filters.showCompleted,
+        maxGoal: filters.maxGoal, 
+        status: filters.showActive ? 'active' : filters.showCompleted ? 'completed' : 'all',
+        isUrgent: filters.showUrgent,
+
       };
 
       const response = await api.get('/campaigns', { params });
@@ -525,7 +525,7 @@ const CampaignList = () => {
         ) : (
           <Grid container spacing={3}>
             {campaigns.map((campaign) => (
-              <Grid item xs={12} sm={6} md={4} key={campaign._id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={campaign._id}>
                 <CampaignCard
                   campaign={campaign}
                   onSave={handleSaveCampaign}

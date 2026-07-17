@@ -1496,7 +1496,7 @@ const AdminVerification = () => {
 
       setOrg(extractedData);
     } catch (error) {
-      console.error('Error extracting details:', error);
+      //console.error('Error extracting details:', error);
     } finally {
       setExtracting(false);
     }
@@ -1582,7 +1582,7 @@ const AdminVerification = () => {
 
       setSnackbar({ open: true, message: 'Charity approved successfully! 🎉', severity: 'success' });
       setTimeout(() => {
-        navigate('/admin/verification');
+        navigate('/admin/charity');
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to approve charity');
@@ -1680,14 +1680,14 @@ const AdminVerification = () => {
               >
                 {saving ? <CircularProgress size={20} /> : 'Save Draft'}
               </Button>
-              <Button
+              {/* <Button
                 variant="outlined"
                 startIcon={<PersonIcon size={18} />}
                 onClick={handleViewCharityDetails}
                 sx={{ borderRadius: 2 }}
               >
                 View Details
-              </Button>
+              </Button> */}
             </Box>
           </Box>
         </motion.div>
@@ -1881,7 +1881,7 @@ const AdminVerification = () => {
         </Paper>
 
         {/* Organisation Details - Auto-populated from documents */}
-        <Paper
+        {/* <Paper
           sx={{
             p: 4,
             mb: 4,
@@ -2143,7 +2143,7 @@ const AdminVerification = () => {
               />
             </Grid>
           </Grid>
-        </Paper>
+        </Paper> */}
 
         {/* Verification Sources */}
         <Paper
@@ -2354,7 +2354,7 @@ const AdminVerification = () => {
               : isDark ? 'rgba(46, 204, 113, 0.08)' : 'rgba(46, 204, 113, 0.04)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+          {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
             {riskLevel === 'low' ? (
               <CheckCircle2Icon className="h-6 w-6 text-emerald-600" />
             ) : riskLevel === 'medium' ? (
@@ -2365,7 +2365,7 @@ const AdminVerification = () => {
             <Typography variant="h6" sx={{ fontWeight: 600, textTransform: 'capitalize' }}>
               {riskLevel} Risk Level
             </Typography>
-          </Box>
+          </Box> */}
 
           <Grid container spacing={3}>
             <Grid item xs={12} sm={4}>

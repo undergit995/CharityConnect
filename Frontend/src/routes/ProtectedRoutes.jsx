@@ -11,7 +11,7 @@ export const ProtectedRoute = ({
   requiredPermissions = [],
   redirectPath = '/auth/login',
 }) => {
-  const { isAuthenticated, loading, hasRole, hasPermission } = useAuth();
+  const { user, isAuthenticated, loading, hasRole, hasPermission } = useAuth();
 
   if (loading) {
     return <AuthLoader />;
@@ -28,18 +28,18 @@ export const ProtectedRoute = ({
     );
     
     if (!hasRequiredRole) {
-      console.warn(`🛑 Access Denied: User role "${user?.role}" does not match required roles:`, requiredRoles);
-      return <Navigate to="/unauthorized" replace />;
+      //console.warn(`🛑 Access Denied: User role "${user?.role}" does not match required roles:`, requiredRoles);
+      return <Navigate to="/" replace />;
     }
   }
 
-  // Check permissions
+  
   if (requiredPermissions.length > 0) {
     const hasRequiredPermissions = requiredPermissions.every(permission => 
       hasPermission(permission)
     );
     if (!hasRequiredPermissions) {
-      return <Navigate to="/unauthorized" replace />;
+      return <Navigate to="/" replace />;
     }
   }
 

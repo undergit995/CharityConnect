@@ -84,8 +84,8 @@ const DonorStats = ({ stats, optimisticStats, loading, saving }) => {
       <Grid item xs={12} sm={6} md={3}>
         <DonorStatsCard
           title="Total Given"
-          value={`$${stats?.totalAmount?.toLocaleString() || 0}`}
-          optimisticValue={`$${optimisticStats.totalAmount?.toLocaleString() || 0}`}
+          value={`₹${stats?.totalAmount?.toLocaleString('en-IN') || 0}`}
+          optimisticValue={`₹${optimisticStats.totalAmount?.toLocaleString('en-IN') || 0}`}
           icon={<MoneyIcon />}
           color="#2ecc71"
           loading={loading}

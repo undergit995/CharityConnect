@@ -174,7 +174,6 @@ const DonorSidebar = () => {
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/donor/dashboard' },
     { text: 'My Donations', icon: <ReceiptIcon />, path: '/donor/donations' },
-    { text: 'Saved Campaigns', icon: <FavoriteIcon />, path: '/donor/saved' },
     { text: 'Explore Campaigns', icon: <SearchIcon />, path: '/donor/campaign' },
     { text: 'Profile', icon: <PersonIcon />, path: '/donor/profile' },
   ];
@@ -249,7 +248,7 @@ const DonorSidebar = () => {
       if (!isLocked) {
         fetchDashboardData();
       }
-    }, 30000);
+    }, 300000);
     return () => clearInterval(interval);
   }, [fetchDashboardData, isLocked]);
 
@@ -400,6 +399,7 @@ const DonorSidebar = () => {
                       : 'rgba(46, 204, 113, 0.08)'
                     : 'transparent',
                   '&:hover': {
+                    cursor: 'pointer',
                     backgroundColor: isDark
                       ? 'rgba(255,255,255,0.05)'
                       : 'rgba(0,0,0,0.04)',

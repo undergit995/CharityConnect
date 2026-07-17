@@ -70,7 +70,6 @@ const CharityCampaignUpdates = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
 
-  // Fetch campaigns
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
@@ -86,7 +85,7 @@ const CharityCampaignUpdates = () => {
     fetchCampaigns();
   }, []);
 
-  // Fetch updates when campaign changes
+  
   useEffect(() => {
     if (selectedCampaign) {
       fetchUpdates();

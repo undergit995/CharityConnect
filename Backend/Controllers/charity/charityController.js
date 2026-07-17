@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
-const Campaign = require("../../models/CampaignModel");
-const Donation = require("../../models/Donation");
-const User = require("../../models/User");
-const ActivityLog = require("../../models/ActivityLog");
-const { sendEmail } = require("../../utils/emailService");
+const Campaign = require("../../models/CampaignModel.js");
+const Donation = require("../../models/Donation.js");
+const { getFileUrl } = require("../../config/multerConfig.js");
+const otpService = require("../../utils/otpService.js");
+const User = require("../../models/User.js");
+const ActivityLog = require("../../models/ActivityLog.js");
+const { sendEmail } = require("../../utils/emailService.js");
 const { formatDistanceToNow } = require("date-fns");
 
 exports.getCharityCampaigns = async (req, res) => {
@@ -80,7 +82,7 @@ exports.getCharityCampaigns = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get charity campaigns error:", error);
+    //console.error("Get charity campaigns error:", error);
     res
       .status(500)
       .json({
@@ -114,7 +116,7 @@ exports.getCampaignById = async (req, res) => {
     }
     res.status(200).json({ success: true, data: campaign });
   } catch (error) {
-    console.error("Get charity campaign error:", error);
+    //console.error("Get charity campaign error:", error);
     res
       .status(500)
       .json({
@@ -188,7 +190,7 @@ exports.submitCampaignForReview = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Submit campaign error:", error);
+    //console.error("Submit campaign error:", error);
     res
       .status(500)
       .json({
@@ -234,7 +236,7 @@ exports.pauseCampaign = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Pause campaign error:", error);
+    //console.error("Pause campaign error:", error);
     res
       .status(500)
       .json({
@@ -280,7 +282,7 @@ exports.resumeCampaign = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Resume campaign error:", error);
+    //console.error("Resume campaign error:", error);
     res
       .status(500)
       .json({
@@ -339,7 +341,7 @@ exports.completeCampaign = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Complete campaign error:", error);
+    //console.error("Complete campaign error:", error);
     res
       .status(500)
       .json({
@@ -384,7 +386,7 @@ exports.cancelRequest = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Cancel request error:", error);
+    //console.error("Cancel request error:", error);
     res
       .status(500)
       .json({
@@ -411,12 +413,12 @@ exports.deleteCampaign = async (req, res) => {
           message: "Campaign not found or you do not have access",
         });
     }
-    if (!["draft", "pending", "cancelled"].includes(campaign.status)) {
+    if (!["draft", "pending", "cancelled", "paused"].includes(campaign.status)) {
       return res
         .status(400)
         .json({
           success: false,
-          message: "Only draft, pending, or cancelled campaigns can be deleted",
+          message: "Only draft, pending, paused, or cancelled campaigns can be deleted",
         });
     }
     campaign.isDeleted = true;
@@ -432,7 +434,7 @@ exports.deleteCampaign = async (req, res) => {
         data: campaign,
       });
   } catch (error) {
-    console.error("Delete campaign error:", error);
+    //console.error("Delete campaign error:", error);
     res
       .status(500)
       .json({
@@ -440,6 +442,82 @@ exports.deleteCampaign = async (req, res) => {
         message: "Failed to delete campaign",
         error: error.message,
       });
+  }
+};
+
+exports.updateCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const charityId = req.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid campaign ID" });
+    }
+
+    const campaign = await Campaign.findOne({ _id: id, charityId });
+
+    if (!campaign) {
+      return res.status(404).json({ success: false, message: "Campaign not found or you do not have access" });
+    }
+
+    // Only allow editing for certain statuses
+    if (!['draft', 'pending', 'paused'].includes(campaign.status)) {
+      return res.status(400).json({ success: false, message: `Cannot edit a campaign with status: ${campaign.status}` });
+    }
+
+    const {
+      title,
+      category,
+      description,
+      shortDescription,
+      goalAmount,
+      endDate,
+      location,
+      beneficiaryInfo,
+      impactDetails,
+    } = req.body;
+
+    // Update fields if they are provided
+    if (title) campaign.title = title;
+    if (category) campaign.category = category;
+    if (description) campaign.description = description;
+    if (shortDescription) campaign.shortDescription = shortDescription;
+    if (goalAmount) campaign.goalAmount = parseFloat(goalAmount);
+    if (endDate) campaign.endDate = new Date(endDate);
+    if (location) campaign.location = location;
+    if (beneficiaryInfo) campaign.beneficiaryInfo = beneficiaryInfo;
+    if (impactDetails) campaign.impactDetails = impactDetails;
+
+    // If an editable campaign is edited, it should go back to pending for admin review
+    if (campaign.status !== 'draft') {
+        campaign.status = 'pending';
+        campaign.approvalStatus = 'pending';
+    }
+
+    // Handle image updates if necessary (this example just handles text fields)
+    // You would add logic here to handle `req.files` for image replacement
+
+    await campaign.save();
+
+    await ActivityLog.create({
+      userId: charityId,
+      action: `Updated campaign: ${campaign.title}`,
+      type: 'campaign_update',
+      details: { campaignId: campaign._id },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Campaign updated successfully. It will be reviewed by an admin.",
+      data: campaign,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update campaign",
+      error: error.message,
+    });
   }
 };
 
@@ -465,7 +543,7 @@ exports.getCampaignStats = async (req, res) => {
     ]);
     res.status(200).json({ success: true, data: stats[0] || {} });
   } catch (error) {
-    console.error("Get campaign stats error:", error);
+    //console.error("Get campaign stats error:", error);
     res
       .status(500)
       .json({
@@ -526,7 +604,7 @@ exports.resolveConflict = async (req, res) => {
         data: updated,
       });
   } catch (error) {
-    console.error("Resolve conflict error:", error);
+    //console.error("Resolve conflict error:", error);
     res
       .status(500)
       .json({
@@ -706,7 +784,7 @@ exports.getDashboardStats = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Charity dashboard stats error:", error);
+    //console.error("Charity dashboard stats error:", error);
     res
       .status(500)
       .json({
@@ -752,7 +830,7 @@ exports.getProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get charity profile error:', error);
+    //console.error('Get charity profile error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch charity profile',
@@ -784,12 +862,28 @@ exports.updateProfile = async (req, res) => {
       zipCode,
       bio,
       charityDetails,
+      email,
+      emailChangeToken,
     } = req.body;
+
+    if (req.files) {
+      if (req.files.profileImage) {
+        charity.profileImage = getFileUrl(req, req.files.profileImage[0].path);
+      }
+      if (req.files.coverImage) {
+        charity.coverImage = getFileUrl(req, req.files.coverImage[0].path);
+      }
+    }
 
     if (firstName) charity.firstName = firstName;
     if (lastName) charity.lastName = lastName;
     if (firstName || lastName) charity.fullName = `${charity.firstName} ${charity.lastName}`;
     if (phone) charity.phone = phone;
+    
+    
+    if (!charity.address) {
+      charity.address = {};
+    }
     if (address) charity.address.street = address;
     if (city) charity.address.city = city;
     if (state) charity.address.state = state;
@@ -797,8 +891,27 @@ exports.updateProfile = async (req, res) => {
     if (zipCode) charity.address.zipCode = zipCode;
     if (bio) charity.bio = bio;
 
+    // Handle email change
+    if (email && email !== charity.email) {
+      if (!emailChangeToken) {
+        return res.status(400).json({ success: false, message: 'Email change requires verification token.' });
+      }
+      const verificationResult = await otpService.verifyOTP(email, emailChangeToken, 'email-change');
+      if (!verificationResult.success) {
+        return res.status(400).json({ success: false, message: `Email verification failed: ${verificationResult.message}` });
+      }
+      // Check for email uniqueness before updating
+      const existingUser = await User.findOne({ email: email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'This email address is already in use.' });
+      }
+      charity.email = email;
+    }
+
     if (charityDetails) {
-      charity.charityDetails = { ...charity.charityDetails, ...charityDetails };
+      const parsedDetails = typeof charityDetails === 'string' ? JSON.parse(charityDetails) : charityDetails;
+      charity.charityDetails = charity.charityDetails || {};
+      Object.assign(charity.charityDetails, parsedDetails);
     }
 
     await charity.save();
@@ -811,7 +924,7 @@ exports.updateProfile = async (req, res) => {
       data: { user: updatedCharity },
     });
   } catch (error) {
-    console.error('Update charity profile error:', error);
+    //console.error('Update charity profile error:', error);
     res.status(500).json({ success: false, message: 'Failed to update profile', error: error.message });
   }
 };

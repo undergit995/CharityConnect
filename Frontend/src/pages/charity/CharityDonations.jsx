@@ -1,4 +1,3 @@
-// pages/charity/CharityDonations.jsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -103,16 +102,17 @@ const CharityDonations = () => {
 
   const getStatusChip = (status) => {
     const statusMap = {
-      pending: { label: 'Pending', color: '#f39c12' },
-      completed: { label: 'Completed', color: '#2ecc71' },
-      failed: { label: 'Failed', color: '#e74c3c' },
-      refunded: { label: 'Refunded', color: '#95a5a6' },
+      Pending: { label: 'Pending', color: '#f39c12' },
+      Completed: { label: 'Completed', color: '#2ecc71' },
+      Failed: { label: 'Failed', color: '#e74c3c' },
+      Refunded: { label: 'Refunded', color: '#95a5a6' },
     };
-    const s = statusMap[status] || statusMap.pending;
+    const s = statusMap[status] || { label: status || 'Unknown', color: '#7f8c8d' };
     return (
       <Chip
         label={s.label}
         size="small"
+        title={status}
         sx={{ backgroundColor: `${s.color}20`, color: s.color }}
       />
     );
@@ -273,10 +273,10 @@ const CharityDonations = () => {
                 label="Status"
               >
                 <MenuItem value="all">All</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-                <MenuItem value="failed">Failed</MenuItem>
-                <MenuItem value="refunded">Refunded</MenuItem>
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Completed">Completed</MenuItem>
+                <MenuItem value="Failed">Failed</MenuItem>
+                <MenuItem value="Refunded">Refunded</MenuItem>
               </Select>
             </FormControl>
             <Button

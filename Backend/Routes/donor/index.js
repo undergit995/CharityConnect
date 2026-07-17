@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware,authAndRole   } = require('../../middlewares/auth');
 const donorController = require('../../Controllers/donor/donorController');
+const { upload } = require('../../config/multerConfig');
 
 /**
  * @route GET /api/donor/dashboard/stats
@@ -39,18 +40,11 @@ router.get('/saved-campaigns', authAndRole('donor'), donorController.getSavedCam
 router.post('/saved-campaigns/:campaignId', authAndRole('donor'), donorController.toggleSaveCampaign);
 
 /**
- * @route GET /api/donor/profile
- * @desc Get donor profile
- * @access Private (Donor only)
- */
-router.get('/profile', authAndRole('donor'), donorController.getProfile);
-
-/**
  * @route PUT /api/donor/profile
  * @desc Update donor profile
  * @access Private (Donor only)
  */
-router.put('/profile', authAndRole('donor'), donorController.updateProfile);
+router.put('/profile', authAndRole('donor'), upload.single('profileImage'), donorController.updateProfile);
 
 /**
  * @route GET /api/donor/impact

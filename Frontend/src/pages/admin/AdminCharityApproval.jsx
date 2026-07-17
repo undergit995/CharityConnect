@@ -583,8 +583,8 @@ const handleFraudReview = (charityId) => {
             <Tab
               
               label={`All Charities (${stats.total})`} />
-            //   label={`Charities Review`}
-            //   iconPosition="start"
+            {/* //   label={`Charities Review`}
+            //   iconPosition="start" */}
             
             {/* <Tab
               icon={<PendingIcon />}

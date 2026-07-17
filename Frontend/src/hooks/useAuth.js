@@ -7,7 +7,7 @@
   
 //   if (!context) {
 //     // Return fallback instead of throwing error
-//     console.warn('useAuth used outside of AuthProvider - returning fallback');
+//     //console.warn('useAuth used outside of AuthProvider - returning fallback');
 //     return {
 //       user: null,
 //       loading: false,

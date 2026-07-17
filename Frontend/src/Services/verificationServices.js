@@ -11,7 +11,7 @@ class VerificationService {
       const response = await api.get(`/verification/status/${charityId}`);
       return response.data.data;
     } catch (error) {
-      console.error('Get verification status error:', error);
+      //console.error('Get verification status error:', error);
       throw error;
     }
   }
@@ -37,7 +37,7 @@ class VerificationService {
       });
       return response.data;
     } catch (error) {
-      console.error('Upload document error:', error);
+      //console.error('Upload document error:', error);
       throw error;
     }
   }
@@ -52,7 +52,7 @@ class VerificationService {
       const response = await api.get(`/verification/documents/${charityId}`);
       return response.data.data;
     } catch (error) {
-      console.error('Get documents error:', error);
+      //console.error('Get documents error:', error);
       throw error;
     }
   }
@@ -73,7 +73,7 @@ class VerificationService {
       });
       return response.data;
     } catch (error) {
-      console.error('Verify document error:', error);
+      //console.error('Verify document error:', error);
       throw error;
     }
   }
@@ -88,7 +88,7 @@ class VerificationService {
       const response = await api.put(`/verification/documents/${charityId}/verify-all`);
       return response.data;
     } catch (error) {
-      console.error('Verify all documents error:', error);
+      //console.error('Verify all documents error:', error);
       throw error;
     }
   }
@@ -102,7 +102,7 @@ class VerificationService {
       const response = await api.get('/verification/checklist');
       return response.data.data;
     } catch (error) {
-      console.error('Get checklist error:', error);
+      //console.error('Get checklist error:', error);
       throw error;
     }
   }
@@ -117,7 +117,7 @@ class VerificationService {
       const response = await api.post(`/verification/submit/${charityId}`);
       return response.data;
     } catch (error) {
-      console.error('Submit for verification error:', error);
+      //console.error('Submit for verification error:', error);
       throw error;
     }
   }
@@ -132,7 +132,7 @@ class VerificationService {
       const response = await api.get(`/verification/history/${charityId}`);
       return response.data.data;
     } catch (error) {
-      console.error('Get verification history error:', error);
+      //console.error('Get verification history error:', error);
       throw error;
     }
   }
@@ -148,7 +148,7 @@ class VerificationService {
       const response = await api.get(`/verification/download/${charityId}/${documentId}`);
       return response.data.data.downloadUrl;
     } catch (error) {
-      console.error('Get download URL error:', error);
+      //console.error('Get download URL error:', error);
       throw error;
     }
   }
@@ -163,7 +163,7 @@ class VerificationService {
       const response = await api.get('/verification/stats', { params: filters });
       return response.data.data;
     } catch (error) {
-      console.error('Get verification stats error:', error);
+      //console.error('Get verification stats error:', error);
       throw error;
     }
   }
@@ -178,7 +178,7 @@ class VerificationService {
       const response = await api.get('/verification/pending', { params });
       return response.data;
     } catch (error) {
-      console.error('Get pending verifications error:', error);
+      //console.error('Get pending verifications error:', error);
       throw error;
     }
   }
@@ -194,7 +194,7 @@ class VerificationService {
       const response = await api.put(`/verification/bulk-update/${charityId}`, { updates });
       return response.data;
     } catch (error) {
-      console.error('Bulk update documents error:', error);
+      //console.error('Bulk update documents error:', error);
       throw error;
     }
   }
@@ -210,7 +210,7 @@ class VerificationService {
       const response = await api.post(`/verification/resend-request/${charityId}`, { notes });
       return response.data;
     } catch (error) {
-      console.error('Resend verification request error:', error);
+      //console.error('Resend verification request error:', error);
       throw error;
     }
   }
@@ -225,7 +225,7 @@ class VerificationService {
       const response = await api.get(`/verification/eligibility/${charityId}`);
       return response.data.data;
     } catch (error) {
-      console.error('Check eligibility error:', error);
+      //console.error('Check eligibility error:', error);
       throw error;
     }
   }

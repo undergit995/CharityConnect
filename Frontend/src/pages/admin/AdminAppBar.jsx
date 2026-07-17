@@ -34,11 +34,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { useSettings } from '../../Context/SettingsContext';
 
 const AdminAppBar = ({ onDrawerToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
+  const { settings } = useSettings();
   const { user, logout } = useAuth();
   const isMobile = useMediaQuery('(max-width:900px)');
   
@@ -64,7 +66,7 @@ const AdminAppBar = ({ onDrawerToggle }) => {
   const handleLogout = async () => {
     handleMenuClose();
     await logout();
-    navigate('/auth/login');
+    navigate('/auth/login', { replace: true });
   };
 
   const handleNavigate = (path) => {
@@ -80,7 +82,6 @@ const AdminAppBar = ({ onDrawerToggle }) => {
     if (path.includes('/admin/campaigns')) return 'Campaigns';
     if (path.includes('/admin/donors')) return 'Donors';
     if (path.includes('/admin/donations')) return 'Donations';
-    if (path.includes('/admin/reports')) return 'Reports';
     if (path.includes('/admin/settings')) return 'Settings';
     return 'Admin Panel';
   };
@@ -138,7 +139,7 @@ const AdminAppBar = ({ onDrawerToggle }) => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            CharityConnect
+            {settings.brandName}
           </Typography>
           
           {/* Page Title */}
@@ -296,12 +297,12 @@ const AdminAppBar = ({ onDrawerToggle }) => {
                 
         <Divider sx={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} />
         
-        <MenuItem onClick={() => handleNavigate('/help')}>
+        {/* <MenuItem onClick={() => handleNavigate('/help')}>
           <ListItemIcon>
             <HelpIcon fontSize="small" sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }} />
           </ListItemIcon>
           Help & Support
-        </MenuItem>
+        </MenuItem> */}
         
         <MenuItem onClick={handleLogout} sx={{ color: '#e74c3c' }}>
           <ListItemIcon>

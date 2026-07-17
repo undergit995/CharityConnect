@@ -99,7 +99,18 @@ const AdminManageCampaigns = () => {
     if (!selectedCampaign) return;
     
     try {
-      await api.put(`/admin/campaigns/${selectedCampaign._id}`, { action });
+      let endpoint = '';
+      if (action === 'approve' || action === 'reject' || action === 'pause' || action === 'resume') {
+        endpoint = `/admin/campaigns/${selectedCampaign._id}/${action}`;
+      } else if (action === 'delete') {
+        endpoint = `/admin/campaigns/${selectedCampaign._id}`;
+        await api.delete(endpoint);
+      } else {
+        setError('Invalid action');
+        return;
+      }
+
+      if (action !== 'delete') await api.put(endpoint, { rejectionReason: action === 'reject' ? 'Rejected by admin' : undefined });
       setSuccess(`Campaign ${action}ed successfully`);
       setOpenDialog(false);
       fetchCampaigns();

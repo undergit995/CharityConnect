@@ -7,7 +7,7 @@ export const PerformanceOptimizations = ({ children }) => {
     // Report component mount time
     const timeToMount = Date.now() - mountTime.current;
     if (timeToMount > 3000) {
-      console.warn(`Component mount time: ${timeToMount}ms`);
+      //console.warn(`Component mount time: ${timeToMount}ms`);
     }
 
     // Report first paint
@@ -15,7 +15,7 @@ export const PerformanceOptimizations = ({ children }) => {
       const paint = performance.getEntriesByType('paint');
       const firstPaint = paint.find(entry => entry.name === 'first-paint');
       if (firstPaint) {
-        console.log(`First Paint: ${firstPaint.startTime}ms`);
+        //console.log(`First Paint: ${firstPaint.startTime}ms`);
       }
     }
 

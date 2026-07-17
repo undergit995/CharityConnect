@@ -1,8 +1,8 @@
-const Campaign = require("../../models/CampaignModel");
-const Donation = require("../../models/Donation");
-const AuthModel = require("../../models/User");
-const ActivityLog = require("../../models/ActivityLog");
-const { sendEmail } = require("../../utils/emailService");
+const Campaign = require("../../models/CampaignModel.js");
+const Donation = require("../../models/Donation.js");
+const AuthModel = require("../../models/User.js");
+const ActivityLog = require("../../models/ActivityLog.js");
+const { sendEmail } = require("../../utils/emailService.js");
 
 
 
@@ -160,7 +160,7 @@ exports.getDashboardStats = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Admin dashboard stats error:", error);
+        //console.error("Admin dashboard stats error:", error);
         res.status(500).json({
             success: false,
             message: "Failed to fetch dashboard stats",

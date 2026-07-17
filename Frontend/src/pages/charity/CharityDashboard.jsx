@@ -88,7 +88,7 @@ const CharityDashboard = () => {
         const response = await api.get(`/verification/eligibility/${user.userId}`);
         setIsEligible(response.data.data.isEligible);
       } catch (error) {
-        console.error('Failed to check eligibility:', error);
+        //console.error('Failed to check eligibility:', error);
       }
     };
     checkEligibility();

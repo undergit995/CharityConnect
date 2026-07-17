@@ -1,5 +1,4 @@
-// components/Footer.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -10,6 +9,8 @@ import {
   Divider,
   useMediaQuery,
   Stack,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   Facebook as FacebookIcon,
@@ -24,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useTheme } from '../hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../Context/SettingsContext';
 
 const Footer = () => {
   const { isDark } = useTheme();
@@ -31,28 +33,66 @@ const Footer = () => {
   const isMobile = useMediaQuery('(max-width:600px)');
 
   const currentYear = new Date().getFullYear();
+  
+  const { settings, loading } = useSettings();
+  const [error, setError] = useState('');
 
-  const quickLinks = [
-    { label: 'About Us', path: '/about' },
-    { label: 'Campaigns', path: '/campaigns' },
-    { label: 'How It Works', path: '/how-it-works' },
-    { label: 'Contact', path: '/contact' },
-  ];
+  const footerData = {
+    ...settings,
+    copyright: `© ${currentYear} ${settings.brandName}. All rights reserved.`
+  };
 
-  const supportLinks = [
-    { label: 'Help Center', path: '/help' },
-    { label: 'FAQ', path: '/faq' },
-    { label: 'Privacy Policy', path: '/privacy' },
-    { label: 'Terms of Service', path: '/terms' },
-  ];
+  // Social media icon mapping
+  const getSocialIcon = (platform) => {
+    const icons = {
+      facebook: <FacebookIcon />,
+      twitter: <TwitterIcon />,
+      instagram: <InstagramIcon />,
+      linkedin: <LinkedInIcon />,
+      youtube: <YouTubeIcon />,
+    };
+    return icons[platform] || null;
+  };
 
-  const socialLinks = [
-    { icon: <FacebookIcon />, url: 'https://facebook.com/charityconnect', label: 'Facebook' },
-    { icon: <TwitterIcon />, url: 'https://twitter.com/charityconnect', label: 'Twitter' },
-    { icon: <InstagramIcon />, url: 'https://instagram.com/charityconnect', label: 'Instagram' },
-    { icon: <LinkedInIcon />, url: 'https://linkedin.com/company/charityconnect', label: 'LinkedIn' },
-    { icon: <YouTubeIcon />, url: 'https://youtube.com/charityconnect', label: 'YouTube' },
-  ];
+  // Social media color mapping
+  const getSocialColor = (platform) => {
+    const colors = {
+      facebook: '#1877f2',
+      twitter: '#1DA1F2',
+      instagram: '#E4405F',
+      linkedin: '#0A66C2',
+      youtube: '#FF0000',
+    };
+    return colors[platform] || '#667eea';
+  };
+
+  if (loading) {
+    return (
+      <Box
+        component="footer"
+        sx={{
+          backgroundColor: isDark ? 'rgba(10,10,18,0.95)' : '#ffffff',
+          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+          transition: 'all 0.3s ease',
+          mt: 'auto',
+          py: 4,
+        }}
+      >
+        <Container maxWidth="xl">
+          <Grid container spacing={4}>
+            {[1, 2, 3, 4].map((item) => (
+              <Grid item xs={12} sm={6} md={3} key={item}>
+                <Skeleton variant="text" height={40} width="70%" />
+                <Skeleton variant="text" height={20} width="90%" />
+                <Skeleton variant="text" height={20} width="80%" />
+                <Skeleton variant="text" height={20} width="60%" />
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -65,6 +105,12 @@ const Footer = () => {
       }}
     >
       <Container maxWidth="xl">
+        {error && (
+          <Alert severity="warning" sx={{ mt: 2, mb: 1 }}>
+            {error} - Using default content
+          </Alert>
+        )}
+
         {/* Main Footer */}
         <Grid container spacing={4} sx={{ py: 5 }}>
           {/* Brand Section */}
@@ -79,7 +125,7 @@ const Footer = () => {
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              CharityConnect
+              {footerData?.brandName}
             </Typography>
             <Typography
               variant="body2"
@@ -90,23 +136,23 @@ const Footer = () => {
                 lineHeight: 1.8,
               }}
             >
-              Connecting donors with verified charities to make a difference in communities around the world.
+              {footerData?.tagline}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {socialLinks.map((social, index) => (
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {footerData?.socialLinks?.map((social, index) => (
                 <IconButton
                   key={index}
                   component="a"
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={social.label}
+                  aria-label={social.platform}
                   sx={{
                     color: isDark ? '#a0a0b8' : '#4a4a6a',
                     backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                     '&:hover': {
-                      color: '#667eea',
-                      backgroundColor: isDark ? 'rgba(102,126,234,0.15)' : 'rgba(102,126,234,0.08)',
+                      color: getSocialColor(social.platform),
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                       transform: 'translateY(-2px)',
                     },
                     transition: 'all 0.3s ease',
@@ -114,7 +160,7 @@ const Footer = () => {
                     height: 40,
                   }}
                 >
-                  {social.icon}
+                  {getSocialIcon(social.platform) || social.icon}
                 </IconButton>
               ))}
             </Box>
@@ -133,7 +179,7 @@ const Footer = () => {
               Quick Links
             </Typography>
             <Stack spacing={1.5}>
-              {quickLinks.map((link) => (
+              {footerData?.quickLinks?.map((link) => (
                 <Link
                   key={link.label}
                   component="button"
@@ -173,7 +219,7 @@ const Footer = () => {
               Support
             </Typography>
             <Stack spacing={1.5}>
-              {supportLinks.map((link) => (
+              {footerData?.supportLinks?.map((link) => (
                 <Link
                   key={link.label}
                   component="button"
@@ -216,7 +262,7 @@ const Footer = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <EmailIcon sx={{ color: '#667eea', fontSize: 20 }} />
                 <Link
-                  href="mailto:support@charityconnect.com"
+                  href={`mailto:${footerData?.contactInfo?.email}`}
                   sx={{
                     color: isDark ? '#a0a0b8' : '#4a4a6a',
                     textDecoration: 'none',
@@ -224,13 +270,13 @@ const Footer = () => {
                     '&:hover': { color: '#667eea' },
                   }}
                 >
-                  support@charityconnect.com
+                  {footerData?.contactInfo?.email}
                 </Link>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <PhoneIcon sx={{ color: '#667eea', fontSize: 20 }} />
                 <Link
-                  href="tel:+1234567890"
+                  href={`tel:${footerData?.contactInfo?.phone}`}
                   sx={{
                     color: isDark ? '#a0a0b8' : '#4a4a6a',
                     textDecoration: 'none',
@@ -238,7 +284,7 @@ const Footer = () => {
                     '&:hover': { color: '#667eea' },
                   }}
                 >
-                  +1 (234) 567-890
+                  {footerData?.contactInfo?.phone}
                 </Link>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -250,7 +296,7 @@ const Footer = () => {
                     fontSize: '0.875rem',
                   }}
                 >
-                  123 Charity Street, Giving City, GC 12345
+                  {footerData?.contactInfo?.address}
                 </Typography>
               </Box>
             </Stack>
@@ -278,7 +324,7 @@ const Footer = () => {
               textAlign: { xs: 'center', sm: 'left' },
             }}
           >
-            © {currentYear} CharityConnect. All rights reserved.
+            {footerData?.copyright}
           </Typography>
 
           <Box
@@ -300,9 +346,7 @@ const Footer = () => {
                 gap: 0.5,
               }}
             >
-              Made with
-              <FavoriteIcon sx={{ fontSize: 14, color: '#e74c3c' }} />
-              for a better world
+              {footerData?.madeWithLove}
             </Typography>
           </Box>
         </Box>

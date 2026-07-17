@@ -62,7 +62,7 @@ import { useAuth } from '../../../Context/AuthContext';
 const navItems = [
   { label: 'Home', path: '/', icon: <HomeIcon /> },
   { label: 'Campaigns', path: '/campaigns', icon: <CampaignIcon /> },
-  { label: 'Donate', path: '/donate', icon: <DonateIcon /> },
+  { label: 'Contact Us', path: '/contact', icon: <AboutIcon /> },
 ];
 
 const adminNavItems = [

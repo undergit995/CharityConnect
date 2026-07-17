@@ -1,23 +1,33 @@
-const otpService = require('../../utils/otpService');
-const { validateEmail } = require('../../utils/validators');
-const { sendOTPEmail } = require('../../utils/emailService');
+const otpService = require('../../utils/otpService.js');
+const { validateEmail } = require('../../utils/validators.js');
+const { sendOTPEmail } = require('../../utils/emailService.js');
 
 exports.sendEmailOtp = async (req, res) => {
-  try {
+  try {console.log("grs");
+  
     const { email, purpose = 'verification' } = req.body;
     if (!email || !validateEmail(email)) {
       return res.status(400).json({ success: false, message: 'Valid email is required' });
     }
     const otpData = await otpService.createOTP(email, 'email', purpose);
-    const result = await sendOTPEmail(email, otpData.otp, purpose, otpService.otpConfig.expiresIn / 60);
+    
+    // Respond to the client immediately
+    sendOTPEmail(email, otpData.otp, purpose, otpService.otpConfig.expiresIn / 60).catch(emailError => {
+      // Log the error if email sending fails, but don't crash the server.
+      console.log(`[Non-blocking] Failed to send OTP email to ${email}:`, emailError.message);
+    });
     res.status(200).json({
       success: true,
-      message: result.message,
-      expiresIn: result.expiresIn,
+      message: `OTP sent successfully to ${email}`,
+      expiresIn: otpService.otpConfig.expiresIn,
+      otpId: otpData._id, // Include otpId for reference if needed
     });
+// Send the email in the background (fire and forget)
   } catch (error) {
     console.log('Send OTP email error:', error.message);
-    res.status(500).json({ success: false, message: error.message || 'Failed to send OTP' });
+    const statusCode = error.message.includes('Please wait') ? 429 : 500;
+    const message = error.message || 'Failed to send OTP';
+    res.status(statusCode).json({ success: false, message });
   }
 };
 
@@ -38,7 +48,7 @@ exports.verifyOtp = async (req, res) => {
       purpose: result.purpose,
     });
   } catch (error) {
-    console.error('Verify OTP error:', error);
+    // //console.error('Verify OTP error:', error);
     res.status(500).json({ success: false, message: 'Failed to verify OTP' });
   }
 };
@@ -56,7 +66,7 @@ exports.resendOtp = async (req, res) => {
       expiresIn: result.expiresIn,
     });
   } catch (error) {
-    console.error('Resend OTP error:', error);
+    // //console.error('Resend OTP error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to resend OTP' });
   }
 };
@@ -70,7 +80,7 @@ exports.getOtpStatus = async (req, res) => {
     const status = await otpService.getOTPStatus(identifier);
     res.status(200).json({ success: true, data: status });
   } catch (error) {
-    console.error('Get OTP status error:', error);
+    // //console.error('Get OTP status error:', error);
     res.status(500).json({ success: false, message: 'Failed to get OTP status' });
   }
 };
@@ -88,7 +98,7 @@ exports.verifyAndRegister = async (req, res) => {
         // Add registration here
         res.status(200).json({ success: true, message: 'OTP verified and user registered successfully' });
     } catch (error) {
-        console.error('Verify and register error:', error);
+        // //console.error('Verify and register error:', error);
         res.status(500).json({ success: false, message: 'Failed to verify OTP and register user' });
     }
 };

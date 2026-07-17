@@ -78,7 +78,7 @@ const Login = () => {
       }
   
     } catch (err) {
-      console.error("Login error:", err);
+      //console.error("Login error:", err);
     }
   };
 
@@ -256,75 +256,6 @@ const Login = () => {
                     </Box>
                   </motion.div>
                 ))}
-              </Box>
-
-              {/* Stats */}
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 4,
-                  mt: 4,
-                  pt: 3,
-                  borderTop: isDark
-                    ? "1px solid rgba(255,255,255,0.06)"
-                    : "1px solid rgba(0,0,0,0.06)",
-                  transition: "border-color 0.3s ease",
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{ color: isDark ? "#fff" : "#1a1a2e", fontWeight: 700 }}
-                  >
-                    50K+
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark
-                        ? "rgba(255,255,255,0.5)"
-                        : "rgba(0,0,0,0.5)",
-                    }}
-                  >
-                    Active Donors
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{ color: isDark ? "#fff" : "#1a1a2e", fontWeight: 700 }}
-                  >
-                    $2.5M+
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark
-                        ? "rgba(255,255,255,0.5)"
-                        : "rgba(0,0,0,0.5)",
-                    }}
-                  >
-                    Donations Raised
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography
-                    variant="h5"
-                    sx={{ color: isDark ? "#fff" : "#1a1a2e", fontWeight: 700 }}
-                  >
-                    1.2K+
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: isDark
-                        ? "rgba(255,255,255,0.5)"
-                        : "rgba(0,0,0,0.5)",
-                    }}
-                  >
-                    Campaigns Funded
-                  </Typography>
-                </Box>
               </Box>
             </motion.div>
           </Box>
@@ -619,7 +550,6 @@ const Login = () => {
                 </Divider>
 
                 <SocialLogin  redirectPath="/"/>
-
                 <Box sx={{ textAlign: "center", mt: 3 }}>
                   <Typography
                     variant="body2"
@@ -728,7 +658,7 @@ export default Login;
 //       await login(formData.email, formData.password, formData.rememberMe);
 //       navigate('/dashboard');
 //     } catch (err) {
-//       console.error('Login error:', err);
+//       //console.error('Login error:', err);
 //     }
 //   };
 

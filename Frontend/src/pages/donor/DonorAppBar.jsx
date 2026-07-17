@@ -33,11 +33,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { useSettings } from '../../Context/SettingsContext';
 
 const DonorAppBar = ({ onDrawerToggle }) => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const isMobile = useMediaQuery('(max-width:900px)');
   
   const [anchorEl, setAnchorEl] = useState(null);
@@ -62,7 +64,7 @@ const DonorAppBar = ({ onDrawerToggle }) => {
   const handleLogout = async () => {
     handleMenuClose();
     await logout();
-    navigate('/auth/login');
+    navigate('/auth/login', { replace: true });
   };
 
   const handleNavigate = (path) => {
@@ -112,7 +114,7 @@ const DonorAppBar = ({ onDrawerToggle }) => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            CharityConnect
+            {settings.brandName}
           </Typography>
           
           <Chip
@@ -244,10 +246,6 @@ const DonorAppBar = ({ onDrawerToggle }) => {
         <MenuItem onClick={() => handleNavigate('/donor/donations')}>
           <ListItemIcon><ReceiptIcon fontSize="small" /></ListItemIcon>
           My Donations
-        </MenuItem>
-        <MenuItem onClick={() => handleNavigate('/donor/saved')}>
-          <ListItemIcon><FavoriteIcon fontSize="small" /></ListItemIcon>
-          Saved Campaigns
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout} sx={{ color: '#e74c3c' }}>

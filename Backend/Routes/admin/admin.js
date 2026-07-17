@@ -1,15 +1,15 @@
-// routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
 const mongoose = require('mongoose');
-const User = require('../../models/User');
-const Verification = require('../../models/Verification');
-const ActivityLog = require('../../models/ActivityLog');
-const { sendEmail } = require('../../utils/emailService');
-const adminController = require("../../Controllers/admin/adminController");
-const campaignController = require("../../Controllers/admin/campaignController");
-const { authAndRole } = require("../../middlewares/auth");
-const { getDashboardStats } = require("../../Controllers/admin/dashboardStats");
+const User = require('../../models/User.js');
+const Verification = require('../../models/Verification.js');
+const ActivityLog = require('../../models/ActivityLog.js');
+const { sendEmail } = require('../../utils/emailService.js');
+const adminController = require("../../Controllers/admin/adminController.js");
+const { upload } = require('../../config/multerConfig.js');
+const campaignController = require("../../Controllers/admin/campaignController.js");
+const { authAndRole } = require("../../middlewares/auth.js");
+const { getDashboardStats } = require("../../Controllers/admin/dashboardStats.js");
 
 // ==================== CHARITY MANAGEMENT ====================
 
@@ -60,7 +60,7 @@ router.put('/charities/:id/approve', authAndRole('admin'), async (req, res) => {
     }
 
     // Check if already approved
-    if (charity.isApproved) {
+    if (charity.isVerified) {
       return res.status(400).json({
         success: false,
         message: 'Charity is already approved',
@@ -71,6 +71,7 @@ router.put('/charities/:id/approve', authAndRole('admin'), async (req, res) => {
     charity.isApproved = true;
     charity.isActive = true;
     charity.isRejected = false;
+    charity.isVerified = true;
     charity.approvedAt = new Date();
     charity.approvedBy = req.userId;
     if (adminNote) charity.adminNote = adminNote;
@@ -81,6 +82,16 @@ router.put('/charities/:id/approve', authAndRole('admin'), async (req, res) => {
       verification.status = 'verified';
       verification.reviewedAt = new Date();
       verification.reviewedBy = req.userId;
+
+      // Mark all required documents as verified
+      verification.documents.forEach(doc => {
+        if (doc.required && doc.status !== 'verified') {
+          doc.status = 'verified';
+          doc.verifiedAt = new Date();
+          doc.verifiedBy = req.userId;
+          doc.adminNotes = 'Automatically approved by admin action.';
+        }
+      });
       await verification.save();
     }
 
@@ -107,7 +118,7 @@ router.put('/charities/:id/approve', authAndRole('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Approve charity error:', error);
+    //console.error('Approve charity error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to approve charity',
@@ -201,7 +212,7 @@ router.put('/charities/:id/reject', authAndRole('admin'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Reject charity error:', error);
+    //console.error('Reject charity error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to reject charity',
@@ -265,7 +276,7 @@ const sendApprovalEmail = async (charity) => {
     });
 
   } catch (error) {
-    console.error('Send approval email error:', error);
+    //console.error('Send approval email error:', error);
   }
 };
 
@@ -325,7 +336,7 @@ const sendRejectionEmail = async (charity, reason) => {
     });
 
   } catch (error) {
-    console.error('Send rejection email error:', error);
+    //console.error('Send rejection email error:', error);
   }
 };
 /**
@@ -401,6 +412,20 @@ router.put("/campaigns/:id/approve", authAndRole("admin"), campaignController.ap
  * @access Private (Admin only)
  */
 router.put("/campaigns/:id/reject", authAndRole("admin"), campaignController.rejectCampaign);
+
+/**
+ * @route PUT /api/admin/campaigns/:id/pause
+ * @desc Pause campaign (Admin only)
+ * @access Private (Admin only)
+ */
+router.put("/campaigns/:id/pause", authAndRole("admin"), campaignController.pauseCampaign);
+
+/**
+ * @route PUT /api/admin/campaigns/:id/resume
+ * @desc Resume campaign (Admin only)
+ * @access Private (Admin only)
+ */
+router.put("/campaigns/:id/resume", authAndRole("admin"), campaignController.resumeCampaign);
 // routes/adminRoutes.js
 
 /**
@@ -409,6 +434,27 @@ router.put("/campaigns/:id/reject", authAndRole("admin"), campaignController.rej
  * @access Private (Admin only)
  */
 router.get("/dashboard/stats", authAndRole("admin"),getDashboardStats);
+
+/**
+ * @route GET /api/admin/public-stats
+ * @desc Get public statistics for landing page
+ * @access Public
+ */
+router.get("/public-stats", adminController.getPublicStats);
+
+/**
+ * @route GET /api/admin/info/*
+ * @desc Get public information like footer, contact etc.
+ * @access Public
+ */
+router.use('/info', require('./settings.js'));
+
+/**
+ * @route PUT /api/admin/profile
+ * @desc Update admin profile
+ * @access Private (Admin only)
+ */
+router.put('/profile', authAndRole('admin'), upload.single('profileImage'), adminController.updateProfile);
 
 
 module.exports = router;

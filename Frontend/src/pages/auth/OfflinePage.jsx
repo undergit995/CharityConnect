@@ -102,7 +102,7 @@ const OfflinePage = () => {
         throw new Error('Network not available');
       }
     } catch (error) {
-      console.error('Reconnection failed:', error);
+      //console.error('Reconnection failed:', error);
       // Retry after 5 seconds
       setRetryCountdown(5);
     } finally {

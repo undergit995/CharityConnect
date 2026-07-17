@@ -76,8 +76,8 @@ const StatsCard = ({ title, value, icon, color, trend, percentage, loading, opti
 
 const CharityStats = ({ stats, optimisticStats, loading }) => {
   return (
-    <Grid container spacing={3} sx={{ mb: 4 }}>
-      <Grid item xs={12} sm={6} md={2.4}>
+    <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={6} md>
         <StatsCard
           title="Total Campaigns"
           value={stats.totalCampaigns}
@@ -87,7 +87,7 @@ const CharityStats = ({ stats, optimisticStats, loading }) => {
           loading={loading}
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={2.4}>
+      <Grid item xs={12} sm={6} md>
         <StatsCard
           title="Active Campaigns"
           value={stats.activeCampaigns}
@@ -97,7 +97,7 @@ const CharityStats = ({ stats, optimisticStats, loading }) => {
           loading={loading}
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={2.4}>
+      <Grid item xs={12} sm={6} md>
         <StatsCard
           title="Total Donations"
           value={stats.totalDonations}
@@ -107,7 +107,7 @@ const CharityStats = ({ stats, optimisticStats, loading }) => {
           loading={loading}
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={2.4}>
+      <Grid item xs={12} sm={6} md>
         <StatsCard
           title="Total Raised"
           value={`₹${stats.totalRaised?.toLocaleString() || 0}`}
@@ -117,7 +117,7 @@ const CharityStats = ({ stats, optimisticStats, loading }) => {
           loading={loading}
         />
       </Grid>
-      <Grid item xs={12} sm={6} md={2.4}>
+      <Grid item xs={12} sm={6} md>
         <StatsCard
           title="Total Donors"
           value={stats.totalDonors}

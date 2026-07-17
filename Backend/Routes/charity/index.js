@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { authAndRole } = require('../../middlewares/auth');
-const charityController = require('../../Controllers/charity/charityController');
-const donationController = require('../../Controllers/charity/donationController');
+const { authAndRole } = require('../../middlewares/auth.js');
+const charityController = require('../../Controllers/charity/charityController.js');
+const donationController = require('../../Controllers/charity/donationController.js');
 const { formatDistanceToNow } = require('date-fns');
-const User = require('../../models/User');
-const Donation = require('../../models/Donation');
-const Campaign = require('../../models/CampaignModel');
+const User = require('../../models/User.js');
+const Donation = require('../../models/Donation.js');
+const { upload } = require('../../config/multerConfig.js');
+const Campaign = require('../../models/CampaignModel.js');
 const mongoose = require('mongoose');
 
 
@@ -141,7 +142,7 @@ router.get('/donations/export/pdf', authAndRole('charity'), async (req, res) => 
       })),
     });
   } catch (error) {
-    console.error('Export PDF error:', error);
+    //console.error('Export PDF error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to export PDF',
@@ -189,7 +190,7 @@ router.get('/donations/export/excel', authAndRole('charity'), async (req, res) =
       })),
     });
   } catch (error) {
-     console.error('Export Excel error:', error);
+     //console.error('Export Excel error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to export Excel',
@@ -281,7 +282,7 @@ router.get('/donations/stats', authAndRole('charity'), async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Get donation stats error:', error);
+    //console.error('Get donation stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch donation stats',
@@ -298,18 +299,10 @@ router.get('/donations/stats', authAndRole('charity'), async (req, res) => {
 router.put('/donations/:id/refund', authAndRole('charity'), donationController.refundDonation);
 
 /**
- * @route GET /api/charity/profile
- * @desc Get charity profile
- * @access Private (Charity only)
- */
-router.get('/profile', authAndRole('charity'), charityController.getProfile);
-
-
-/**
  * @route PUT /api/charity/profile
  * @desc Update charity profile
  * @access Private (Charity only)
  */
-router.put('/profile', authAndRole('charity'), charityController.updateProfile);
+router.put('/profile', authAndRole('charity'),  upload.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }]), charityController.updateProfile);
 
 module.exports = router;

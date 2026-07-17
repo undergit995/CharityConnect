@@ -9,7 +9,7 @@ import CampaignList from '../pages/donor/CampaignLists';
 const DonorDashboard = lazy(() => import('../pages/donor/DonorDashboard'));
 const DonorProfile = lazy(() => import('../pages/donor/DonorProfile'));
 const DonationPage = lazy(() => import('../pages/DonationPage'));
-// const DonorSaved = lazy(() => import('../pages/donor/DonorSaved'));
+const Donations = lazy(() => import('../pages/donor/Donations'));
 // const DonorSettings = lazy(() => import('../pages/donor/DonorSettings'));
 // const DonorNotifications = lazy(() => import('../pages/donor/DonorNotifications'));
 
@@ -24,8 +24,8 @@ const DonorRoutes = () => {
           <Route path="profile" element={<DonorProfile />} />
           <Route path="campaign" element={<CampaignList />} />
            <Route path="campaign/:id/donate" element={<DonationPage />} />
+           <Route path="donations" element={<Donations />} />
           {/*
-          <Route path="settings" element={<DonorSettings />} />
           <Route path="notifications" element={<DonorNotifications />} /> */}
           <Route path="*" element={<Navigate to="/donor/dashboard" replace />} />
         </Route>

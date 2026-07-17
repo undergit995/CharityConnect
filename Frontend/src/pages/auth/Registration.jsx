@@ -51,7 +51,12 @@ const steps = ["Account Type", "Personal Info", "Verification"];
 const Register = () => {
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { register, loading, sendOTP: sendAuthOTP, verifyOTP: verifyAuthOTP } = useAuth();
+  const {
+    register,
+    loading,
+    sendOTP: sendAuthOTP,
+    verifyOTP: verifyAuthOTP,
+  } = useAuth();
 
   const [activeStep, setActiveStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
@@ -72,14 +77,15 @@ const Register = () => {
     confirmPassword: "",
     role: "donor",
     acceptTerms: false,
-  organizationName:'',
-  organizationType:'',
-  registrationNumber:'',
+    organizationName: "",
+    organizationType: "",
+    registrationNumber: "",
   });
 
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [otpId, setOtpId] = useState("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   // Resend cooldown timer
   useEffect(() => {
@@ -160,7 +166,6 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  
   const handleSendOTP = async () => {
     if (!formData.email) {
       setErrors((prev) => ({ ...prev, email: "Email is required" }));
@@ -179,13 +184,13 @@ const Register = () => {
     setServerError("");
 
     try {
-      const result = await sendAuthOTP(formData.email, 'verification');
+      const result = await sendAuthOTP(formData.email, "verification");
       setOtpSent(true);
       setResendCooldown(60);
-      setErrors((prev) => ({ ...prev, otp: '' }));
+      setErrors((prev) => ({ ...prev, otp: "" }));
       return true;
     } catch (error) {
-      console.error("Send OTP error:", error);
+      console.log("Send OTP error:", error.message,error);
       const message =
         error?.response?.data?.message ||
         "Failed to send OTP. Please try again.";
@@ -197,12 +202,12 @@ const Register = () => {
     }
   };
 
-  
-  const handleVerifyOTP = useCallback(async (otp) => {
-    if (otpLoading || otpVerified || !otp || otp.length !== 6) return;
+  const handleVerifyOTP = useCallback(
+    async (otp) => {
+      if (otpLoading || otpVerified || !otp || otp.length !== 6) return;
 
-  setOtpLoading(true);
-  setOtpError("");
+      setOtpLoading(true);
+      setOtpError("");
 
       try {
         const result = await verifyAuthOTP(formData.email, otp, "verification");
@@ -212,16 +217,17 @@ const Register = () => {
           setErrors((prev) => ({ ...prev, otp: "" }));
         }
       } catch (error) {
-        console.error("Verify OTP error:", error);
-        const message =
-          error.message || "Invalid OTP. Please try again.";
+        //console.error("Verify OTP error:", error);
+        const message = error.message || "Invalid OTP. Please try again.";
         setOtpError(message);
         setErrors((prev) => ({ ...prev, otp: message }));
         setOtpVerified(false);
       } finally {
         setOtpLoading(false);
       }
-  },[formData, otpLoading, otpVerified, verifyAuthOTP]);
+    },
+    [formData, otpLoading, otpVerified, verifyAuthOTP],
+  );
 
   const handleResendOTP = async () => {
     if (resendCooldown > 0) return;
@@ -239,7 +245,7 @@ const Register = () => {
         setOtpVerified(false);
       }
     } catch (error) {
-      console.error("Resend OTP error:", error);
+      //console.error("Resend OTP error:", error);
       const message =
         error.response?.data?.message ||
         "Failed to resend OTP. Please try again.";
@@ -249,7 +255,6 @@ const Register = () => {
     }
   };
 
-  
   const handleSubmit = async () => {
     if (!otpVerified) {
       setErrors((prev) => ({
@@ -276,7 +281,6 @@ const Register = () => {
         fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
       };
 
-      
       if (formData.role === "charity") {
         userData.charityDetails = {
           organizationName: formData.organizationName || "",
@@ -286,30 +290,15 @@ const Register = () => {
         };
       }
 
-      const response = await api.post('/auth/register',userData);
-
+      const response = await api.post("/auth/register", userData);
       if (response?.data?.success) {
+        setRegistrationSuccess(true);
+        setTimeout(() => {
           navigate("/auth/login");
-
-        // if (response?.data?.user?.role === "admin") {
-        //   navigate("/admin/dashboard");
-        // } else if (response?.data?.user?.role === "charity") {
-        //   navigate("/charity/dashboard");
-        // } else if (response?.data?.user?.role === "donor") {
-        //   navigate("/donor/dashboard");
-        // } else {
-        //   navigate("/dashboard");
-        // }
-      } else {
-        navigate("/auth/verify-email", {
-          state: {
-            email: formData.email,
-            message: "Please verify your email address to continue.",
-          },
-        });
+        }, 5000);
       }
     } catch (err) {
-      console.error("Registration error:", err);
+      //console.error("Registration error:", err);
 
       const errorMessage =
         err.response?.data?.message ||
@@ -333,7 +322,6 @@ const Register = () => {
     }
   };
 
-  
   const handleNext = async () => {
     if (validateStep(activeStep)) {
       if (activeStep === 1) {
@@ -344,7 +332,6 @@ const Register = () => {
     }
   };
 
-  
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
   };
@@ -483,7 +470,13 @@ const Register = () => {
 
       case 1:
         return (
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); handleNext(); }}>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleNext();
+            }}
+          >
             <Box
               sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
             >
@@ -757,6 +750,52 @@ const Register = () => {
         );
 
       case 2:
+        if (registrationSuccess) {
+          return (
+            <Box sx={{ textAlign: "center", py: 4 }}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 20,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    margin: "0 auto",
+                    borderRadius: "50%",
+                    background: "rgba(46, 204, 113, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    mb: 3,
+                  }}
+                >
+                  <CheckCircleIcon sx={{ fontSize: 48, color: "#2ecc71" }} />
+                </Box>
+              </motion.div>
+
+              <Typography
+                variant="h5"
+                gutterBottom
+                fontWeight={600}
+                color="success.main"
+              >
+                Registration Successful!
+              </Typography>
+              <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+                You can now log in with your new account.
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Redirecting to login page in a few seconds...
+              </Typography>
+            </Box>
+          );
+        }
         return (
           <Box>
             <Alert
@@ -985,7 +1024,7 @@ const Register = () => {
                 <Button
                   variant="contained"
                   onClick={handleSubmit}
-                  disabled={loading || submitLoading || !otpVerified}
+                  disabled={submitLoading || !otpVerified}
                   sx={{
                     py: 1.5,
                     px: 4,
@@ -1001,7 +1040,20 @@ const Register = () => {
                     transition: "all 0.3s ease",
                   }}
                 >
-                  {submitLoading ? (
+                  {registrationSuccess ? (
+                    <Link
+                      component={RouterLink}
+                      to="/auth/login"
+                      sx={{
+                        textDecoration: "none",
+                        fontWeight: 600,
+                        color: "#667eea",
+                        "&:hover": { textDecoration: "underline" },
+                      }}
+                    >
+                      Log In
+                    </Link>
+                  ) : submitLoading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
                     "Create Account"
@@ -1011,7 +1063,7 @@ const Register = () => {
                 <Button
                   variant="contained"
                   onClick={handleNext}
-                  disabled={loading}
+                  disabled={otpLoading}
                   sx={{
                     py: 1.5,
                     px: 4,
@@ -1027,7 +1079,7 @@ const Register = () => {
                     transition: "all 0.3s ease",
                   }}
                 >
-                  {submitLoading ? (
+                  {otpLoading ? (
                     <CircularProgress size={24} color="inherit" />
                   ) : (
                     "Next"

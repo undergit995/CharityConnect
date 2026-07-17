@@ -63,7 +63,7 @@ const CharitySidebar = () => {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch charity stats:', error);
+        //console.error('Failed to fetch charity stats:', error);
         setStats(prev => ({ ...prev, loading: false }));
       }
     };
@@ -168,6 +168,7 @@ const CharitySidebar = () => {
                     : 'rgba(155, 89, 182, 0.08)'
                   : 'transparent',
                 '&:hover': {
+                  cursor:'pointer',
                   backgroundColor: isDark 
                     ? 'rgba(255,255,255,0.05)' 
                     : 'rgba(0,0,0,0.04)',

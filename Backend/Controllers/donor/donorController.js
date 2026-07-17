@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const Donation = require("../../models/Donation.js");
+const { getFileUrl } = require("../../config/multerConfig.js");
+const otpService = require("../../utils/otpService.js");
 const Campaign = require("../../models/CampaignModel");
 const User = require("../../models/User");
 
@@ -172,23 +174,16 @@ exports.getDashboardStats = async (req, res) => {
             counts: categoryDistribution.map((i) => i.count),
           },
           impactData: impactData.map((i) => ({
-            campaignName: i._id,
+            campaignTitle: i._id,
             totalDonated: i.totalDonated,
           })),
         },
-        recentDonations: recentDonations.map((d) => ({
-          _id: d._id,
-          campaignName: d.campaignId?.title || "Unknown",
-          amount: d.amount,
-          date: d.donationDate,
-          status: d.status,
-          campaignImage: d.campaignId?.coverImage,
-        })),
+        recentDonations: recentDonations,
         savedCampaigns: savedCampaigns?.savedCampaigns || [],
       },
     });
   } catch (error) {
-    console.error("Donor dashboard stats error:", error);
+    //console.error("Donor dashboard stats error:", error);
     res
       .status(500)
       .json({
@@ -201,14 +196,31 @@ exports.getDashboardStats = async (req, res) => {
 
 exports.getDonations = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status = "all" } = req.query;
+    const { page = 1, limit = 10, status = "all", search, sort } = req.query;
     const query = { donorId: req.userId };
     if (status !== "all") query.status = status;
+
+    if (search) {
+      const campaigns = await Campaign.find({
+        title: { $regex: search, $options: 'i' },
+      }).select('_id');
+      const campaignIds = campaigns.map(c => c._id);
+
+      query.$or = [
+        { receiptNumber: { $regex: search, $options: 'i' } },
+        { campaignId: { $in: campaignIds } },
+      ];
+    }
+
+    let sortOption = { donationDate: -1 };
+    if (sort === 'asc') {
+      sortOption = { donationDate: 1 };
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const [donations, total] = await Promise.all([
       Donation.find(query)
-        .sort({ donationDate: -1 })
+        .sort(sortOption)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("campaignId", "title coverImage category")
@@ -219,7 +231,7 @@ exports.getDonations = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: donations,
+      donations: donations,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -228,7 +240,7 @@ exports.getDonations = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get donor donations error:", error);
+    //console.error("Get donor donations error:", error);
     res
       .status(500)
       .json({
@@ -261,7 +273,7 @@ exports.getDonationReceipt = async (req, res) => {
     }
     res.status(200).json({ success: true, data: donation });
   } catch (error) {
-    console.error("Get donation receipt error:", error);
+    //console.error("Get donation receipt error:", error);
     res
       .status(500)
       .json({
@@ -292,7 +304,7 @@ exports.getSavedCampaigns = async (req, res) => {
     }
     res.status(200).json({ success: true, data: user.savedCampaigns || [] });
   } catch (error) {
-    console.error("Get saved campaigns error:", error);
+    //console.error("Get saved campaigns error:", error);
     res
       .status(500)
       .json({
@@ -355,7 +367,7 @@ exports.toggleSaveCampaign = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Save campaign error:", error);
+    //console.error("Save campaign error:", error);
     res
       .status(500)
       .json({
@@ -394,7 +406,7 @@ exports.getProfile = async (req, res) => {
       data: { donor, donationSummary: donationSummary[0] || {} },
     });
   } catch (error) {
-    console.error("Get donor profile error:", error);
+    //console.error("Get donor profile error:", error);
     res
       .status(500)
       .json({
@@ -425,23 +437,56 @@ exports.updateProfile = async (req, res) => {
       bio,
       donorPreferences,
       notificationPreferences,
+      email,
+      emailChangeToken,
     } = req.body;
     if (firstName) donor.firstName = firstName;
     if (lastName) donor.lastName = lastName;
     if (firstName || lastName)
       donor.fullName = `${donor.firstName} ${donor.lastName}`;
     if (phone) donor.phone = phone;
+
+    // Ensure address object exists before setting properties
+    if (!donor.address) {
+      donor.address = {};
+    }
+
     if (address) donor.address.street = address;
     if (city) donor.address.city = city;
     if (state) donor.address.state = state;
     if (country) donor.address.country = country;
     if (zipCode) donor.address.zipCode = zipCode;
     if (bio) donor.bio = bio;
-    if (donorPreferences) donor.donorPreferences = donorPreferences;
-    if (notificationPreferences)
-      donor.notificationPreferences = notificationPreferences;
+    if (donorPreferences) {
+      donor.donorPreferences = typeof donorPreferences === 'string' ? JSON.parse(donorPreferences) : donorPreferences;
+    }
+
+    // Handle email change
+    if (email && email !== donor.email) {
+      if (!emailChangeToken) {
+        return res.status(400).json({ success: false, message: 'Email change requires verification token.' });
+      }
+      const verificationResult = await otpService.verifyOTP(email, emailChangeToken, 'email-change');
+      if (!verificationResult.success) {
+        return res.status(400).json({ success: false, message: `Email verification failed: ${verificationResult.message}` });
+      }
+      // Check for email uniqueness before updating
+      const existingUser = await User.findOne({ email: email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'This email address is already in use.' });
+      }
+      donor.email = email;
+    }
+    if (notificationPreferences) {
+      donor.notificationPreferences = typeof notificationPreferences === 'string' ? JSON.parse(notificationPreferences) : notificationPreferences;
+    }
+
+    if (req.file) {
+      donor.profileImage = getFileUrl(req, req.file.path);
+    }
 
     await donor.save();
+    
     const updatedDonor = donor.toObject();
     delete updatedDonor.password;
 
@@ -450,10 +495,10 @@ exports.updateProfile = async (req, res) => {
       .json({
         success: true,
         message: "Profile updated successfully",
-        data: updatedDonor,
+        data: { user: updatedDonor },
       });
   } catch (error) {
-    console.error("Update donor profile error:", error);
+    console.log("Update donor profile error:", error.message);
     res
       .status(500)
       .json({
@@ -515,7 +560,7 @@ exports.getImpact = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Get donor impact error:", error);
+    //console.error("Get donor impact error:", error);
     res
       .status(500)
       .json({

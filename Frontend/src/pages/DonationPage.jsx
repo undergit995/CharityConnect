@@ -127,7 +127,7 @@ const DonationPage = () => {
         >
           <Button
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate(`/campaigns/${id}`)}
+            onClick={() => navigate(`/donor/campaign`)}
             sx={{
               mb: 3,
               color: isDark ? '#a0a0b8' : '#4a4a6a',

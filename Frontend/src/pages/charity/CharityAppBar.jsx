@@ -33,11 +33,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import { useSettings } from '../../Context/SettingsContext';
 
 const CharityAppBar = ({ onDrawerToggle }) => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const isMobile = useMediaQuery('(max-width:900px)');
   
   const [anchorEl, setAnchorEl] = useState(null);
@@ -113,7 +115,7 @@ const CharityAppBar = ({ onDrawerToggle }) => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            CharityConnect
+            {settings.brandName}
           </Typography>
           
           <Chip

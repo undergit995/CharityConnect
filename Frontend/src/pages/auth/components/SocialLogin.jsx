@@ -21,7 +21,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function handleCredentialResponse(response) {
   const idToken = response.credential;
-  console.log("Encoded JWT ID token: " + idToken);
+  //console.log("Encoded JWT ID token: " + idToken);
 }
 
 export function initializeGoogleSignIn() {
@@ -41,7 +41,7 @@ export function initializeGoogleSignIn() {
 
     window.google.accounts.id.prompt();
   } else {
-    console.error("Google Identity Services script not loaded.");
+    //console.error("Google Identity Services script not loaded.");
   }
 }
 const SocialLogin = ({ redirectPath = "/" }) => {
@@ -81,7 +81,7 @@ const SocialLogin = ({ redirectPath = "/" }) => {
               navigate(redirectPath);
             }
           } catch (error) {
-            console.error("Google login error:", error);
+            //console.error("Google login error:", error);
           } finally {
             setSocialLoading(false);
           }
@@ -92,7 +92,7 @@ const SocialLogin = ({ redirectPath = "/" }) => {
       
       window.google.accounts.id.prompt();
     } catch (error) {
-      console.error("Google login error:", error);
+      //console.error("Google login error:", error);
       setSocialLoading(false);
     }
   };
@@ -116,17 +116,17 @@ const SocialLogin = ({ redirectPath = "/" }) => {
                 navigate(redirectPath);
               }
             } catch (error) {
-              console.error("Facebook login error:", error);
+              //console.error("Facebook login error:", error);
             }
           } else {
-            console.log("Facebook login cancelled");
+            //console.log("Facebook login cancelled");
           }
           setSocialLoading(false);
         },
         { scope: "email,public_profile" },
       );
     } catch (error) {
-      console.error("Facebook login error:", error);
+      //console.error("Facebook login error:", error);
       setSocialLoading(false);
     }
   };
@@ -199,7 +199,7 @@ const SocialLogin = ({ redirectPath = "/" }) => {
               navigate(redirectPath);
             }
           } catch (error) {
-            console.error("Apple login error:", error);
+            //console.error("Apple login error:", error);
           } finally {
             setSocialLoading(false);
             window.removeEventListener("message", messageHandler);
@@ -226,7 +226,7 @@ const SocialLogin = ({ redirectPath = "/" }) => {
         setSocialLoading(false);
       }, 300000);
     } catch (error) {
-      console.error("Apple login error:", error);
+      //console.error("Apple login error:", error);
       setSocialLoading(false);
     }
   };

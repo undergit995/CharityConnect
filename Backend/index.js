@@ -1,13 +1,25 @@
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 require("dotenv").config();
+const corsOptions = require("./config/corsConfig.js");
+const { connectDB, gracefulShutdown } = require("./config/connectDb.js");
+const auth = require("./Routes/auth/auth.js");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const path = require('path');
-const corsOptions = require("./config/corsConfig");
-const { connectDB, gracefulShutdown } = require("./config/connectDb");
-const auth = require("./Routes/auth/auth")
+const path = require("path");
     // const { globalErrorHandler } = require('./utils/errorHandler');
+process.on("uncaughtException", (err) => {
+    console.error("UNCAUGHT EXCEPTION:");
+    console.error(err);
+    process.exit(1);
+});
 
+process.on("unhandledRejection", (err) => {
+    console.error("UNHANDLED REJECTION:");
+    console.error(err);
+    process.exit(1);
+});
 const app = express();
 
 // CORS configuration
@@ -31,18 +43,17 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // API routes
 app.use("/api/auth", auth);
-app.use("/api/maintenance", require("./routes/maintenance/index"));
-app.use("/api/otp", require("./routes/auth/otpRoute"));
-app.use("/api/admin", require("./routes/admin/admin"));
-app.use("/api/charity", require("./routes/charity/index"));
-app.use("/api/donations", require("./Routes/donation/donation"));
-app.use("/api/campaigns", require("./routes/campaign/campaign"));
-app.use("/api/payments", require("./Routes/payment/index"));
-app.use("/api/verification", require("./routes/verification/verification"));
-app.use("/api/contact", require("./routes/contact/index"));
-app.use("/api/donor", require("./routes/donor/index"));
-
-
+app.use("/api/maintenance", require("./Routes/Maintenance/index.js"));
+app.use("/api/otp", require("./Routes/auth/otpRoute.js"));
+app.use("/api/admin", require("./Routes/admin/admin.js"));
+app.use("/api/charity", require("./Routes/charity/index.js"));
+app.use("/api/donations", require("./Routes/donation/donation.js"));
+app.use("/api/campaigns", require("./Routes/campaign/campaign.js"));
+app.use("/api/payments", require("./Routes/payment/index.js"));
+app.use("/api/verification", require("./Routes/verification/verification.js"));
+app.use("/api/contact", require("./Routes/contact/index.js"));
+app.use("/api/info", require("./Routes/admin/settings.js"));
+app.use("/api/donor", require("./Routes/donor/index.js"));
 // Global error handler
 // app.use(globalErrorHandler);
 
@@ -54,34 +65,41 @@ app.use("/api/donor", require("./routes/donor/index"));
 //     });
 // });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7000;
 
 // Initialize server
-const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
-    connectDB();
+const server = app.listen(PORT, '0.0.0.0', async() => {
+
+  try {
+    await connectDB();
+    console.log("Database connection ");
+  } catch (error) {
+    console.error("Database connection failed:");
+    console.error(error);
+    process.exit(1);
+  }
 });
 
 // Graceful shutdown handling
 const shutdown = async () => {
-    console.log('Received shutdown signal. Starting graceful shutdown...');
+    // console.log('Received shutdown signal. Starting graceful shutdown...');
     server.close(async () => {
-        console.log('HTTP server closed.');
+        // console.log('HTTP server closed.');
         await gracefulShutdown();
         process.exit(0);
     });
 };
 
 // Handle various shutdown signals
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    shutdown();
-});
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
-    shutdown();
-});
+// process.on('SIGTERM', shutdown);
+// process.on('SIGINT', shutdown);
+// process.on('uncaughtException', (err) => {
+//     // console.error('Uncaught Exception:', err);
+//     shutdown();
+// });
+// process.on('unhandledRejection', (err) => {
+//     // console.error('Unhandled Rejection:', err);
+//     shutdown();
+// });
 
 module.exports = app;

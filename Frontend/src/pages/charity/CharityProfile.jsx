@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -29,6 +29,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -55,6 +59,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useAuth } from '../../Context/AuthContext';
+import OTPInput from '../auth/components/OTPInput';
 import { api } from '../../Services/authServices';
 
 
@@ -66,7 +71,7 @@ const TabPanel = ({ children, value, index }) => (
 
 const CharityProfile = () => {
   const { isDark } = useTheme();
-  const { user, updateProfile } = useAuth();
+  const { user, updateCurrentUser, sendOTP, verifyOTP } = useAuth();
   const isMobile = useMediaQuery('(max-width:600px)');
   
   const [isEditing, setIsEditing] = useState(false);
@@ -77,7 +82,11 @@ const CharityProfile = () => {
   const [stats, setStats] = useState({ totalRaised: 0, totalDonors: 0, activeCampaigns: 0 });
   const [campaigns, setCampaigns] = useState([]);
   const [recentDonations, setRecentDonations] = useState([]);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [otpDialogOpen, setOtpDialogOpen] = useState(false);
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [emailChangeToken, setEmailChangeToken] = useState('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -109,6 +118,7 @@ const CharityProfile = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
+//console.log(user);
 
   useEffect(() => {
     if (user) {
@@ -144,7 +154,7 @@ const CharityProfile = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!user?.userId) return;
+      if (!user?._id) return;
       setDataLoading(true);
       try {
         const [statsRes, campaignsRes, donationsRes] = await Promise.all([
@@ -171,13 +181,12 @@ const CharityProfile = () => {
         }
       } catch (err) {
         setError('Failed to load profile data.');
-      } finally {
-        
+      } finally {        
         setDataLoading(false);
       }
     };
     fetchData();
-  }, [user?.userId]);
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
@@ -218,31 +227,75 @@ const CharityProfile = () => {
     }
   };
 
+  const handleEmailChangeRequest = async () => {
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const result = await sendOTP(formData.email, 'email-change');
+      if (result.success) {
+        setOtpDialogOpen(true);
+      } else {
+        setError(result.message || 'Failed to send OTP to new email.');
+      }
+    } catch (err) {
+      setError(err.message || 'An error occurred while sending OTP.');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyEmailAndSave = useCallback(async (otp) => {
+    if (otp.length !== 6) return;
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      setEmailChangeToken(otp);
+      setOtpDialogOpen(false);
+      setTimeout(() => {
+        document.getElementById('profile-update-form-submit-button').click();
+      }, 100);
+    } catch (err) {
+      setOtpError(err.message || 'Invalid OTP');
+    } finally {
+      setOtpLoading(false);
+    }
+  }, [formData.email, verifyOTP]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
+    if (formData.email !== user.email && !emailChangeToken) {
+      handleEmailChangeRequest();
+      setLoading(false);
+      return;
+    }
+
     try {
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
-        if (typeof formData[key] === 'object') {
-          formDataToSend.append(key, JSON.stringify(formData[key]));
+        const value = formData[key];
+        if (typeof value === 'object' && value !== null) {
+          formDataToSend.append(key, JSON.stringify(value));
         } else {
-          formDataToSend.append(key, formData[key]);
+          formDataToSend.append(key, value);
         }
       });
       if (profileImage) formDataToSend.append('profileImage', profileImage);
       if (coverImage) formDataToSend.append('coverImage', coverImage);
+      if (emailChangeToken) formDataToSend.append('emailChangeToken', emailChangeToken);
 
-      await updateProfile(formDataToSend);
+      await api.put('/charity/profile', formDataToSend);
       setSuccess('Profile updated successfully!');
       setIsEditing(false);
+      await updateCurrentUser();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile');
       setTimeout(() => setError(''), 3000);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -479,7 +532,7 @@ const CharityProfile = () => {
               {isEditing && (
                 <Box sx={{ mt: 4 }}>
                   <Divider sx={{ mb: 3 }} />
-                  <form onSubmit={handleSubmit}>
+                  <form onSubmit={handleSubmit} id="profile-update-form">
                     <Grid container spacing={3}>
                       <Grid item xs={12} sm={6}>
                         <TextField
@@ -559,6 +612,7 @@ const CharityProfile = () => {
                             Cancel
                           </Button>
                           <Button
+                            id="profile-update-form-submit-button"
                             type="submit"
                             variant="contained"
                             disabled={loading}
@@ -582,6 +636,43 @@ const CharityProfile = () => {
             </Box>
           </Paper>
         </motion.div>
+
+        <Dialog open={otpDialogOpen} onClose={() => setOtpDialogOpen(false)} maxWidth="xs" fullWidth>
+          <DialogTitle>Verify New Email Address</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" sx={{ mb: 2 }}>
+              We've sent a verification code to <strong>{formData.email}</strong>. Please enter it below to confirm the change.
+            </Typography>
+            {otpError && <Alert severity="error" sx={{ mb: 2 }}>{otpError}</Alert>}
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+              <OTPInput
+                length={6}
+                onComplete={handleVerifyEmailAndSave}
+                disabled={otpLoading}
+              />
+            </Box>
+            {otpLoading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2">Verifying...</Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOtpDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const otpInputs = document.querySelectorAll('input[aria-label="Please enter verification code"]');
+                const otpValue = Array.from(otpInputs).map(input => input.value).join('');
+                handleVerifyEmailAndSave(otpValue);
+              }}
+              variant="contained"
+              disabled={otpLoading}
+            >
+              Verify & Save
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Tabs */}
         <Paper

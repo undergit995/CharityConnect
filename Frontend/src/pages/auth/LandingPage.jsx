@@ -53,6 +53,7 @@ import {
 import { motion } from 'framer-motion';
 import { useTheme } from '../../hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../Services/authServices';
 
 // Import images (you'll need to add these)
 // import heroImage from '../../assets/images/hero-bg.jpg';
@@ -119,6 +120,12 @@ const LandingPage = () => {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const heroRef = useRef(null);
+  const [stats, setStats] = useState({
+    totalDonors: '50K+',
+    totalRaised: '₹2.5M+',
+    campaignsFunded: '1.2K+',
+    totalCharities: '500+',
+  });
 
   // Hero Section Animation
   useEffect(() => {
@@ -131,6 +138,29 @@ const LandingPage = () => {
       setFeaturedIndex((prev) => (prev + 1) % featuredCampaigns.length);
     }, 5000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch dynamic stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/admin/public-stats');
+        if (response.data.success) {
+          const data = response.data.data;
+          console.log(data);
+          
+          setStats({
+            totalDonors: data.totalDonors.toLocaleString(),
+            totalRaised: `₹${(data.totalRaised / 1000000).toFixed(1)}M+`,
+            campaignsFunded: data.campaignsFunded.toLocaleString(),
+            totalCharities: data.totalCharities.toLocaleString(),
+          });
+        }
+      } catch (error) {
+        //console.error("Failed to fetch landing page stats:", error);
+      }
+    };
+    fetchStats();
   }, []);
 
   // Featured Campaigns Data
@@ -243,12 +273,6 @@ const LandingPage = () => {
     },
   ];
 
-  const stats = [
-    { icon: <VolunteerIcon />, value: '50K+', label: 'Active Donors' },
-    { icon: <ImpactIcon />, value: '₹2.5M+', label: 'Donations Raised' },
-    { icon: <ImpactIcon />, value: '1.2K+', label: 'Campaigns Funded' },
-    { icon: <PeopleIcon />, value: '500+', label: 'Trusted Charities' },
-  ];
 
   const trustedCharities = [
     { name: 'Red Cross', logo: '/images/red-cross.svg' },
@@ -485,39 +509,46 @@ const LandingPage = () => {
 
                   {/* Stats */}
                   <Box sx={{ display: 'flex', gap: 4, mt: 4, flexWrap: 'wrap' }}>
-                    {stats.map((stat, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 + index * 0.1 }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              color: '#ffffff',
-                              fontWeight: 700,
-                              fontSize: { xs: '1.5rem', md: '2rem' },
-                            }}
-                          >
-                            {stat.value}
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: 'rgba(255,255,255,0.7)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                            }}
-                          >
-                            {stat.icon}
-                            {stat.label}
-                          </Typography>
-                        </Box>
-                      </motion.div>
-                    ))}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                      <Box>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                          {stats.totalDonors}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <VolunteerIcon /> Active Donors
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                      <Box>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                          {stats.totalRaised}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ImpactIcon /> Donations Raised
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+                      <Box>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                          {stats.campaignsFunded}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <ImpactIcon /> Campaigns Funded
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+                      <Box>
+                        <Typography variant="h4" sx={{ color: '#ffffff', fontWeight: 700, fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                          {stats.totalCharities}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <PeopleIcon /> Trusted Charities
+                        </Typography>
+                      </Box>
+                    </motion.div>
                   </Box>
                 </Box>
               </motion.div>
@@ -654,70 +685,101 @@ const LandingPage = () => {
               </Typography>
             </Box>
 
-            <Grid container spacing={3}>
-              {features.map((feature, index) => (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <motion.div variants={fadeInUp}>
-                    <Paper
-                      sx={{
-                        p: 3,
-                        textAlign: 'center',
-                        height: '100%',
-                        background: isDark ? 'rgba(20,20,32,0.6)' : '#ffffff',
-                        backdropFilter: 'blur(10px)',
-                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-8px)',
-                          boxShadow: isDark
-                            ? '0 8px 40px rgba(0,0,0,0.4)'
-                            : '0 8px 40px rgba(0,0,0,0.1)',
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 60,
-                          height: 60,
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mx: 'auto',
-                          mb: 2,
-                        }}
-                      >
-                        {React.cloneElement(feature.icon, {
-                          sx: { color: '#ffffff', fontSize: 30 },
-                        })}
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 600,
-                          mb: 1,
-                          color: isDark ? '#e8e8f0' : '#1a1a2e',
-                        }}
-                      >
-                        {feature.title}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: isDark ? '#a0a0b8' : '#4a4a6a' }}
-                      >
-                        {feature.description}
-                      </Typography>
-                    </Paper>
-                  </motion.div>
-                </Grid>
-              ))}
-            </Grid>
+            <Grid
+  container
+  spacing={3}
+  justifyContent="center"
+  alignItems="stretch"
+>
+  {features.map((feature,index)=>(
+    <Grid
+      size={{xs:12, sm:6, md:3}}
+      key={index}
+      sx={{
+        display:'flex',
+        justifyContent:'center'
+      }}
+    >
+      <motion.div
+        variants={fadeInUp}
+        style={{
+          width:'100%',
+          maxWidth:300
+        }}
+      >
+        <Paper
+          sx={{
+            p:3,
+            height:260,
+            width:'100%',
+            display:'flex',
+            flexDirection:'column',
+            alignItems:'center',
+            justifyContent:'center',
+            textAlign:'center',
+
+            background: isDark
+              ? 'rgba(20,20,32,0.6)'
+              : '#ffffff',
+
+            backdropFilter:'blur(10px)',
+
+            border:
+              `1px solid ${
+                isDark
+                ? 'rgba(255,255,255,0.05)'
+                : 'rgba(0,0,0,0.05)'
+              }`,
+
+            transition:'all .3s ease',
+
+            '&:hover':{
+              transform:'translateY(-8px)',
+            }
+          }}
+        >
+
+          <Box
+            sx={{
+              width:60,
+              height:60,
+              borderRadius:'50%',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              mb:2,
+              background:
+              'linear-gradient(135deg,#667eea,#764ba2)'
+            }}
+          >
+            {React.cloneElement(feature.icon,{
+              sx:{
+                color:'#fff',
+                fontSize:30
+              }
+            })}
+          </Box>
+
+
+          <Typography variant="h6">
+            {feature.title}
+          </Typography>
+
+
+          <Typography variant="body2">
+            {feature.description}
+          </Typography>
+
+        </Paper>
+      </motion.div>
+    </Grid>
+  ))}
+</Grid>
           </motion.div>
         </Container>
       </Box>
 
-      {/* ===== CATEGORIES SECTION ===== */}
+
       <Box id="categories" sx={{ py: { xs: 6, md: 10 } }}>
         <Container maxWidth="lg">
           <motion.div
@@ -757,7 +819,7 @@ const LandingPage = () => {
 
             <Grid container spacing={2}>
               {categories.map((category, index) => (
-                <Grid item xs={6} sm={4} md={2.4} key={index}>
+                <Grid size={{xs:6, sm:4 ,md:2.4}} key={index}>
                   <motion.div
                     variants={fadeInUp}
                     whileHover={{ scale: 1.05 }}
@@ -768,6 +830,8 @@ const LandingPage = () => {
                       sx={{
                         p: 2,
                         textAlign: 'center',
+                        height: '100%',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center',
                         cursor: 'pointer',
                         background: isDark ? 'rgba(20,20,32,0.6)' : '#ffffff',
                         border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
@@ -815,7 +879,6 @@ const LandingPage = () => {
         </Container>
       </Box>
 
-      {/* ===== FEATURED CAMPAIGNS SECTION ===== */}
       <Box
         sx={{
           py: { xs: 6, md: 10 },
@@ -1045,6 +1108,7 @@ const LandingPage = () => {
                   <Card
                     sx={{
                       height: 400,
+                      display: 'flex', flexDirection: 'column'
                     }}
                   >
                     <CardMedia
@@ -1053,7 +1117,7 @@ const LandingPage = () => {
                       image={story.image}
                       alt={story.title}
                     />
-                    <CardContent>
+                    <CardContent sx={{ flexGrow: 1 }}>
                       <Typography
                         variant="h6"
                         sx={{

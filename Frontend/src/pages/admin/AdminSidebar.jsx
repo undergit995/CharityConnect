@@ -26,6 +26,7 @@ import {
   Logout as LogoutIcon,
   Verified as VerifiedIcon,
   Pending as PendingIcon,
+  BuildCircleSharp,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTheme } from '../../Theme/ThemeContext';
@@ -53,7 +54,7 @@ const AdminSidebar = () => {
     { text: 'Campaigns', icon: <CampaignIcon />, path: '/admin/campaigns' },
     { text: 'Donations', icon: <DonateIcon />, path: '/admin/donations' },
     { text: 'Profile', icon: <PersonIcon />, path: '/admin/profile' },
-    { text: 'Verification', icon: <VerifiedIcon />, path: '/admin/verification' }
+    { text: 'Info', icon: <BuildCircleSharp />, path: '/admin/info' },
   ];
 
   // Fetch admin stats
@@ -73,7 +74,7 @@ const AdminSidebar = () => {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch admin stats:', error);
+        //console.error('Failed to fetch admin stats:', error);
         setStats(prev => ({ ...prev, loading: false }));
       }
     };
@@ -99,7 +100,7 @@ const AdminSidebar = () => {
             });
           }
         } catch (error) {
-          console.error('Failed to fetch admin stats:', error);
+          //console.error('Failed to fetch admin stats:', error);
         }
       };
       fetchAdminStats();
@@ -107,7 +108,7 @@ const AdminSidebar = () => {
 
     return () => clearInterval(interval);
   }, []);
-
+console.log(user)
   const handleLogout = async () => {
     await logout();
     navigate('/auth/login');
@@ -196,6 +197,7 @@ const AdminSidebar = () => {
                     : 'rgba(102, 126, 234, 0.08)'
                   : 'transparent',
                 '&:hover': {
+                  cursor:'pointer',
                   backgroundColor: isDark
                     ? 'rgba(255,255,255,0.05)'
                     : 'rgba(0,0,0,0.04)',

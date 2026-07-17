@@ -6,7 +6,7 @@ import { authService, api } from '../Services/authServices';
 // Create Auth Context
 export const AuthContext = createContext(null);
 
-// Custom hook to use auth context
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
           const decoded = jwtDecode(token);
           
           if (decoded.exp * 1000 > Date.now()) {
-            setUser(decoded);
+            setUser(decoded.user || decoded);
             setIsAuthenticated(true);
             setPermissions(decoded.permissions || []);
             
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }) => {
             try {
               const newAccessToken = await authService.refreshToken();
               const newDecoded = jwtDecode(newAccessToken);
-              setUser(newDecoded);
+              setUser(newDecoded.user || newDecoded);
               setIsAuthenticated(true);
               setPermissions(newDecoded.permissions || []);
               startSessionTimeout(newDecoded.exp * 1000);
@@ -122,10 +122,6 @@ export const AuthProvider = ({ children }) => {
         setSessionTimeout(null);
       }
 
-      // Redirect to login page
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/auth/login';
-      }
     }
   }, [sessionTimeout]);
 
@@ -209,7 +205,7 @@ export const AuthProvider = ({ children }) => {
 
       return response.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Registration failed. Please try again.';
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -323,14 +319,10 @@ export const AuthProvider = ({ children }) => {
         email: identifier,
         purpose,
       });
-      return {
-        success: true,
-        message: 'OTP sent successfully',
-        ...response.data,
-      };
-    } catch (err) {
-      console.log(err.response);      
-      const errorMessage = err.response?.data?.message || 'Failed to send OTP';
+      return response.data;
+    } catch (err) { 
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      console.log("Send OTP error in AuthContext:", errorMessage, err);
       throw new Error(errorMessage);
     }
   };
@@ -365,20 +357,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update current user data from server
+  const updateCurrentUser = async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await api.get('/auth/me');
+      if (response.data.success) {
+        const freshUser = response.data.data.user;
+        setUser(freshUser);
+        if (freshUser.permissions) {
+          setPermissions(freshUser.permissions);
+        }
+        return freshUser;
+      }
+    } catch (err) {
+      console.error("Failed to update current user:", err);
+    }
+  };
+
   // Update user profile
   const updateProfile = async (profileData) => {
-    setLoading(true);
     setError(null);
 
     try {
-      let endpoint = '/auth/profile'; // Default endpoint
+      let endpoint = '/admin/profile';
       if (user?.role === 'charity') {
         endpoint = '/charity/profile';
       } else if (user?.role === 'donor') {
         endpoint = '/donor/profile';
       }
-      // Admin can use the generic one or have its own if needed
-
       const response = await authService.api.put(endpoint, profileData);
       setUser(response.data.user);
       return response.data;
@@ -441,6 +448,7 @@ export const AuthProvider = ({ children }) => {
     
     // User management
     updateProfile,
+    updateCurrentUser,
     
     // Permission helpers
     hasPermission,
