@@ -213,7 +213,7 @@ exports.getAllCampaigns = async (req, res) => {
             const now = new Date();
             const sevenDaysFromNow = new Date(now);
             sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-            query.endDate = { $gt: now, $lt: sevenDaysFromNow };
+            query.endDate = { $gte: now, $lt: sevenDaysFromNow };
             query.status = "active";
         }
 

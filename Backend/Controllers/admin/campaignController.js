@@ -25,11 +25,10 @@ exports.getCampaigns = async (req, res) => {
         if (status === 'pending') {
             query.approvalStatus = 'pending';
         } else if (status === 'approved') {
-            query.approvalStatus = 'approved';
-            query.status = 'active';
+            query.approvalStatus = 'approved'; // This might show more than just 'active'
         } else if (status === 'rejected') {
             query.approvalStatus = 'rejected';
-        } else if (status === 'all') {
+        } else if (status === 'all' || !status) {
             // Show all
         }
 
@@ -347,7 +346,7 @@ exports.rejectCampaign = async (req, res) => {
         });
     }
 };
-mail
+
 /**
  * @desc Pause an active campaign (Admin only)
  * @route PUT /api/admin/campaigns/:id/pause
